@@ -40,4 +40,22 @@ if __name__ == '__main__':
     name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires = StackingTemplates.Productivity.numberOfSimultaneousTabsTemplate()
     Achievement.createAchievementsFromStackingTemplate(name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires)
 
+    #################### FILES ####################
+    # Files created
+    name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires = StackingTemplates.Files.filesCreatedTemplate()
+    Achievement.createAchievementsFromStackingTemplate(name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires)
+
+    # Files created for each language
+    for template in StackingTemplates.Files.filesCreatedLanguageTemplates():
+        name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires = template
+        Achievement.createAchievementsFromStackingTemplate(name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires)
+
+    # Files deleted
+    name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires = StackingTemplates.Files.filesDeletedTemplate()
+    Achievement.createAchievementsFromStackingTemplate(name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires)
+
+    # Files moved
+    name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires = StackingTemplates.Files.filesMovedTemplate()
+    Achievement.createAchievementsFromStackingTemplate(name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires)
+
     Achievement.toJsonFile(ACHIVEMENTS_PATH)
