@@ -58,4 +58,43 @@ if __name__ == '__main__':
     name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires = StackingTemplates.Files.filesMovedTemplate()
     Achievement.createAchievementsFromStackingTemplate(name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires)
 
+    #################### GIT ####################
+    # Commits
+    name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires = StackingTemplates.Git.commitsTemplate()
+    Achievement.createAchievementsFromStackingTemplate(name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires)
+
+    # Branches created
+    name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires = StackingTemplates.Git.branchesCreatedTemplate()
+    Achievement.createAchievementsFromStackingTemplate(name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires)
+
+    # Merges and rebases
+    name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires = StackingTemplates.Git.mergesAndRebasesTemplate()
+    Achievement.createAchievementsFromStackingTemplate(name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires)
+
+    # Amends
+    name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires = StackingTemplates.Git.amendsTemplate()
+    Achievement.createAchievementsFromStackingTemplate(name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires)
+
+    # Forced pushes
+    name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires = StackingTemplates.Git.forcedPushesTemplate()
+    Achievement.createAchievementsFromStackingTemplate(name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires)
+
+    # Pushes
+    name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires = StackingTemplates.Git.pushesTemplate()
+    Achievement.createAchievementsFromStackingTemplate(name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires)
+
+    #################### VSCODE ####################
+    # extensions installed
+    name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires = StackingTemplates.VSCode.extensionsInstalledTemplate()
+    Achievement.createAchievementsFromStackingTemplate(name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires)
+
+    # extensions out of date
+    name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires = StackingTemplates.VSCode.extensionsOutdatedTemplate()
+    Achievement.createAchievementsFromStackingTemplate(name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires)
+
+    # themes installed
+    name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires = StackingTemplates.VSCode.themesInstalledTemplate()
+    Achievement.createAchievementsFromStackingTemplate(name, icon_dir, category, group, labels, criterias, criterias_functions, description, min_tier, max_tier, points_function, hidden, requires)
+
+    # Create the achievements from the stacking templates
     Achievement.toJsonFile(ACHIVEMENTS_PATH)
