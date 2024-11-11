@@ -16,6 +16,7 @@ class Criteria:
     NUMBER_OF_PASTES = 'pastesCount'
     ERRORS_FIXED = 'errorsFixedCount'
     FILES_CREATED = 'filesCreatedCount'
+    FILES_CREATED_LANGUAGE = 'filesCreatedCount_%s'
     FILES_DELETED = 'filesDeletedCount'
     FILES_MOVED = 'filesMovedCount'
     COMMITS = 'commitsCount'

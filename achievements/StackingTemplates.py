@@ -29,6 +29,80 @@ from math import factorial
 import constants
 
 class StackingTemplates:
+    '''
+    Stacking templates class, contains the stacking templates for the achievements
+    '''
+    class Files:
+        '''
+        Files stacking templates
+        '''
+        @staticmethod
+        def filesCreatedTemplate() -> tuple[str, str, str, str, List[str], List[str], List[Callable], str, int, int, Callable, bool, List[int]]:
+            '''
+            Returns the template for the files created achievement
+            '''
+            name = 'Creator %d'
+            icon_dir = 'creator'
+            category = constants.Category.FILES
+            group = 'Files Created'
+            criterias = [constants.Criteria.FILES_CREATED]
+            description = f'Create {criterias[0]} files'
+            labels = [constants.Category.FILES, constants.Labels.FILES_CREATED]
+
+            return name, icon_dir, category, group, labels, criterias, [lambda x: 5 * 2 ** x], description, 0, 15, lambda x: 2**(x+1), False, []
+
+
+        @staticmethod
+        def filesCreatedLanguageTemplates() -> List[tuple[str, str, str, str, List[str], List[str], List[Callable], str, int, int, Callable, bool, List[int]]]:
+            '''
+            Returns the templates for the files created for each language achievement
+            '''
+            name = 'LANGUAGE Creator %d'
+            icon_dir = '%s_creator'
+            category = constants.Category.FILES
+            group = 'Files Created'
+            description = 'Create FILES files in LANGUAGE'
+            labels = [constants.Category.FILES, constants.Labels.FILES_CREATED]
+
+            languages_tuples = []
+            for language in constants.Labels.LANGUAGES:
+                criterias = [constants.Criteria.FILES_CREATED_LANGUAGE % language]
+                languages_tuples.append((name.replace('LANGUAGE', language), icon_dir % language, category, group, labels, criterias, [lambda x: 5 * 2 ** x], description.replace('LANGUAGE', language).replace('FILES', criterias[0]), 0, 11, lambda x: 2**(x+2), False, []))
+
+            return languages_tuples
+
+
+        @staticmethod
+        def filesDeletedTemplate() -> tuple[str, str, str, str, List[str], List[str], List[Callable], str, int, int, Callable, bool, List[int]]:
+            '''
+            Returns the template for the files deleted achievement
+            '''
+            name = 'Deleter %d'
+            icon_dir = 'deleter'
+            category = constants.Category.FILES
+            group = 'Files Deleted'
+            criterias = [constants.Criteria.FILES_DELETED]
+            description = f'Delete {criterias[0]} files'
+            labels = [constants.Category.FILES, constants.Labels.FILES_DELETED]
+
+            return name, icon_dir, category, group, labels, criterias, [lambda x: 2 ** (x+1)], description, 0, 10, lambda x: 2**(x+1), False, []
+
+
+        @staticmethod
+        def filesMovedTemplate() -> tuple[str, str, str, str, List[str], List[str], List[Callable], str, int, int, Callable, bool, List[int]]:
+            '''
+            Returns the template for the files moved achievement
+            '''
+            name = 'Mover %d'
+            icon_dir = 'mover'
+            category = constants.Category.FILES
+            group = 'Files Moved'
+            criterias = [constants.Criteria.FILES_MOVED]
+            description = f'Move {criterias[0]} files'
+            labels = [constants.Category.FILES, constants.Labels.FILES_MOVED]
+
+            return name, icon_dir, category, group, labels, criterias, [lambda x: 2 ** x], description, 0, 10, lambda x: 2**(x+1), False, []
+
 
     class Productivity:
         '''
