@@ -22,16 +22,27 @@ List of Stacking Tempaltes:
     - Lines of Code for each language
     - Lines of comments
     - Number of pastes
+- VSCode
+    - Extensions Installed
+    - Extensions Outdated
+    - Themes Installed
 '''
 
 from typing import List, Callable
-from math import factorial
 import constants
 
 class StackingTemplates:
     '''
     Stacking templates class, contains the stacking templates for the achievements
     '''
+
+    STANDARD_EASY_CRITERIA_FUNCTION = lambda x: 10**x                                                                            # [1, 10, 100, 1000, 10000, 100000,...]
+    STANDARD_MEDIUM_CRITERIA_FUNCTION = lambda x: 2 ** ((x + 2) // 2) * 5 ** ((x + 1) // 2)                                      # [2, 10, 20, 100, 200, 1000, 2000, 10000, 20000, 100000]
+    STANDARD_HARD_CRITERIA_FUNCTION = lambda x: 2 ** (x // 2) * 5 ** ((x + 1) // 2)                                              # [1, 5, 10, 50, 100, 500, 1000, 5000, 10000, 50000,...]
+    STANDARD_INFERNAL_CRITERIA_FUNCTION = lambda x: (2 ** max(0, (x - 1) // 2)) * (3 ** (1 if x == 1 else 0)) * (5 ** (x // 2))  # [1, 3, 5, 10, 50, 100, 500, 1000, 5000, 10000,...]
+
+    STANDARD_POINTS_FUNCTION = STANDARD_INFERNAL_CRITERIA_FUNCTION
+
     class Files:
         '''
         Files stacking templates
@@ -49,7 +60,7 @@ class StackingTemplates:
             description = f'Create {criterias[0]} files'
             labels = [constants.Category.FILES, constants.Labels.FILES_CREATED]
 
-            return name, icon_dir, category, group, labels, criterias, [lambda x: 5 * 2 ** x], description, 0, 15, lambda x: 2**(x+1), False, []
+            return name, icon_dir, category, group, labels, criterias, [StackingTemplates.STANDARD_MEDIUM_CRITERIA_FUNCTION], description, 0, 15, StackingTemplates.STANDARD_POINTS_FUNCTION, False, []
 
 
         @staticmethod
@@ -67,7 +78,7 @@ class StackingTemplates:
             languages_tuples = []
             for language in constants.Labels.LANGUAGES:
                 criterias = [constants.Criteria.FILES_CREATED_LANGUAGE % language]
-                languages_tuples.append((name.replace('LANGUAGE', language), icon_dir % language, category, group, labels, criterias, [lambda x: 5 * 2 ** x], description.replace('LANGUAGE', language).replace('FILES', criterias[0]), 0, 11, lambda x: 2**(x+2), False, []))
+                languages_tuples.append((name.replace('LANGUAGE', language), icon_dir % language, category, group, labels, criterias, [StackingTemplates.STANDARD_HARD_CRITERIA_FUNCTION], description.replace('LANGUAGE', language).replace('FILES', criterias[0]), 0, 11, StackingTemplates.STANDARD_POINTS_FUNCTION, False, []))
 
             return languages_tuples
 
@@ -85,7 +96,7 @@ class StackingTemplates:
             description = f'Delete {criterias[0]} files'
             labels = [constants.Category.FILES, constants.Labels.FILES_DELETED]
 
-            return name, icon_dir, category, group, labels, criterias, [lambda x: 2 ** (x+1)], description, 0, 10, lambda x: 2**(x+1), False, []
+            return name, icon_dir, category, group, labels, criterias, [StackingTemplates.STANDARD_HARD_CRITERIA_FUNCTION], description, 0, 10, StackingTemplates.STANDARD_POINTS_FUNCTION, False, []
 
 
         @staticmethod
@@ -93,15 +104,115 @@ class StackingTemplates:
             '''
             Returns the template for the files moved achievement
             '''
-            name = 'Mover %d'
+            name = 'Please bro just one more refactor %d'
             icon_dir = 'mover'
             category = constants.Category.FILES
             group = 'Files Moved'
             criterias = [constants.Criteria.FILES_MOVED]
-            description = f'Move {criterias[0]} files'
+            description = f'Move (or rename) {criterias[0]} files'
             labels = [constants.Category.FILES, constants.Labels.FILES_MOVED]
 
-            return name, icon_dir, category, group, labels, criterias, [lambda x: 2 ** x], description, 0, 10, lambda x: 2**(x+1), False, []
+            return name, icon_dir, category, group, labels, criterias, [StackingTemplates.STANDARD_INFERNAL_CRITERIA_FUNCTION], description, 0, 10, StackingTemplates.STANDARD_POINTS_FUNCTION, False, []
+
+
+    class Git:
+        '''
+        Git stacking templates
+        '''
+        @staticmethod
+        def commitsTemplate() -> tuple[str, str, str, str, List[str], List[str], List[Callable], str, int, int, Callable, bool, List[int]]:
+            '''
+            Returns the template for the commits achievement
+            '''
+            name = 'Committer %d'
+            icon_dir = 'committer'
+            category = constants.Category.GIT
+            group = 'Commits'
+            criterias = [constants.Criteria.COMMITS]
+            description = f'Commit {criterias[0]} times'
+            labels = [constants.Category.GIT, constants.Labels.COMMITS]
+
+            return name, icon_dir, category, group, labels, criterias, [StackingTemplates.STANDARD_HARD_CRITERIA_FUNCTION], description, 0, 10, StackingTemplates.STANDARD_POINTS_FUNCTION, False, []
+
+
+        @staticmethod
+        def branchesCreatedTemplate() -> tuple[str, str, str, str, List[str], List[str], List[Callable], str, int, int, Callable, bool, List[int]]:
+            '''
+            Returns the template for the branches created achievement
+            '''
+            name = 'Friend of the Trees %d'
+            icon_dir = 'brancher'
+            category = constants.Category.GIT
+            group = 'Branches Created'
+            criterias = [constants.Criteria.BRANCHES_CREATED]
+            description = f'Create {criterias[0]} branches'
+            labels = [constants.Category.GIT, constants.Labels.BRANCHES_CREATED]
+
+            return name, icon_dir, category, group, labels, criterias, [StackingTemplates.STANDARD_INFERNAL_CRITERIA_FUNCTION], description, 0, 10, StackingTemplates.STANDARD_POINTS_FUNCTION, False, []
+
+
+        @staticmethod
+        def mergesAndRebasesTemplate() -> tuple[str, str, str, str, List[str], List[str], List[Callable], str, int, int, Callable, bool, List[int]]:
+            '''
+            Returns the template for the merges and rebases achievement
+            '''
+            name = 'Merger %d'
+            icon_dir = 'merger'
+            category = constants.Category.GIT
+            group = 'Merges and Rebases'
+            criterias = [constants.Criteria.MERGES_AND_REBASES]
+            description = f'Merge or rebase {criterias[0]} times'
+            labels = [constants.Category.GIT, constants.Labels.MERGES_AND_REBASES]
+
+            return name, icon_dir, category, group, labels, criterias, [StackingTemplates.STANDARD_INFERNAL_CRITERIA_FUNCTION], description, 0, 10, StackingTemplates.STANDARD_POINTS_FUNCTION, False, []
+
+
+        @staticmethod
+        def amendsTemplate() -> tuple[str, str, str, str, List[str], List[str], List[Callable], str, int, int, Callable, bool, List[int]]:
+            '''
+            Returns the template for the amends achievement
+            '''
+            name = 'Amender %d'
+            icon_dir = 'amender'
+            category = constants.Category.GIT
+            group = 'Amends'
+            criterias = [constants.Criteria.AMENDS]
+            description = f'Amend {criterias[0]} times'
+            labels = [constants.Category.GIT, constants.Labels.AMENDS]
+
+            return name, icon_dir, category, group, labels, criterias, [StackingTemplates.STANDARD_INFERNAL_CRITERIA_FUNCTION], description, 0, 10, StackingTemplates.STANDARD_POINTS_FUNCTION, False, []
+
+
+        @staticmethod
+        def forcedPushesTemplate() -> tuple[str, str, str, str, List[str], List[str], List[Callable], str, int, int, Callable, bool, List[int]]:
+            '''
+            Returns the template for the forced pushes achievement
+            '''
+            name = 'Good Luck Everyone %d'
+            icon_dir = 'forcer'
+            category = constants.Category.GIT
+            group = 'Forced Pushes'
+            criterias = [constants.Criteria.FORCED_PUSHES]
+            description = f'Force push {criterias[0]} times'
+            labels = [constants.Category.GIT, constants.Labels.FORCED_PUSHES]
+
+            return name, icon_dir, category, group, labels, criterias, [StackingTemplates.STANDARD_INFERNAL_CRITERIA_FUNCTION], description, 0, 10, StackingTemplates.STANDARD_POINTS_FUNCTION, False, []
+
+
+        @staticmethod
+        def pushesTemplate() -> tuple[str, str, str, str, List[str], List[str], List[Callable], str, int, int, Callable, bool, List[int]]:
+            '''
+            Returns the template for the pushes achievement
+            '''
+            name = 'Ship fast, talk later %d'
+            icon_dir = 'pusher'
+            category = constants.Category.GIT
+            group = 'Pushes'
+            criterias = [constants.Criteria.PUSHES]
+            description = f'Push {criterias[0]} times'
+            labels = [constants.Category.GIT, constants.Labels.PUSHES]
+
+            return name, icon_dir, category, group, labels, criterias, [StackingTemplates.STANDARD_INFERNAL_CRITERIA_FUNCTION], description, 0, 10, StackingTemplates.STANDARD_POINTS_FUNCTION, False, []
 
 
     class Productivity:
@@ -121,7 +232,7 @@ class StackingTemplates:
             description = f'Write {criterias[0]} lines of code'
             labels = [constants.Category.PRODUCTIVITY, constants.Labels.LINES_OF_CODE]
 
-            return name, icon_dir, category, group, labels, criterias, [lambda x: 10**x], description, 0, 10, lambda x: 2**x, False, []
+            return name, icon_dir, category, group, labels, criterias, [StackingTemplates.STANDARD_EASY_CRITERIA_FUNCTION], description, 0, 10, StackingTemplates.STANDARD_POINTS_FUNCTION, False, []
 
 
         @staticmethod
@@ -139,7 +250,7 @@ class StackingTemplates:
             languages_tuples = []
             for language in constants.Labels.LANGUAGES:
                 criterias = [constants.Criteria.LINES_OF_CODE_LANGUAGE % language]
-                languages_tuples.append((name.replace('LANGUAGE', language), icon_dir % language, category, group, labels, criterias, [lambda x: 5**x], description.replace('LANGUAGE', language).replace('LOC', criterias[0]), 0, 10, lambda x: 2**x, False, []))
+                languages_tuples.append((name.replace('LANGUAGE', language), icon_dir % language, category, group, labels, criterias, [StackingTemplates.STANDARD_MEDIUM_CRITERIA_FUNCTION], description.replace('LANGUAGE', language).replace('LOC', criterias[0]), 0, 15, StackingTemplates.STANDARD_POINTS_FUNCTION, False, []))
 
             return languages_tuples
 
@@ -157,7 +268,7 @@ class StackingTemplates:
             description = f'Write {criterias[0]} lines of comments'
             labels = [constants.Category.PRODUCTIVITY, constants.Labels.LINES_OF_COMMENTS]
 
-            return name, icon_dir, category, group, labels, criterias, [lambda x: 10**x ],  description, 0, 10, lambda x: 2**x, False, []
+            return name, icon_dir, category, group, labels, criterias, [StackingTemplates.STANDARD_MEDIUM_CRITERIA_FUNCTION],  description, 0, 15, StackingTemplates.STANDARD_POINTS_FUNCTION, False, []
 
 
         @staticmethod
@@ -173,7 +284,7 @@ class StackingTemplates:
             description = f'Paste {criterias[0]} times'
             labels = [constants.Category.PRODUCTIVITY, constants.Labels.NUMBER_OF_PASTES]
 
-            return name, icon_dir, category, group, labels, criterias, [lambda x: 5**x], description, 0, 10, lambda x: 2**x, False, []
+            return name, icon_dir, category, group, labels, criterias, [StackingTemplates.STANDARD_HARD_CRITERIA_FUNCTION], description, 0, 15, StackingTemplates.STANDARD_POINTS_FUNCTION, False, []
 
 
         @staticmethod
@@ -189,7 +300,7 @@ class StackingTemplates:
             description = f'Fix {criterias[0]} errors'
             labels = [constants.Category.PRODUCTIVITY, constants.Labels.ERRORS_FIXED]
 
-            return name, icon_dir, category, group, labels, criterias, [factorial], description, 0, 10, lambda x: 2**x, False, []
+            return name, icon_dir, category, group, labels, criterias, [StackingTemplates.STANDARD_HARD_CRITERIA_FUNCTION], description, 0, 15, StackingTemplates.STANDARD_POINTS_FUNCTION, False, []
 
         @staticmethod
         def timeSpentTemplate() -> tuple[str, str, str, str, List[str], List[str], List[Callable], str, int, int, Callable, bool, List[int]]:
@@ -204,7 +315,7 @@ class StackingTemplates:
             description = f'Spend {criterias[0]} hours coding'
             labels = [constants.Category.PRODUCTIVITY, constants.Labels.TIME_SPENT]
 
-            return name, icon_dir, category, group, labels, criterias, [lambda x: 2**x], description, 0, 17, lambda x: 2**x, False, []
+            return name, icon_dir, category, group, labels, criterias, [StackingTemplates.STANDARD_INFERNAL_CRITERIA_FUNCTION], description, 0, 15, StackingTemplates.STANDARD_POINTS_FUNCTION, False, []
 
 
         @staticmethod
@@ -220,4 +331,56 @@ class StackingTemplates:
             description = f'Open {criterias[0]} tabs simultaneously'
             labels = [constants.Category.PRODUCTIVITY, constants.Labels.NUMBER_OF_SIMULTANEOUS_TABS]
 
-            return name, icon_dir, category, group, labels, criterias, [lambda x: [1,3,5,10,50,100][x]], description, 0, 5, lambda x: 2**x, False, []
+            return name, icon_dir, category, group, labels, criterias, [StackingTemplates.STANDARD_INFERNAL_CRITERIA_FUNCTION], description, 0, 5, StackingTemplates.STANDARD_POINTS_FUNCTION, False, []
+
+    class VSCode:
+        '''
+        VSCode stacking templates
+        '''
+
+        @staticmethod
+        def extensionsInstalledTemplate() -> tuple[str, str, str, str, List[str], List[str], List[Callable], str, int, int, Callable, bool, List[int]]:
+            '''
+            Returns the template for the extensions installed achievement
+            '''
+            name = 'Got to catch them all ! %d'
+            icon_dir = 'extension_master'
+            category = constants.Category.VSCODE
+            group = 'Extensions Installed'
+            criterias = ['extensionsInstalledCount']
+            description = f'Install {criterias[0]} extensions'
+            labels = [constants.Category.VSCODE, constants.Labels.EXTENSIONS_INSTALLED]
+
+            return name, icon_dir, category, group, labels, criterias, [StackingTemplates.STANDARD_INFERNAL_CRITERIA_FUNCTION], description, 0, 5, StackingTemplates.STANDARD_POINTS_FUNCTION, False, []
+
+
+        @staticmethod
+        def extensionsOutdatedTemplate() -> tuple[str, str, str, str, List[str], List[str], List[Callable], str, int, int, Callable, bool, List[int]]:
+            '''
+            Returns the template for the extensions outdated achievement
+            '''
+            name = 'Living Dangerously %d'
+            icon_dir = 'extension_outdated'
+            category = constants.Category.VSCODE
+            group = 'Extensions Outdated'
+            criterias = ['extensionsOutdatedCount']
+            description = f'Have {criterias[0]} outdated extensions'
+            labels = [constants.Category.VSCODE, constants.Labels.EXTENSIONS_OUTDATED]
+
+            return name, icon_dir, category, group, labels, criterias, [StackingTemplates.STANDARD_INFERNAL_CRITERIA_FUNCTION], description, 0, 5, StackingTemplates.STANDARD_POINTS_FUNCTION, False, []
+
+
+        @staticmethod
+        def themesInstalledTemplate() -> tuple[str, str, str, str, List[str], List[str], List[Callable], str, int, int, Callable, bool, List[int]]:
+            '''
+            Returns the template for the themes installed achievement
+            '''
+            name = 'Pimp my Ride %d'
+            icon_dir = 'theme_master'
+            category = constants.Category.VSCODE
+            group = 'Themes Installed'
+            criterias = ['themesInstalledCount']
+            description = f'Install {criterias[0]} themes'
+            labels = [constants.Category.VSCODE, constants.Labels.THEMES_INSTALLED]
+
+            return name, icon_dir, category, group, labels, criterias, [StackingTemplates.STANDARD_INFERNAL_CRITERIA_FUNCTION], description, 0, 5, StackingTemplates.STANDARD_POINTS_FUNCTION, False, []

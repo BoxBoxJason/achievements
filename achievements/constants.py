@@ -7,6 +7,7 @@ class Category:
     FILES = 'files'
     GIT = 'git'
     PRODUCTIVITY = 'productivity'
+    VSCODE = 'vscode'
 
 #################### CRITERIAS ####################
 class Criteria:
@@ -27,6 +28,9 @@ class Criteria:
     PUSHES = 'pushesCount'
     NUMBER_OF_SIMULTANEOUS_TABS = 'SimultaneousTabsCount'
     TIME_SPENT = 'timeSpentCount'
+    EXTENSIONS_INSTALLED = 'extensionsInstalledCount'
+    EXTENSIONS_OUTDATED = 'extensionsOutdatedCount'
+    THEMES_INSTALLED = 'themesInstalledCount'
 
 #################### LABELS ####################
 class Labels:
@@ -45,7 +49,9 @@ class Labels:
     PUSHES = 'pushes'
     NUMBER_OF_SIMULTANEOUS_TABS = 'number of simultaneous tabs'
     TIME_SPENT = 'time spent'
-
+    EXTENSIONS_INSTALLED = 'extensions installed'
+    EXTENSIONS_OUTDATED = 'extensions outdated'
+    THEMES_INSTALLED = 'themes installed'
     LANGUAGES = [
         'java',
         'python',
