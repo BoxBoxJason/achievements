@@ -38,31 +38,31 @@ class Achievement:
         # Validate input
         name = name.strip()
         if not name:
-            raise ValueError('Name must not be empty')
+            raise ValueError('name must not be empty')
         icon = icon.strip()
         if not icon:
-            raise ValueError('Icon must not be empty')
+            raise ValueError('icon must not be empty')
         category = category.strip()
         if not category:
-            raise ValueError('Category must not be empty')
+            raise ValueError('category must not be empty')
         group = group.strip()
         if not group:
-            raise ValueError('Group must not be empty')
+            raise ValueError('group must not be empty')
         if not criteria:
-            raise ValueError('Criteria must not be empty')
+            raise ValueError('criteria must not be empty')
         description = description.strip()
         if not description:
-            raise ValueError('Description must not be empty')
+            raise ValueError('description must not be empty')
         if tier < 0:
-            raise ValueError('Tier must be a positive integer')
+            raise ValueError('tier must be a positive integer')
         if points < 0:
-            raise ValueError('Points must be a positive integer')
+            raise ValueError('points must be a positive integer')
         for requirement in requires:
             if requirement < 0 or requirement >= Achievement.__id_counter:
-                raise ValueError('Requirement must be an existing achievement id')
+                raise ValueError('requirement must be an existing achievement id')
         for label in labels:
             if not label:
-                raise ValueError('Label must not be empty')
+                raise ValueError('label must not be empty')
 
         self.id = Achievement.__id_counter
         self.name = name
