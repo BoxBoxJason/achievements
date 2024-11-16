@@ -32,7 +32,10 @@ export namespace constants {
       TIME_SPENT: 'timeSpentCount',
       EXTENSIONS_INSTALLED: 'extensionsInstalledCount',
       EXTENSIONS_OUTDATED: 'extensionsOutdatedCount',
-      THEMES_INSTALLED: 'themesInstalledCount'
+      THEMES_INSTALLED: 'themesInstalledCount',
+      DEBUGGER_SESSIONS: 'debuggerSessionsCount',
+      TERMINAL_COMMANDS: 'terminalCommandsCount',
+      CODE_SNIPPETS: 'codeSnippetsCount',
     } as const;
 
     //////////////////////// LABELS ////////////////////////
@@ -55,6 +58,9 @@ export namespace constants {
       EXTENSIONS_INSTALLED: 'extensions installed',
       EXTENSIONS_OUTDATED: 'extensions outdated',
       THEMES_INSTALLED: 'themes installed',
+      DEBUGGER_SESSIONS: 'debugger sessions',
+      TERMINAL_COMMANDS: 'terminal commands',
+      CODE_SNIPPETS: 'code snippets',
       LANGUAGES: [
         'java',
         'python',
