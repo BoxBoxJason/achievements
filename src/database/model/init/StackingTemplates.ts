@@ -1,9 +1,11 @@
 /**
- * stackingTemplates module contains the templates definitions for the achievements
+ * Stacking Achievements Templates represents achievements that are based on a stacking criteria.
+ * @author: BoxBoxJason
+ * @date 2024-11-11
  */
 
-import { constants } from './constants';
-import {StackingAchievementTemplate} from './Achievement';
+import { constants } from '../../../constants';
+import { StackingAchievementTemplate } from '../tables/Achievement';
 
 export namespace StackingTemplates {
   //////////////////////// CRITERIA FUNCTIONS ////////////////////////
@@ -49,8 +51,8 @@ export namespace StackingTemplates {
       }));
 
     export const filesDeletedTemplate = (): StackingAchievementTemplate => ({
-      name: 'Deleter %d',
-      iconDir: 'deleter',
+      name: 'The Eraser %d',
+      iconDir: 'eraser',
       category: constants.category.FILES,
       group: 'Files Deleted',
       labels: [constants.category.FILES, constants.labels.FILES_DELETED],
@@ -345,5 +347,55 @@ export namespace StackingTemplates {
       hidden: false,
       requires: [],
     });
+
+    export const debuggerSessionsTemplate = (): StackingAchievementTemplate => ({
+      name: 'Am I better than everyone ? %d',
+      iconDir: 'debugger',
+      category: constants.category.VSCODE,
+      group: 'Debugger Sessions',
+      labels: [constants.category.VSCODE, constants.labels.DEBUGGER_SESSIONS],
+      criterias: [constants.criteria.DEBUGGER_SESSIONS],
+      criteriasFunctions: [STANDARD_INFERNAL_CRITERIA_FUNCTION],
+      description: `Start ${constants.criteria.DEBUGGER_SESSIONS} debugger sessions`,
+      minTier: 0,
+      maxTier: 10,
+      pointsFunction: STANDARD_POINTS_FUNCTION,
+      hidden: false,
+      requires: [],
+    });
+
+    export const terminalCommandsTemplate = (): StackingAchievementTemplate => ({
+      name: 'Commander %d',
+      iconDir: 'terminal',
+      category: constants.category.VSCODE,
+      group: 'Terminal Commands',
+      labels: [constants.category.VSCODE, constants.labels.TERMINAL_COMMANDS],
+      criterias: [constants.criteria.TERMINAL_COMMANDS],
+      criteriasFunctions: [STANDARD_INFERNAL_CRITERIA_FUNCTION],
+      description: `Run ${constants.criteria.TERMINAL_COMMANDS} terminal commands`,
+      minTier: 0,
+      maxTier: 10,
+      pointsFunction: STANDARD_POINTS_FUNCTION,
+      hidden: false,
+      requires: [],
+    });
   }
+
+  export const codeSnippetsTemplate = (): StackingAchievementTemplate => ({
+    name: 'Snippets Master %d',
+    iconDir: 'code_snippet',
+    category: constants.category.PRODUCTIVITY,
+    group: 'Code Snippets',
+    labels: [constants.category.PRODUCTIVITY, constants.labels.CODE_SNIPPETS],
+    criterias: [constants.criteria.CODE_SNIPPETS],
+    criteriasFunctions: [STANDARD_INFERNAL_CRITERIA_FUNCTION],
+    description: `Use ${constants.criteria.CODE_SNIPPETS} code snippets`,
+    minTier: 0,
+    maxTier: 10,
+    pointsFunction: STANDARD_POINTS_FUNCTION,
+    hidden: false,
+    requires: [],
+  });
+
+
 }
