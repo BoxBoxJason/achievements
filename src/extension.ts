@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { db_model } from './database/model/model';
 import logger from './logger/logger';
 import { config } from './config/config';
+import { AchievementsWebview } from './views/management';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -25,30 +26,39 @@ export function activate(context: vscode.ExtensionContext) {
 	// Warning, do not forget to add each command to the package.json file AND to the subscriptions array
 
 	// Enable command
-	const enable_command = vscode.commands.registerCommand('achievements.enable', () => {
+	const enableCommand = vscode.commands.registerCommand('achievements.enable', () => {
 		config.enableExtension();
-
 	});
-	context.subscriptions.push(enable_command);
+	context.subscriptions.push(enableCommand);
 
 	// Disable command
-	const disable_command = vscode.commands.registerCommand('achievements.disable', () => {
+	const disableCommand = vscode.commands.registerCommand('achievements.disable', () => {
 		config.enableExtension(false);
 		logger.info('Achievement disabled!');
 	});
-	context.subscriptions.push(disable_command);
+	context.subscriptions.push(disableCommand);
 
 	// Configuration command
-	const configuration_command = vscode.commands.registerCommand('achievements.configuration', () => {
+	const configurationCommand = vscode.commands.registerCommand('achievements.configuration', () => {
 		config.openConfiguration();
 	});
-	context.subscriptions.push(configuration_command);
+	context.subscriptions.push(configurationCommand);
 
-	// Show achievements command
-	const show_achievements_command = vscode.commands.registerCommand('achievements.show', () => {
-		logger.error('Not implemented yet');
+	// Show achievements command, creates a webview panel
+	let currentPanel: vscode.WebviewPanel | undefined = undefined;
+	const showAchievementsCommand = vscode.commands.registerCommand('achievements.show', () => {
+		const columnToShowIn = vscode.window.activeTextEditor
+        ? vscode.window.activeTextEditor.viewColumn
+        : undefined;
+		if (currentPanel) {
+			// If we already have a panel, show it in the target column
+			currentPanel.reveal(columnToShowIn);
+		  } else {
+			// Otherwise, create a new panel
+			currentPanel = AchievementsWebview.setupAchievementsPanel(context.subscriptions);
+		  }
 	});
-	context.subscriptions.push(show_achievements_command);
+	context.subscriptions.push(showAchievementsCommand);
 }
 
 // This method is called when your extension is deactivated
