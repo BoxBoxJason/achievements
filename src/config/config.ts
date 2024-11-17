@@ -91,14 +91,14 @@ export namespace config {
 
     export function openConfiguration(): void {
         if (!initialized) {
-            vscode.window.showErrorMessage('Config module not initialized');
+            logger.error('Config module not initialized');
             return;
         }
 
         const configFilePath = path.join(extensionStorage, CONFIG_FILENAME);
 
         if (!fs.existsSync(configFilePath)) {
-            vscode.window.showErrorMessage('Configuration file does not exist. Creating a new one...');
+            logger.warn('Configuration file does not exist. Creating a new one...');
             saveConfig();
         }
 
@@ -106,7 +106,6 @@ export namespace config {
             vscode.window.showTextDocument(doc);
         }, (error) => {
             logger.error(`Failed to open configuration file: ${error}`);
-            vscode.window.showErrorMessage('Failed to open configuration file.');
         });
     }
 
