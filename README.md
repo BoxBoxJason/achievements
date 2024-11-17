@@ -1,71 +1,63 @@
-# achievements README
+# Achievements
 
-This is the README for your extension "achievements". After writing up a brief description, we recommend including the following sections.
+Achievements is a Visual Studio Code extension that allows you to track your progress in coding, and earn achievements for completing tasks.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- Track your progress in coding
+- Earn achievements for completing tasks
+- View your achievements in the **Achievements** panel
+- View each achievement's description and requirements
+- View your progress towards each achievement
 
-For example if there is an image subfolder under your extension project workspace:
+## Extension Commands
 
-\!\[feature X\]\(images/feature-x.png\)
+### Configuration commands
+- `achievements.enable`: Enables the Achievements extension.
+- `achievements.disable`: Disables the Achievements extension.
+- `achievements.configuration`: Opens the Achievements configuration page.
+- `achievements.notifications`: Enables or disables notifications for achievements.
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
-
-## Requirements
-
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
-
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
+### Achievement commands
+- `achievements.show`: Opens the Achievements panel.
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
+### [0.0.1] | 2024-11-?? - Initial release
 
-### 1.0.0
+Initial release of Achievements
 
-Initial release of ...
+#### Added
+- Database
+    - Database model for achievements
+    - Database model for progressions
+    - Database model for requirements
+    - Database model for database schema
+    - Migration manager for database schema
+    - Initial achievements populated in database
+- Over 1000 achievements
+    - Git related
+    - Code related
+    - Debugging related
+    - Testing related
+    - Refactoring related
+    - Commenting related
+    - File related
+    - More...
+- Achievements panel
+    - View achievements
+    - View progress towards achievements
+    - View achievement descriptions
+    - Filter achievements by category
+    - Filter achievements by progress
+    - Filter achievements by name
+- Configuration
+    - Enable / disable extension
+    - Enable / disable notifications
+    - Select log level
+    - Select log directory
 
-### 1.0.1
+## Known Issues
 
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+### Slow boot time
+The extension takes around 7 seconds to boot up, which might be considered slow. It is currently required because it checks for the database schema / default achievements at boot. Unfortunately, because better-sqlite3 does not support asynchronous operations, the only way to speed up the boot time would be to switch to a different database library.
