@@ -1,13 +1,35 @@
 import * as React from 'react';
-import { createRoot } from 'react-dom/client'; // Updated import for React 18+
-import { PrimaryButton, TextField } from '@fluentui/react';
+import { createRoot } from 'react-dom/client';
+import { Image } from '@fluentui/react';
+import SearchBar from './components/SearchBar';
+import AchievementHolder from './components/AchievementsHolder';
 
 const App: React.FC = () => {
+
+  const imageUris = (window as any).imageUris || {}
+
   return (
-    <div style={{ padding: 20 }}>
-      <h1>Achievements</h1>
-      <TextField label="Select achievement" />
-      <PrimaryButton text="Click here" />
+    <div className='achievements-view'>
+      <div className='title-image centerer'>
+        {imageUris.PUSHEEN_TROPHY && (
+          <Image
+            src={imageUris.PUSHEEN_TROPHY}
+            alt="Pusheen Heart"
+            width={'min(120px, 20vw)'}
+            min-width={32}
+            styles={{
+              root: { marginRight: 10 },
+              image: { imageRendering: 'pixelated' },
+            }}
+          />
+        )}
+        <h1>Achievements</h1>
+      </div>
+      {/* Search Bar */}
+      <SearchBar />
+
+      {/* Achievement Holder */}
+      <AchievementHolder />
     </div>
   );
 };
