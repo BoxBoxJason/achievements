@@ -2,7 +2,7 @@
  * constants module stores the shared constants for the achievements builder
  */
 
-import path from "path";
+import path from 'path';
 
 export namespace constants {
   //////////////////////// CATEGORIES ////////////////////////
@@ -105,4 +105,5 @@ export namespace constants {
     WEBVIEW_ENTRYPOINTS: [path.join('src','views','index.tsx')],
     WEBVIEW_OUT_FILE: path.join('dist','webview.js'),
   } as const;
+
 }
