@@ -14,7 +14,7 @@ import { db_model } from '../model';
 import AchievementRequirement from './AchievementRequirement';
 
 interface StackingAchievementTemplate {
-  name: string;
+  title: string;
   iconDir: string;
   category: string;
   group: string;
@@ -29,9 +29,9 @@ interface StackingAchievementTemplate {
   requires: number[];
 }
 
-interface AchievementDict {
+export interface AchievementDict {
   id?: number;
-  name: string;
+  title: string;
   icon: string;
   category: string;
   group: string;
@@ -47,13 +47,28 @@ interface AchievementDict {
   achievedAt?: Date;
 }
 
+export interface AchievementSelectRequestFilters {
+  offset?: number;
+  limit?: number;
+  category?: string;
+  group?: string;
+  labels?: string[];
+  title?: string;
+  criterias?: string[];
+  achieved?: boolean;
+  hidden?: boolean;
+  achievable?: boolean;
+  sortCriteria?: string;
+  sortDirection?: string;
+}
+
 /**
  * Achievement class, contains the information of an achievement and its processing methods
  *
  * @class Achievement
  *
  * @property {number} id - The unique identifier of the achievement
- * @property {string} name - The name of the achievement
+ * @property {string} title - The title of the achievement
  * @property {string} icon - The path to the icon of the achievement
  * @property {string} category - The category of the achievement
  * @property {string} group - The group of the achievement
@@ -82,10 +97,26 @@ interface AchievementDict {
  * @method getAchievementsByCriterias - Retrieves achievements based on a list of criterias
  */
 class Achievement {
+
+  private static INSERT_QUERY = `INSERT INTO achievements
+    (title, icon, category, "group", labels, criteria, description, tier, points, hidden, repeatable, achieved, achievedAt)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(title) DO UPDATE SET
+      icon = excluded.icon,
+      category = excluded.category,
+      "group" = excluded."group",
+      labels = excluded.labels,
+      criteria = excluded.criteria,
+      description = excluded.description,
+      tier = excluded.tier,
+      points = excluded.points,
+      hidden = excluded.hidden,
+      repeatable = excluded.repeatable
+      `;
   private static ICONS_DIR = path.join('icons', 'achievements');
 
   public id?: number;
-  public name: string;
+  public title: string;
   public icon: string;
   public category: string;
   public group: string;
@@ -113,7 +144,7 @@ class Achievement {
     // Destructuring data object for validation and assignment
     let {
       id,
-      name,
+      title,
       icon,
       category,
       group,
@@ -128,8 +159,8 @@ class Achievement {
     } = data;
 
     // Input validation
-    name = name.trim();
-    if (!name) { throw new Error('name must not be empty'); }
+    title = title.trim();
+    if (!title) { throw new Error('title must not be empty'); }
     icon = icon.trim();
     if (!icon) { throw new Error('icon must not be empty'); }
     category = category.trim();
@@ -151,7 +182,7 @@ class Achievement {
     });
 
     // Assigning properties
-    this.name = name;
+    this.title = title;
     this.icon = path.join(Achievement.ICONS_DIR, icon);
     this.category = category;
     this.group = group;
@@ -186,7 +217,7 @@ class Achievement {
     template: StackingAchievementTemplate
   ): Achievement[] {
     const {
-      name,
+      title,
       iconDir,
       category,
       group,
@@ -229,7 +260,7 @@ class Achievement {
 
       // Creating the achievement
       let achievement = new Achievement({
-        name: name.replace('%d', (tier - minTier + 1).toString()),
+        title: title.replace('%d', (tier - minTier + 1).toString()),
         icon: path.join(iconDir, String(tier)),
         category: category,
         group: group,
@@ -264,7 +295,7 @@ class Achievement {
   static fromObject(data: { [key: string]: any }): Achievement {
     return new Achievement({
       id: data.id,
-      name: data.name,
+      title: data.title,
       icon: data.icon,
       category: data.category,
       group: data.group,
@@ -299,7 +330,7 @@ class Achievement {
 
     return new Achievement({
       id: row.id,
-      name: row.name,
+      title: row.title,
       icon: row.icon,
       category: row.category,
       group: row.group,
@@ -362,7 +393,7 @@ class Achievement {
   toObject(): AchievementDict {
     return {
       id: this.id,
-      name: this.name,
+      title: this.title,
       icon: this.icon,
       category: this.category,
       group: this.group,
@@ -389,26 +420,10 @@ class Achievement {
    * @returns {void}
    */
   toRow(): void {
-    const query = `INSERT INTO achievements
-    (name, icon, category, "group", labels, criteria, description, tier, points, hidden, repeatable, achieved, achievedAt)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(name) DO UPDATE SET
-      icon = excluded.icon,
-      category = excluded.category,
-      "group" = excluded."group",
-      labels = excluded.labels,
-      criteria = excluded.criteria,
-      description = excluded.description,
-      tier = excluded.tier,
-      points = excluded.points,
-      hidden = excluded.hidden,
-      repeatable = excluded.repeatable
-      `;
-
     const db = db_model.openDB();
-    const statement = db.prepare(query);
+    const statement = db.prepare(Achievement.INSERT_QUERY);
     const info = statement.run(
-      this.name,
+      this.title,
       this.icon,
       this.category,
       this.group,
@@ -426,14 +441,7 @@ class Achievement {
     this.id = info.lastInsertRowid as number;
 
     // Handle any additional insertion logic (requirements)
-    const requirementInsertQuery = `
-      INSERT INTO achievement_requirements (achievement_id, requirement_id)
-      SELECT ?, ?
-      WHERE EXISTS (SELECT 1 FROM achievements WHERE id = ?)
-        AND EXISTS (SELECT 1 FROM achievements WHERE id = ?)
-      ON CONFLICT(achievement_id, requirement_id) DO NOTHING
-    `;
-    const insertStatement = db.prepare(requirementInsertQuery);
+    const insertStatement = db.prepare(AchievementRequirement.INSERT_QUERY);
     this.requires.forEach(requirementId => {
       insertStatement.run(this.id, requirementId, this.id, requirementId);
     });
@@ -452,28 +460,11 @@ class Achievement {
    */
   static toDB(achievements: Achievement[]): void {
     const db = db_model.openDB();
-    const query = `INSERT INTO achievements
-      (name, icon, category, "group", labels, criteria, description, tier, points, hidden, repeatable, achieved, achievedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-
-    ON CONFLICT(name) DO UPDATE SET
-      icon = excluded.icon,
-      category = excluded.category,
-      "group" = excluded."group",
-      labels = excluded.labels,
-      criteria = excluded.criteria,
-      description = excluded.description,
-      tier = excluded.tier,
-      points = excluded.points,
-      hidden = excluded.hidden,
-      repeatable = excluded.repeatable
-      `;
-
-    const statement = db.prepare(query);
+    const statement = db.prepare(Achievement.INSERT_QUERY);
     db.transaction(() => {
       achievements.forEach((achievement) => {
         const info = statement.run(
-          achievement.name,
+          achievement.title,
           achievement.icon,
           achievement.category,
           achievement.group,
@@ -491,14 +482,7 @@ class Achievement {
         achievement.id = info.lastInsertRowid as number;
 
         // Handle any additional insertion logic (e.g., requirements)
-        const requirementInsertQuery = `
-          INSERT INTO achievement_requirements (achievement_id, requirement_id)
-          SELECT ?, ?
-          WHERE EXISTS (SELECT 1 FROM achievements WHERE id = ?)
-            AND EXISTS (SELECT 1 FROM achievements WHERE id = ?)
-          ON CONFLICT(achievement_id, requirement_id) DO NOTHING
-        `;
-        const insertStatement = db.prepare(requirementInsertQuery);
+        const insertStatement = db.prepare(AchievementRequirement.INSERT_QUERY);
         achievement.requires.forEach(requirementId => {
           insertStatement.run(achievement.id, requirementId, achievement.id, requirementId);
         });
@@ -568,71 +552,84 @@ class Achievement {
   // ==================== GET ====================
 
   /**
-   * Retrieves achievements based on a list of criterias
+   * Retrieves achievements based off (optional) filters
    *
    * @static
    * @memberof Achievement
-   * @method getAchievementsByCriterias
+   * @method getAchievementsRawFormat
    *
-   * @param {string[]} criterias - The list of criterias to search for
-   * @returns {Achievement[]} - The list of achievements that match the criterias
-   *
+   * @param {string[]} criterias - The list of criterias to filter by
+   * @returns {Achievement[]} - The list of achievements
    */
-  static getAchievementsByCriterias(criterias: string[]): Achievement[] {
-    if (criterias.length === 0) {
-      return [];
-    }
-
-    const likeConditions = criterias.map(() => `criteria LIKE ?`).join(' AND ');
-
-    const query = `SELECT * FROM achievements WHERE ${likeConditions}`;
+  static getAchievementsRawFormat(filters : AchievementSelectRequestFilters) : unknown[] {
     const db = db_model.openDB();
+    let query = 'SELECT * FROM achievements';
+    let values = [];
+    if (filters) {
+      let conditions = [];
+      if (filters.category) {
+        conditions.push('category = ?');
+        values.push(filters.category);
+      }
+      if (filters.group) {
+        conditions.push('"group" = ?');
+        values.push(filters.group);
+      }
+      for (let label of filters.labels || []) {
+        conditions.push('labels LIKE ?');
+        values.push(`%${label}%`);
+      }
+      if (filters.title) {
+        conditions.push('title LIKE ?');
+        values.push(`%${filters.title}%`);
+      }
+      for (let criteria of filters.criterias || []) {
+        conditions.push('criteria LIKE ?');
+        values.push(`%${criteria}%`);
+      }
+      if (filters.achieved !== undefined) {
+        conditions.push('achieved = ?');
+        values.push(filters.achieved ? 1 : 0);
+      }
+      if (filters.hidden !== undefined) {
+        conditions.push('hidden = ?');
+        values.push(filters.hidden ? 1 : 0);
+      }
+      if (filters.achievable !== undefined) {
+        if (filters.achievable) {
+          conditions.push('achieved = 0');
+          conditions.push('id NOT IN (SELECT achievement_id FROM achievement_requirements WHERE requirement_id IN (SELECT id FROM achievements WHERE achieved = 0))');
+        } else {
+          conditions.push('(achieved = 1 OR id IN (SELECT achievement_id FROM achievement_requirements WHERE requirement_id IN (SELECT id FROM achievements WHERE achieved = 0)))');
+        }
+      }
+      if (conditions.length > 0) {
+        query += ` WHERE ${conditions.join(' AND ')}`;
+      }
 
-    const values = criterias.map(criteria => `%${criteria}%`);
+      if (filters.sortCriteria) {
+        query += ` ORDER BY ${filters.sortCriteria}`;
+        if (filters.sortDirection) {
+          query += ` ${filters.sortDirection.toUpperCase()}`;
+        }
+      }
+
+      if (filters.limit) {
+        query += ' LIMIT ?';
+        values.push(filters.limit);
+      }
+      if (filters.offset) {
+        query += ' OFFSET ?';
+        values.push(filters.offset);
+      }
+    }
     const rows = db.prepare(query).all(values);
-    return rows.map(row => Achievement.fromRow(row));
+    return rows;
   }
 
 
-  /**
- * Retrieves achievable achievements based on a list of criteria.
- *
- * @static
- * @memberof Achievement
- * @method getAchievableByCriterias
- *
- * @param {string[]} criterias - The list of criteria to search for
- * @returns {Achievement[]} - The list of achievable achievements that match the criteria
- */
-  static getAchievableByCriterias(criterias: string[]): Achievement[] {
-    if (criterias.length === 0) {
-      return [];
-    }
-
-    const likeConditions = criterias.map(() => `criteria LIKE ?`).join(' AND ');
-
-    // Query to find achievable achievements that meet the criteria and have their requirements met
-    const query = `
-    SELECT a.*
-    FROM achievements a
-    LEFT JOIN achievement_requirements ar ON a.id = ar.achievement_id
-    LEFT JOIN achievements r ON ar.requirement_id = r.id
-    WHERE ${likeConditions}
-      AND a.achieved = 0
-      AND (
-          ar.requirement_id IS NULL OR
-          a.id NOT IN (
-              SELECT achievement_id
-              FROM achievement_requirements ar2
-              LEFT JOIN achievements r2 ON ar2.requirement_id = r2.id
-              WHERE r2.achieved = 0
-          )
-      )
-  `;
-
-    const db = db_model.openDB();
-    const values = criterias.map(criteria => `%${criteria}%`);
-    const rows = db.prepare(query).all(values);
+  static getAchievements(filters : AchievementSelectRequestFilters) : Achievement[] {
+    const rows = Achievement.getAchievementsRawFormat(filters);
     return rows.map(row => Achievement.fromRow(row));
   }
 
