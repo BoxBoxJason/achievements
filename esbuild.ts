@@ -27,6 +27,21 @@ const esbuildProblemMatcherPlugin: esbuild.Plugin = {
 };
 
 async function main() {
+  // Build for webview React code
+  const ctxWebview = await esbuild.context({
+    entryPoints: [...constants.build.WEBVIEW_ENTRYPOINTS],
+    bundle: true,
+    format: 'iife', // Output format suitable for webviews
+    minify: production,
+    sourcemap: !production,
+    platform: 'browser',
+    outfile: constants.build.WEBVIEW_OUT_FILE,
+    logLevel: 'silent',
+    plugins: [
+      esbuildProblemMatcherPlugin,
+    ],
+  });
+
   // Build for main extension
   const ctxExtension = await esbuild.context({
     entryPoints: [...constants.build.EXTENSION_ENTRYPOINTS],
@@ -44,33 +59,18 @@ async function main() {
     ],
   });
 
-  // Build for webview React code
-  const ctxWebview = await esbuild.context({
-    entryPoints: [...constants.build.WEBVIEW_ENTRYPOINTS],
-    bundle: true,
-    format: 'iife', // Output format suitable for webviews
-    minify: production,
-    sourcemap: !production,
-    platform: 'browser',
-    outfile: constants.build.WEBVIEW_OUT_FILE,
-    logLevel: 'silent',
-    plugins: [
-      esbuildProblemMatcherPlugin,
-    ],
-  });
-
   if (watch) {
     // Run watch mode concurrently for both builds
     await Promise.all([
+      ctxWebview.watch(),
       ctxExtension.watch(),
-      ctxWebview.watch()
     ]);
   } else {
     // Single builds
-    await ctxExtension.rebuild();
-    await ctxExtension.dispose();
     await ctxWebview.rebuild();
     await ctxWebview.dispose();
+    await ctxExtension.rebuild();
+    await ctxExtension.dispose();
   }
 }
 
