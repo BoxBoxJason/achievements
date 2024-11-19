@@ -32,6 +32,10 @@
         "title": "Achievements: Configuration"
       },
       {
+        "command": "achievements.notifications",
+        "title": "Achievements: enable/disable notifications"
+      },
+      {
         "command": "achievements.show",
         "title": "Achievements: Show"
       }

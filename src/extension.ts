@@ -44,19 +44,32 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	context.subscriptions.push(configurationCommand);
 
+	// Toggle notifications command
+	const toggleNotificationsCommand = vscode.commands.registerCommand('achievements.notifications', () => {
+		config.toggleNotifications();
+	});
+	context.subscriptions.push(toggleNotificationsCommand);
+
 	// Show achievements command, creates a webview panel
 	let currentPanel: vscode.WebviewPanel | undefined = undefined;
 	const showAchievementsCommand = vscode.commands.registerCommand('achievements.show', () => {
 		const columnToShowIn = vscode.window.activeTextEditor
-        ? vscode.window.activeTextEditor.viewColumn
-        : undefined;
+			? vscode.window.activeTextEditor.viewColumn
+			: undefined;
 		if (currentPanel) {
 			// If we already have a panel, show it in the target column
 			currentPanel.reveal(columnToShowIn);
-		  } else {
+		} else {
 			// Otherwise, create a new panel
-			currentPanel = AchievementsWebview.setupAchievementsPanel(context.subscriptions);
-		  }
+			currentPanel = AchievementsWebview.setupAchievementsPanel(context);
+			currentPanel.onDidDispose(
+				() => {
+					currentPanel = undefined;
+				},
+				null,
+				context.subscriptions
+			);
+		}
 	});
 	context.subscriptions.push(showAchievementsCommand);
 }
