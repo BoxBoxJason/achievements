@@ -22,7 +22,7 @@ export namespace db_init {
 
     // Lines of Code for each language
     for (const template of StackingTemplates.productivity.linesOfCodeLanguageTemplates()) {
-      logger.debug(`Creating lines of code achievements for ${template.name}`);
+      logger.debug(`Creating lines of code achievements for ${template.title}`);
       Achievement.fromStackingTemplateToDB(template);
     }
 
@@ -53,7 +53,7 @@ export namespace db_init {
 
     // Files Created for Each Language
     for (const template of StackingTemplates.files.filesCreatedLanguageTemplates()) {
-      logger.debug(`Creating files created achievements for ${template.name}`);
+      logger.debug(`Creating files created achievements for ${template.title}`);
       Achievement.fromStackingTemplateToDB(template);
     }
 
