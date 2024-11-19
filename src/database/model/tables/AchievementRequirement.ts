@@ -21,6 +21,12 @@ interface AchievementRequirementDict {
  * @default AchievementRequirement
  */
 class AchievementRequirement {
+    public static INSERT_QUERY = `INSERT INTO achievement_requirements (achievement_id, requirement_id)
+          SELECT ?, ?
+          WHERE EXISTS (SELECT 1 FROM achievements WHERE id = ?)
+            AND EXISTS (SELECT 1 FROM achievements WHERE id = ?)
+          ON CONFLICT(achievement_id, requirement_id) DO NOTHING
+        `;
     public achievement_id: number;
     public requirement_id: number;
 
