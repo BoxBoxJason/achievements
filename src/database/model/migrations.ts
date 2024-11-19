@@ -30,7 +30,7 @@ export function applyMigration(db: BetterSqlite3.Database, wantedVersion: number
           db.prepare(`
             CREATE TABLE IF NOT EXISTS achievements (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
-              name TEXT UNIQUE NOT NULL,
+              title TEXT UNIQUE NOT NULL,
               icon TEXT NOT NULL,
               category TEXT NOT NULL,
               "group" TEXT NOT NULL,

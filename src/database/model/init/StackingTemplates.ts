@@ -18,7 +18,7 @@ export namespace StackingTemplates {
   export namespace files {
     //////////////////////// FILES STACKING TEMPLATES ////////////////////////
     export const filesCreatedTemplate = (): StackingAchievementTemplate => ({
-      name: 'Creator %d',
+      title: 'Creator %d',
       iconDir: 'creator',
       category: constants.category.FILES,
       group: 'Files Created',
@@ -35,7 +35,7 @@ export namespace StackingTemplates {
 
     export const filesCreatedLanguageTemplates = (): StackingAchievementTemplate[] =>
       constants.labels.LANGUAGES.map(language => ({
-        name: `LANGUAGE Creator %d`.replace('LANGUAGE', language),
+        title: `LANGUAGE Creator %d`.replace('LANGUAGE', language),
         iconDir: `%s_creator`.replace('%s', language),
         category: constants.category.FILES,
         group: 'Files Created',
@@ -51,7 +51,7 @@ export namespace StackingTemplates {
       }));
 
     export const filesDeletedTemplate = (): StackingAchievementTemplate => ({
-      name: 'The Eraser %d',
+      title: 'The Eraser %d',
       iconDir: 'eraser',
       category: constants.category.FILES,
       group: 'Files Deleted',
@@ -67,7 +67,7 @@ export namespace StackingTemplates {
     });
 
     export const filesMovedTemplate = (): StackingAchievementTemplate => ({
-      name: 'Please bro just one more refactor %d',
+      title: 'Please bro just one more refactor %d',
       iconDir: 'mover',
       category: constants.category.FILES,
       group: 'Files Moved',
@@ -86,7 +86,7 @@ export namespace StackingTemplates {
   export namespace git {
     //////////////////////// GIT STACKING TEMPLATES ////////////////////////
     export const commitsTemplate = (): StackingAchievementTemplate => ({
-      name: 'Committer %d',
+      title: 'Committer %d',
       iconDir: 'committer',
       category: constants.category.GIT,
       group: 'Commits',
@@ -102,7 +102,7 @@ export namespace StackingTemplates {
     });
 
     export const branchesCreatedTemplate = (): StackingAchievementTemplate => ({
-      name: 'Friend of the Trees %d',
+      title: 'Friend of the Trees %d',
       iconDir: 'brancher',
       category: constants.category.GIT,
       group: 'Branches Created',
@@ -118,7 +118,7 @@ export namespace StackingTemplates {
     });
 
     export const mergesAndRebasesTemplate = (): StackingAchievementTemplate => ({
-      name: 'Merger %d',
+      title: 'Merger %d',
       iconDir: 'merger',
       category: constants.category.GIT,
       group: 'Merges and Rebases',
@@ -134,7 +134,7 @@ export namespace StackingTemplates {
     });
 
     export const amendsTemplate = (): StackingAchievementTemplate => ({
-      name: 'Amender %d',
+      title: 'Amender %d',
       iconDir: 'amender',
       category: constants.category.GIT,
       group: 'Amends',
@@ -150,7 +150,7 @@ export namespace StackingTemplates {
     });
 
     export const forcedPushesTemplate = (): StackingAchievementTemplate => ({
-      name: 'Good Luck Everyone %d',
+      title: 'Good Luck Everyone %d',
       iconDir: 'forcer',
       category: constants.category.GIT,
       group: 'Forced Pushes',
@@ -166,7 +166,7 @@ export namespace StackingTemplates {
     });
 
     export const pushesTemplate = (): StackingAchievementTemplate => ({
-      name: 'Ship fast, talk later %d',
+      title: 'Ship fast, talk later %d',
       iconDir: 'pusher',
       category: constants.category.GIT,
       group: 'Pushes',
@@ -185,7 +185,7 @@ export namespace StackingTemplates {
   export namespace productivity {
     //////////////////////// PRODUCTIVITY STACKING TEMPLATES ////////////////////////
     export const linesOfCodeTemplate = (): StackingAchievementTemplate => ({
-      name: 'Code Monkey %d',
+      title: 'Code Monkey %d',
       iconDir: 'code_monkey',
       category: constants.category.PRODUCTIVITY,
       group: 'Lines of Code',
@@ -202,7 +202,7 @@ export namespace StackingTemplates {
 
     export const linesOfCodeLanguageTemplates = (): StackingAchievementTemplate[] =>
       constants.labels.LANGUAGES.map(language => ({
-        name: `LANGUAGE Speaker %d`.replace('LANGUAGE', language),
+        title: `LANGUAGE Speaker %d`.replace('LANGUAGE', language),
         iconDir: `%s_speaker`.replace('%s', language),
         category: constants.category.PRODUCTIVITY,
         group: 'Lines of Code',
@@ -218,7 +218,7 @@ export namespace StackingTemplates {
       }));
 
     export const linesOfCommentTemplate = (): StackingAchievementTemplate => ({
-      name: 'Outstanding Commentator %d',
+      title: 'Outstanding Commentator %d',
       iconDir: 'commentator',
       category: constants.category.PRODUCTIVITY,
       group: 'Lines of Comments',
@@ -234,7 +234,7 @@ export namespace StackingTemplates {
     });
 
     export const numberOfPastesTemplate = (): StackingAchievementTemplate => ({
-      name: 'Copy Ninja %d',
+      title: 'Copy Ninja %d',
       iconDir: 'copy_ninja',
       category: constants.category.PRODUCTIVITY,
       group: 'Number of Pastes',
@@ -250,7 +250,7 @@ export namespace StackingTemplates {
     });
 
     export const errorsFixedTemplate = (): StackingAchievementTemplate => ({
-      name: 'I can fix her %d',
+      title: 'I can fix her %d',
       iconDir: 'error_fixer',
       category: constants.category.PRODUCTIVITY,
       group: 'Errors Fixed',
@@ -266,7 +266,7 @@ export namespace StackingTemplates {
     });
 
     export const timeSpentTemplate = (): StackingAchievementTemplate => ({
-      name: 'Shower Avoider %d',
+      title: 'Shower Avoider %d',
       iconDir: 'shower_avoider',
       category: constants.category.PRODUCTIVITY,
       group: 'Time Spent',
@@ -282,7 +282,7 @@ export namespace StackingTemplates {
     });
 
     export const numberOfSimultaneousTabsTemplate = (): StackingAchievementTemplate => ({
-      name: 'Tab Hoarder %d',
+      title: 'Tab Hoarder %d',
       iconDir: 'tab_hoarder',
       category: constants.category.PRODUCTIVITY,
       group: 'Number of Simultaneous Tabs',
@@ -301,7 +301,7 @@ export namespace StackingTemplates {
   export namespace vscode {
     //////////////////////// VSCODE STACKING TEMPLATES ////////////////////////
     export const extensionsInstalledTemplate = (): StackingAchievementTemplate => ({
-      name: 'Got to catch them all ! %d',
+      title: 'Got to catch them all ! %d',
       iconDir: 'extension_master',
       category: constants.category.VSCODE,
       group: 'Extensions Installed',
@@ -317,7 +317,7 @@ export namespace StackingTemplates {
     });
 
     export const extensionsOutdatedTemplate = (): StackingAchievementTemplate => ({
-      name: 'Living Dangerously %d',
+      title: 'Living Dangerously %d',
       iconDir: 'extension_outdated',
       category: constants.category.VSCODE,
       group: 'Extensions Outdated',
@@ -333,7 +333,7 @@ export namespace StackingTemplates {
     });
 
     export const themesInstalledTemplate = (): StackingAchievementTemplate => ({
-      name: 'Pimp my Ride %d',
+      title: 'Pimp my Ride %d',
       iconDir: 'theme_master',
       category: constants.category.VSCODE,
       group: 'Themes Installed',
@@ -349,7 +349,7 @@ export namespace StackingTemplates {
     });
 
     export const debuggerSessionsTemplate = (): StackingAchievementTemplate => ({
-      name: 'Am I better than everyone ? %d',
+      title: 'Am I better than everyone ? %d',
       iconDir: 'debugger',
       category: constants.category.VSCODE,
       group: 'Debugger Sessions',
@@ -365,7 +365,7 @@ export namespace StackingTemplates {
     });
 
     export const terminalCommandsTemplate = (): StackingAchievementTemplate => ({
-      name: 'Commander %d',
+      title: 'Commander %d',
       iconDir: 'terminal',
       category: constants.category.VSCODE,
       group: 'Terminal Commands',
@@ -382,7 +382,7 @@ export namespace StackingTemplates {
   }
 
   export const codeSnippetsTemplate = (): StackingAchievementTemplate => ({
-    name: 'Snippets Master %d',
+    title: 'Snippets Master %d',
     iconDir: 'code_snippet',
     category: constants.category.PRODUCTIVITY,
     group: 'Code Snippets',
