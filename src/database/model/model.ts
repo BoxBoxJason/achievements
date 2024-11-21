@@ -6,7 +6,7 @@
 
 import * as path from 'path';
 import * as fs from 'fs';
-import logger from '../../logger/logger';
+import logger from '../../utils/logger';
 import * as vscode from 'vscode';
 import BetterSqlite3 from 'better-sqlite3';
 import { applyMigration } from './migrations';

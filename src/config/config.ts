@@ -8,7 +8,7 @@
 
 import path from "path";
 import fs from "fs";
-import logger from "../logger/logger";
+import logger from "../utils/logger";
 import * as vscode from "vscode";
 
 
