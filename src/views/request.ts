@@ -1,35 +1,9 @@
 import * as vscode from "vscode";
-import { AchievementSelectRequestFilters } from "../database/model/tables/Achievement";
-import { AchievementController } from "../database/controller/achievements";
-import { constants } from "../constants";
 import path from "path";
-import logger from "../logger/logger";
-import { webview } from "./viewconst";
 
 export interface PostMessage {
   command: string;
   data: any;
-}
-
-export function handleMessage(message: PostMessage, panel: vscode.WebviewPanel): void {
-  logger.debug('Received message: ' + message.toString());
-  switch (message.command) {
-    case webview.commands.RETRIEVE_ACHIEVEMENTS:
-      logger.debug('Retrieving achievements');
-      handleAchievementsSelect(message.data, panel);
-      break;
-    default:
-      console.error('Unknown command: ' + message.command);
-  }
-}
-
-function handleAchievementsSelect(filters: AchievementSelectRequestFilters | null, panel: vscode.WebviewPanel): void {
-  if (filters) {
-    const achievements = AchievementController.getAchievements(filters);
-    panel.webview.postMessage({ command: webview.commands.DISPLAY_ACHIEVEMENTS, data: achievements });
-  } else {
-    return;
-  }
 }
 
 export function getWebviewImageUri(
