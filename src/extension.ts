@@ -2,7 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { db_model } from './database/model/model';
-import logger from './logger/logger';
+import logger from './utils/logger';
 import { config } from './config/config';
 import { AchievementsWebview } from './views/management';
 
@@ -62,6 +62,8 @@ export function activate(context: vscode.ExtensionContext) {
 		} else {
 			// Otherwise, create a new panel
 			currentPanel = AchievementsWebview.setupAchievementsPanel(context);
+
+			// Reset when the current panel is closed
 			currentPanel.onDidDispose(
 				() => {
 					currentPanel = undefined;
