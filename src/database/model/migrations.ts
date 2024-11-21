@@ -1,6 +1,6 @@
 
 import BetterSqlite3 from 'better-sqlite3';
-import logger from "../../logger/logger";
+import logger from "../../utils/logger";
 
 
 interface Migration {
@@ -23,8 +23,7 @@ export function applyMigration(db: BetterSqlite3.Database, wantedVersion: number
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               version INTEGER UNIQUE NOT NULL,
               applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-            )
-          `).run();
+            )`).run();
 
           // Achievements table
           db.prepare(`
@@ -35,7 +34,6 @@ export function applyMigration(db: BetterSqlite3.Database, wantedVersion: number
               category TEXT NOT NULL,
               "group" TEXT NOT NULL,
               labels TEXT NOT NULL,
-              criteria TEXT NOT NULL,
               description TEXT NOT NULL,
               tier INTEGER NOT NULL,
               points INTEGER NOT NULL,
@@ -43,8 +41,20 @@ export function applyMigration(db: BetterSqlite3.Database, wantedVersion: number
               repeatable INTEGER NOT NULL,
               achieved BOOLEAN NOT NULL DEFAULT FALSE,
               achievedAt DATETIME
-            )
-          `).run();
+            )`).run();
+
+          // Achievement criteria table
+          db.prepare(`
+            CREATE TABLE IF NOT EXISTS achievement_criterias (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            achievement_id INTEGER NOT NULL,
+            progression_id INTEGER NOT NULL,
+            required_value TEXT NOT NULL,
+            "type" TEXT NOT NULL,
+            FOREIGN KEY (achievement_id) REFERENCES achievements (id) ON DELETE CASCADE,
+            FOREIGN KEY (progression_id) REFERENCES progressions (id) ON DELETE CASCADE,
+            UNIQUE (achievement_id, progression_id)
+          )`).run();
 
           // Achievement requirements table
           db.prepare(`
@@ -53,9 +63,9 @@ export function applyMigration(db: BetterSqlite3.Database, wantedVersion: number
               requirement_id INTEGER NOT NULL,
               PRIMARY KEY (achievement_id, requirement_id),
               FOREIGN KEY (achievement_id) REFERENCES achievements (id) ON DELETE CASCADE,
-              FOREIGN KEY (requirement_id) REFERENCES achievements (id) ON DELETE CASCADE
-            )
-          `).run();
+              FOREIGN KEY (requirement_id) REFERENCES achievements (id) ON DELETE CASCADE,
+              UNIQUE (achievement_id, requirement_id)
+            )`).run();
 
           // Progressions table
           db.prepare(`
@@ -63,8 +73,7 @@ export function applyMigration(db: BetterSqlite3.Database, wantedVersion: number
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               name TEXT UNIQUE NOT NULL,
               value INTEGER NOT NULL DEFAULT 0
-            )
-          `).run();
+            )`).run();
         });
 
         createTablesTransaction();
@@ -75,6 +84,7 @@ export function applyMigration(db: BetterSqlite3.Database, wantedVersion: number
           db.prepare('DROP TABLE IF EXISTS achievements').run();
           db.prepare('DROP TABLE IF EXISTS achievement_requirements').run();
           db.prepare('DROP TABLE IF EXISTS progressions').run();
+          db.prepare('DROP TABLE IF EXISTS achievement_criterias').run();
         });
 
         dropTablesTransaction();
