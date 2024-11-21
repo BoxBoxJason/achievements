@@ -6,7 +6,7 @@ import Achievement from '../tables/Achievement';
 import { StackingTemplates } from './StackingTemplates';
 import Progression from '../tables/Progression';
 import { constants } from '../../../constants';
-import logger from '../../../logger/logger';
+import logger from '../../../utils/logger';
 
 
 export namespace db_init {
