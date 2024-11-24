@@ -6,17 +6,10 @@
  * @date 2024-11-12
  */
 
-import Achievement, { AchievementSelectRequestFilters } from '../model/tables/Achievement';
-import Progression from '../model/tables/Progression';
-
-interface ProgressionDict {
-  [key: string]: number;
-}
+import { queries } from '../../views/viewconst';
+import Achievement, { AchievementRow, AchievementSelectRequestFilters } from '../model/tables/Achievement';
 
 export namespace AchievementController {
-
-  const VALID_SORT_CRITERIA = ['achieved', 'title', 'category', 'group', 'achievedAt', 'tier', 'points'];
-
   // ==================== GET FUNCTIONS ====================
 
   /**
@@ -28,7 +21,7 @@ export namespace AchievementController {
    * @param {string[]} criterias - The criterias to check against
    * @returns {Achievement[]} - The list of achievable achievements
    */
-  function getAchievableAchievementsByCriterias(criterias: string[]): Achievement[] {
+  function getAchievableAchievementsByCriterias(criterias: string[]): { count : number | null, achievements: Achievement[]} {
     return Achievement.getAchievements({ achievable: true, criterias: criterias });
   }
 
@@ -41,79 +34,22 @@ export namespace AchievementController {
    * @param {AchievementSelectRequestFilters} filters - The filters to apply
    * @returns {Achievement[]} - The list of achievements
    */
-  export function getAchievements(filters: AchievementSelectRequestFilters): Achievement[] {
+  export function getAchievements(filters: AchievementSelectRequestFilters): { count : number | null, achievements: Achievement[]} {
     filters = parseFilters(filters);
     return Achievement.getAchievements(filters);
   }
 
 
-  export function getJsonAchievements(filters: AchievementSelectRequestFilters): unknown[] {
+  export function getJsonAchievements(filters: AchievementSelectRequestFilters): { count : number | null, achievements: AchievementRow[]} {
     filters = parseFilters(filters);
     return Achievement.getAchievementsRawFormat(filters);
   }
 
-  /**
- * Check if an achievement has been completed
- *
- * @memberof achievements
- * @function checkAchievementDone
- *
- * @param {Achievement} achievement - The achievement to check
- * @param {ProgressionDict} progressions - The progressions to check against
- * @returns {boolean} - True if the achievement has been completed
- */
-  function checkAchievementDone(achievement: Achievement, progressions: ProgressionDict): boolean {
-    return Object.keys(achievement.criteria).every(
-      criterion => progressions[criterion] >= achievement.criteria[criterion]
-    );
+  export function getJsonFilters() : { categories: string[], groups: string[], labels: string[] } {
+    return { categories: Achievement.getCategories(), groups: Achievement.getGroups(), labels: Achievement.getLabels()};
   }
+
   // ==================== PATCH FUNCTIONS ====================
-  /**
-   * Increase the progression value of a criteria and check if any achievements have been unlocked
-   *
-   * @memberof achievements
-   * @function increaseProgression
-   *
-   * @param {string} criteria_name - The name of the criteria to increase
-   * @param {number} increase - The amount to increase the criteria by
-   * @returns {void}
-   */
-  export function increaseProgression(criteria_name: string, increase: number): void {
-    // Update the progression value and retrieve all progressions
-    Progression.addValueFromName(criteria_name, increase);
-    let criterias = progressionsToObject(Progression.fromDB());
-
-    // Retrieve the achievements that are achievable by the updated progression
-    let achievableAchievements = getAchievableAchievementsByCriterias([criteria_name]);
-
-    // Check if the updated progression has unlocked any achievements
-    let unlockedAchievements = achievableAchievements.filter(
-      achievement => checkAchievementDone(achievement, criterias)
-    );
-
-    // Complete the unlocked achievements
-    for (let achievement of unlockedAchievements) {
-      achievement.updateAchieved();
-    }
-  }
-
-
-  /**
-   * Convert a list of progressions to a dictionary
-   *
-   * @memberof achievements
-   * @function progressionsToObject
-   *
-   * @param {Progression[]} progressions - The list of progressions to convert
-   * @returns {ProgressionDict} - The progressions as a dictionary
-   */
-  function progressionsToObject(progressions: Progression[]): ProgressionDict {
-    let progressionDict: ProgressionDict = Object();
-    for (let progression of progressions) {
-      progressionDict[progression.name] = progression.value;
-    }
-    return progressionDict;
-  }
 
   function parseFilters(filters: AchievementSelectRequestFilters): AchievementSelectRequestFilters {
     // Set default values for filters
@@ -140,9 +76,9 @@ export namespace AchievementController {
     if (filters.sortCriteria === undefined) {
       filters.sortCriteria = 'achieved';
     } else {
-      filters.sortCriteria = filters.sortCriteria.trim().toLowerCase();
-      if (!VALID_SORT_CRITERIA.includes(filters.sortCriteria)) {
-        throw new Error('Invalid sort criteria');
+      filters.sortCriteria = filters.sortCriteria.trim();
+      if (!queries.VALID_SORT_CRITERIA.includes(filters.sortCriteria)) {
+        throw new Error(`Invalid sort criteria: ${filters.sortCriteria}`);
       }
     }
     if (filters.sortDirection === undefined) {
