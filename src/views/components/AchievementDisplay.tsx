@@ -1,49 +1,77 @@
 import * as React from 'react';
-import { Text, Image, Stack } from '@fluentui/react';
 import { AchievementDict } from '../../database/model/tables/Achievement';
+import { webview } from '../viewconst';
 
-const AchievementDisplay: React.FC<AchievementDict> = (achievementDict : AchievementDict) => {
+const AchievementDisplay: React.FC<AchievementDict> = (achievementDict: AchievementDict) => {
+
+  const imageUris = (window as any).imageUris || {}
+
   return (
-    <Stack
-      horizontal
-      tokens={{ childrenGap: 10 }}
-      styles={{
-        root: {
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          padding: '10px',
-          alignItems: 'center',
-          marginBottom: '10px',
-        },
-      }}
+    <div className='achievement-display' style={{
+      display: 'flex',
+      flexDirection: 'row',
+      width: '90%',
+      minWidth: '300px',
+      height: '70px',
+      alignItems: 'center',
+      margin: '5px 0',
+      padding: '3px',
+      backgroundColor: webview.colors.ACHIEVEMENT_BACKGROUND_GREY,
+    }}
     >
       {/* Icon */}
-      <Image
+      <img className='achievement-icon'
         src={achievementDict.icon}
+        onError={(e) => {
+          e.currentTarget.src = imageUris.PUSHEEN_ERROR
+        }}
         alt={`${achievementDict.title} Icon`}
-        width={40}
-        height={40}
-        styles={{ root: { flexShrink: 0 } }}
+        style={{
+          flexShrink: 0,
+          width: '70px',
+          height: '70px',
+          marginRight: '10px',
+          imageRendering: 'pixelated',
+        }}
       />
 
       {/* Text Content */}
-      <Stack>
-        {/* Title */}
-        <Text variant="mediumPlus" styles={{ root: { fontWeight: 'bold' } }}>
-          {achievementDict.title}
-        </Text>
+      <div className='achievement-body' style={{
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+        padding: '10px 5px',
+      }}>
+        <div className='achievement-body-text'>
+          {/* Title */}
+          <h3 style={{
+            fontWeight: 'bold',
+            width: 'fit-content',
+            textTransform: 'capitalize',
+            padding: 0,
+            margin: '0 0 5px 0',
+          }}>
+            {achievementDict.title}
+          </h3>
 
-        {/* Description */}
-        <Text variant="small">{achievementDict.description}</Text>
+          {/* Description */}
+          <p className='achievement-description' style={{
+            margin: 0,
+            padding: 0,
+          }}>{achievementDict.description}</p>
+        </div>
 
         {/* Status */}
-        <Text variant="small" styles={{ root: { color: achievementDict.achieved ? 'green' : 'red' } }}>
+        <span className='achievement-status' style={{
+          color: achievementDict.achieved ? webview.colors.GRAY_TEXT : webview.colors.RED_TEXT,
+        }}>
           {achievementDict.achieved && achievementDict.achievedAt
-            ? `Achieved on: ${achievementDict.achievedAt || 'Date not available'}`
+            ? `Unlocked: ${achievementDict.achievedAt || 'Date not available'}`
             : 'Not Achieved'}
-        </Text>
-      </Stack>
-    </Stack>
+        </span>
+      </div>
+    </div>
   );
 };
 
