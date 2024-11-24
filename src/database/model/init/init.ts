@@ -106,21 +106,37 @@ export namespace db_init {
 
   function createIntegerProgressions() {
     logger.debug('Creating integer progressions');
+    let progressions: Progression[] = [];
+
     for (const criteria of Object.values(constants.criteria)) {
-      if (criteria !== constants.criteria.LINES_OF_CODE_LANGUAGE) {
+      if (criteria !== constants.criteria.LINES_OF_CODE_LANGUAGE && criteria !== constants.criteria.FILES_CREATED_LANGUAGE) {
         const progression = new Progression({
           name: criteria,
+          type: 'integer',
+          value: 0,
         });
-        progression.toRow();
-      } else {
+        progressions.push(progression);
+      } else if (criteria === constants.criteria.LINES_OF_CODE_LANGUAGE) {
         for (const language of constants.labels.LANGUAGES) {
           const progression = new Progression({
             name: criteria.replace('%s', language),
+            type: 'integer',
+            value: 0,
           });
-          progression.toRow();
+          progressions.push(progression);
+        }
+      } else if (criteria === constants.criteria.FILES_CREATED_LANGUAGE) {
+        for (const language of constants.labels.LANGUAGES) {
+          const progression = new Progression({
+            name: criteria.replace('%s', language),
+            type: 'integer',
+            value: 0,
+          });
+          progressions.push(progression);
         }
       }
     }
+    Progression.toDB(progressions);
   }
 
   export function activate() {

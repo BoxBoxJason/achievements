@@ -33,7 +33,6 @@ export function applyMigration(db: BetterSqlite3.Database, wantedVersion: number
               icon TEXT NOT NULL,
               category TEXT NOT NULL,
               "group" TEXT NOT NULL,
-              labels TEXT NOT NULL,
               description TEXT NOT NULL,
               tier INTEGER NOT NULL,
               points INTEGER NOT NULL,
@@ -43,6 +42,15 @@ export function applyMigration(db: BetterSqlite3.Database, wantedVersion: number
               achievedAt DATETIME
             )`).run();
 
+            // Achievement labels table
+          db.prepare(`
+            CREATE TABLE IF NOT EXISTS achievement_labels (
+              achievement_id INTEGER NOT NULL,
+              label TEXT NOT NULL,
+              PRIMARY KEY (achievement_id, label),
+              FOREIGN KEY (achievement_id) REFERENCES achievements (id) ON DELETE CASCADE
+            )`).run();
+
           // Achievement criteria table
           db.prepare(`
             CREATE TABLE IF NOT EXISTS achievement_criterias (
@@ -50,7 +58,8 @@ export function applyMigration(db: BetterSqlite3.Database, wantedVersion: number
             achievement_id INTEGER NOT NULL,
             progression_id INTEGER NOT NULL,
             required_value TEXT NOT NULL,
-            "type" TEXT NOT NULL,
+            "type" TEXT NOT NULL DEFAULT 'number',
+            comparison_operator TEXT NOT NULL DEFAULT '>=',
             FOREIGN KEY (achievement_id) REFERENCES achievements (id) ON DELETE CASCADE,
             FOREIGN KEY (progression_id) REFERENCES progressions (id) ON DELETE CASCADE,
             UNIQUE (achievement_id, progression_id)
@@ -72,7 +81,8 @@ export function applyMigration(db: BetterSqlite3.Database, wantedVersion: number
             CREATE TABLE IF NOT EXISTS progressions (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               name TEXT UNIQUE NOT NULL,
-              value INTEGER NOT NULL DEFAULT 0
+              "type" TEXT NOT NULL,
+              value TEXT NOT NULL
             )`).run();
         });
 
