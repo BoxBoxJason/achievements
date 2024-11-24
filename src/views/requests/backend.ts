@@ -11,6 +11,9 @@ export namespace backendRequests {
       case webview.commands.RETRIEVE_ACHIEVEMENTS:
         handleAchievementsSelect(message.data, panel);
         break;
+      case webview.commands.RETRIEVE_ACHIEVEMENTS_FILTERS:
+        handleAchievementsSelectFilters(panel);
+        break;
       default:
         console.error('Unknown command: ' + message.command);
     }
@@ -23,6 +26,11 @@ export namespace backendRequests {
     } else {
       return;
     }
+  }
+
+  export function handleAchievementsSelectFilters(panel: vscode.WebviewPanel): void {
+    const filters = AchievementController.getJsonFilters();
+    panel.webview.postMessage({ command: webview.commands.SET_ACHIEVEMENTS_FILTERS, data: filters });
   }
 
 }

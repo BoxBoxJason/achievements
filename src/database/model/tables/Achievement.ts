@@ -59,6 +59,7 @@ export interface AchievementSelectRequestFilters {
   achievable?: boolean;
   sortCriteria?: string;
   sortDirection?: string;
+  count?: boolean;
 }
 
 interface RawAchievementRow {
@@ -79,13 +80,13 @@ interface RawAchievementRow {
   criteria: string;
 }
 
-interface AchievementRow {
+export interface AchievementRow {
   id: number;
   title: string;
   icon: string;
   category: string;
   group: string;
-  labels: string;
+  labels: string[];
   description: string;
   tier: number;
   points: number;
@@ -131,13 +132,12 @@ interface AchievementRow {
 class Achievement {
 
   public static readonly ACHIEVEMENT_INSERT_QUERY = `INSERT INTO achievements
-    (title, icon, category, "group", labels, description, tier, points, hidden, repeatable, achieved, achievedAt)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    (title, icon, category, "group", description, tier, points, hidden, repeatable, achieved, achievedAt)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(title) DO UPDATE SET
       icon = excluded.icon,
       category = excluded.category,
       "group" = excluded."group",
-      labels = excluded.labels,
       description = excluded.description,
       tier = excluded.tier,
       points = excluded.points,
@@ -150,6 +150,13 @@ class Achievement {
     WITH inserted_achievement AS (
       ${Achievement.ACHIEVEMENT_INSERT_QUERY}
       RETURNING id
+    ),
+
+    -- Insert the labels
+    labels_inserted AS (
+      INSERT INTO achievement_labels (achievement_id, label)
+      SELECT inserted_achievement.id, ?
+      ON CONFLICT(achievement_id, label) DO NOTHING
     ),
 
     -- Insert the requirements
@@ -280,120 +287,138 @@ class Achievement {
    */
   static fromStackingTemplateToDB(template: StackingAchievementTemplate): void {
     const {
-        title,
-        iconDir,
-        category,
-        group,
-        labels,
-        criterias,
-        criteriasFunctions,
-        description,
-        minTier,
-        maxTier,
-        pointsFunction,
-        hidden,
-        requires,
+      title,
+      iconDir,
+      category,
+      group,
+      labels,
+      criterias,
+      criteriasFunctions,
+      description,
+      minTier,
+      maxTier,
+      pointsFunction,
+      hidden,
+      requires,
     } = template;
 
-    const achievementData : any[] = [];
-    const criteriaData : any[] = [];
-    const requirementData : any[] = [];
+    const achievementData: any[] = [];
+    const criteriaData: any[] = [];
+    const requirementData: any[] = [];
+    const requirementByIdData: any[] = [];
+    const labelsData: any[] = [];
     const tierTitles: string[] = [];
 
     // Prepare achievement data
     for (let tier = minTier; tier <= maxTier; tier++) {
-        const currentTitle = title.replace('%d', (tier - minTier + 1).toString());
-        const currentIcon = path.join(iconDir, String(tier));
+      const currentTitle = title.replace('%d', (tier - minTier + 1).toString());
+      const currentIcon = path.join(iconDir, String(tier));
 
-        // Calculate criteria values and update description
-        const criteriaMap: { [key: string]: any } = {};
-        let currentDescription = description;
-        for (let i = 0; i < criterias.length; i++) {
-            const value = criteriasFunctions[i](tier);
-            criteriaMap[criterias[i]] = value;
-            currentDescription = currentDescription.replace(criterias[i], String(value));
-        }
+      // Calculate criteria values and update description
+      const criteriaMap: { [key: string]: any } = {};
+      let currentDescription = description;
+      for (let i = 0; i < criterias.length; i++) {
+        const value = criteriasFunctions[i](tier);
+        criteriaMap[criterias[i]] = value;
+        currentDescription = currentDescription.replace(criterias[i], String(value));
+      }
 
-        const currentPoints = pointsFunction(tier);
-        tierTitles.push(currentTitle); // Store titles for linking requirements later
+      const currentPoints = pointsFunction(tier);
+      tierTitles.push(currentTitle); // Store titles for linking requirements later
 
-        // Prepare the data for achievements insert
-        achievementData.push([
-            currentTitle,
-            currentIcon,
-            category,
-            group,
-            JSON.stringify(labels),
-            currentDescription,
-            tier,
-            currentPoints,
-            hidden ? 1 : 0,
-            0, // Repeatable: false
-            0, // Achieved: false
-            null, // AchievedAt: null
-        ]);
+      // Prepare the data for achievements insert
+      achievementData.push([
+        currentTitle,
+        currentIcon,
+        category,
+        group,
+        currentDescription,
+        tier,
+        currentPoints,
+        hidden ? 1 : 0,
+        0, // Repeatable: false
+        0, // Achieved: false
+        null, // AchievedAt: null
+      ]);
 
-        // Prepare criteria data for this achievement
-        Object.entries(criteriaMap).forEach(([progressionName, value]) => {
-          criteriaData.push([progressionName, value, typeof value, currentTitle]);
-        });
+      // Prepare criteria data for this achievement
+      Object.entries(criteriaMap).forEach(([progressionName, value]) => {
+        criteriaData.push([value, typeof value, progressionName, currentTitle]);
+      });
     }
 
     // Insert achievements into the database
     const db = db_model.openDB();
-    const insertedAchievementIds: number[] = [];
     db.transaction(() => {
-        const achievementStmt = db.prepare(Achievement.ACHIEVEMENT_INSERT_QUERY);
-        achievementData.forEach((params) => {
-            const result = achievementStmt.run(params);
-            const lastInsertRowId = Number(result.lastInsertRowid);
-            if (lastInsertRowId > 0) {
-              insertedAchievementIds.push(lastInsertRowId); // Collect inserted IDs
-            }
-        });
+      const achievementStmt = db.prepare(Achievement.ACHIEVEMENT_INSERT_QUERY);
+      achievementData.forEach((params) => {
+        achievementStmt.run(params);
+      });
     })();
 
-    // Prepare requirements based on inserted IDs
-    for (let i = 0; i < insertedAchievementIds.length; i++) {
-        const currentId = insertedAchievementIds[i];
-        const previousId = i > 0 ? insertedAchievementIds[i - 1] : null;
+    // Prepare requirements based on tier titles and insert labels
+    for (let i = 0; i < tierTitles.length; i++) {
+      // Include template requirements
+      requires.forEach((requirementId) => {
+        requirementByIdData.push([requirementId,tierTitles[i]]);
+      });
 
-        // Include template requirements and previous tier ID
-        const currentRequires = [...requires];
-        if (previousId !== null) {
-            currentRequires.push(previousId); // Link to the previous tier
-        }
+      labels.forEach((label) => {
+        labelsData.push([label,tierTitles[i]]);
+      });
 
-        currentRequires.forEach((requirementId) => {
-            requirementData.push([currentId, requirementId]);
-        });
+      if (i > 0) {
+        // Include previous tier as requirement
+        requirementData.push([tierTitles[i - 1],tierTitles[i]]);
+      }
+
     }
 
     // Insert requirements and criteria into the database
     db.transaction(() => {
-        // Insert requirements
-        const requirementStmt = db.prepare(`
-            INSERT INTO achievement_requirements (achievement_id, requirement_id)
-            VALUES (?, ?)
-            ON CONFLICT(achievement_id, requirement_id) DO NOTHING
-        `);
-        requirementData.forEach((params) => requirementStmt.run(params));
+      // Insert labels
+      const labelsStmt = db.prepare(`
+        INSERT INTO achievement_labels (achievement_id, label)
+        SELECT a.id, ?
+        FROM achievements a
+        WHERE a.title = ?
+        ON CONFLICT(achievement_id, label) DO NOTHING`);
+      labelsData.forEach((params) => labelsStmt.run(params));
 
-        // Insert criteria
-        const criteriaStmt = db.prepare(`
-            INSERT INTO achievement_criterias (achievement_id, progression_id, required_value, "type")
-            SELECT a.id, p.id, ?, ?
-            FROM achievements a
-            JOIN progressions p ON p.name = ?
-            WHERE a.title = ?
-            ON CONFLICT(achievement_id, progression_id) DO UPDATE SET
-              required_value = excluded.required_value,
-              "type" = excluded."type"
-        `);
-        criteriaData.forEach((params) => criteriaStmt.run(params));
+      // Insert requirements  by titles
+      const requirementStmt = db.prepare(`
+        INSERT INTO achievement_requirements (achievement_id, requirement_id)
+        SELECT a.id, r.id
+        FROM achievements a
+        JOIN achievements r ON r.title = ?
+        WHERE a.title = ?
+        ON CONFLICT(achievement_id, requirement_id) DO NOTHING`);
+      requirementData.forEach((params) => requirementStmt.run(params));
+
+      // Insert requirements by IDs
+      const requirementByIdStmt = db.prepare(`
+        INSERT INTO achievement_requirements (achievement_id, requirement_id)
+        SELECT a.id, ?
+        FROM achievements a
+        WHERE a.title = ?
+        ON CONFLICT(achievement_id, requirement_id) DO NOTHING`);
+      requirementByIdData.forEach((params) => requirementByIdStmt.run(params));
+
+      // Insert criteria
+      const criteriaStmt = db.prepare(`
+        INSERT INTO achievement_criterias (achievement_id, progression_id, required_value, "type",comparison_operator)
+        SELECT a.id, p.id, ?, ?, '>='
+        FROM achievements a
+        JOIN progressions p ON p.name = ?
+        WHERE a.title = ?
+        ON CONFLICT(achievement_id, progression_id) DO UPDATE SET
+          required_value = excluded.required_value,
+          "type" = excluded."type",
+          comparison_operator = excluded.comparison_operator`);
+
+      criteriaData.forEach((params) => criteriaStmt.run(params));
     })();
-}
-
+  }
 
 
   /**
@@ -413,7 +438,7 @@ class Achievement {
       icon: row.icon,
       category: row.category,
       group: row.group,
-      labels: JSON.parse(row.labels),
+      labels: row.labels,
       criteria: row.criteria.reduce((acc: any, c: any) => {
         acc[c.progression_name] = parseValue(c.required_value, c.type);
         return acc;
@@ -428,97 +453,6 @@ class Achievement {
       achievedAt: row.achievedAt ? new Date(row.achievedAt) : undefined,
     });
   }
-  // ==================== TO methods ====================
-
-  /**
-   * Inserts a list of achievements into the database
-   *
-   * @static
-   * @memberof Achievement
-   * @method toDB
-   *
-   * @param {Achievement[]} achievements - The list of achievements to insert
-   * @returns {void}
-   */
-  static toDB(achievements: Achievement[]): void {
-    const db = db_model.openDB();
-
-    // Prepare batched SQL queries for achievements, requirements, and criteria
-    const achievementInserts: any[] = [];
-    const requirementInserts: any[] = [];
-    const criteriaInserts: any[] = [];
-
-    achievements.forEach((achievement) => {
-      // Prepare achievement parameters
-      const achievementParams = [
-        achievement.title,
-        achievement.icon,
-        achievement.category,
-        achievement.group,
-        JSON.stringify(achievement.labels),
-        achievement.description,
-        achievement.tier,
-        achievement.points,
-        achievement.hidden ? 1 : 0,
-        achievement.repeatable ? 1 : 0,
-        achievement.achieved ? 1 : 0,
-        achievement.achievedAt ? achievement.achievedAt.toISOString() : null,
-      ];
-      achievementInserts.push(achievementParams);
-
-      // Prepare requirements
-      achievement.requires.forEach((requirementId) => {
-        requirementInserts.push([requirementId, achievement.title]);
-      });
-
-      // Prepare criteria
-      Object.entries(achievement.criteria).forEach(([progressionName, value]) => {
-        let type: string;
-        if (typeof value === 'number') {
-          type = 'integer';
-        } else if (typeof value === 'boolean') {
-          type = 'boolean';
-        } else if (value instanceof Date) {
-          type = 'datetime';
-          value = value.toISOString();
-        } else {
-          type = 'text';
-        }
-        criteriaInserts.push([progressionName, value, type, achievement.title]);
-      });
-    });
-
-    // Execute batched inserts in a single transaction
-    // WARNING: IF DB EVER CHANGES TO ASYNCHRONOUS, THIS WILL NEED TO BE REFACTORED
-    db.transaction(() => {
-      // Bulk insert achievements
-      const achievementStmt = db.prepare(Achievement.ACHIEVEMENT_INSERT_QUERY);
-      achievementInserts.forEach((params) => achievementStmt.run(params));
-
-      // Bulk insert requirements
-      const requirementStmt = db.prepare(`
-        INSERT INTO achievement_requirements (achievement_id, requirement_id)
-        SELECT a.id, ?
-        FROM achievements a WHERE a.title = ?
-        ON CONFLICT(achievement_id, requirement_id) DO NOTHING
-      `);
-      requirementInserts.forEach((params) => requirementStmt.run(params));
-
-      // Bulk insert criteria
-      const criteriaStmt = db.prepare(`
-        INSERT INTO achievement_criterias (achievement_id, progression_id, required_value, "type")
-        SELECT a.id, p.id, ?, ?
-        FROM achievements a
-        JOIN progressions p ON p.name = ?
-        WHERE a.title = ?
-        ON CONFLICT(achievement_id, progression_id) DO UPDATE SET
-          required_value = excluded.required_value,
-          "type" = excluded."type"
-      `);
-      criteriaInserts.forEach((params) => criteriaStmt.run(params));
-    })();
-  }
-
 
   // ==================== UPDATE ====================
 
@@ -573,29 +507,17 @@ class Achievement {
    * @param {string[]} criterias - The list of criterias to filter by
    * @returns {Achievement[]} - The list of achievements
    */
-  static getAchievementsRawFormat(filters: AchievementSelectRequestFilters): AchievementRow[] {
+  static getAchievementsRawFormat(filters: AchievementSelectRequestFilters): { count: number | null, achievements: AchievementRow[] } {
     const db = db_model.openDB();
 
     // Base query for achievements
-    let query = `
-      SELECT
-        a.*,
-        COALESCE(json_group_array(r.id), '[]') AS requirements,
-        COALESCE(
-          json_group_array(
-            json_object(
-              'progression_name', p.name,
-              'required_value', c.required_value,
-              'type', c.type
-            )
-          ),
-          '[]'
-        ) AS criteria
+    let baseQuery = `
       FROM achievements a
       LEFT JOIN achievement_requirements ar ON a.id = ar.achievement_id
       LEFT JOIN achievements r ON ar.requirement_id = r.id
       LEFT JOIN achievement_criterias c ON a.id = c.achievement_id
       LEFT JOIN progressions p ON c.progression_id = p.id
+      LEFT JOIN achievement_labels al ON a.id = al.achievement_id
     `;
 
     const conditions: string[] = [];
@@ -611,10 +533,10 @@ class Achievement {
       values.push(filters.group);
     }
     if (filters.labels && filters.labels.length > 0) {
-      filters.labels.forEach((label) => {
-        conditions.push('a.labels LIKE ?');
-        values.push(`%${label}%`);
-      });
+      // Match achievements with all provided labels
+      const labelConditions = filters.labels.map(() => 'EXISTS (SELECT 1 FROM achievement_labels al WHERE al.achievement_id = a.id AND al.label = ?)');
+      conditions.push(`(${labelConditions.join(' AND ')})`);
+      values.push(...filters.labels);
     }
     if (filters.title) {
       conditions.push('a.title LIKE ?');
@@ -644,45 +566,99 @@ class Achievement {
       }
     }
 
+    let whereClause = '';
     if (conditions.length > 0) {
-      query += ` WHERE ${conditions.join(' AND ')}`;
+      whereClause = ` WHERE ${conditions.join(' AND ')}`;
     }
 
-    query += `
+    let count: number | null = null;
+
+    // If count is requested, calculate the total count
+    if (filters.count) {
+      const countQuery = `SELECT COUNT(DISTINCT a.id) AS total
+        ${baseQuery}
+        ${whereClause}
+      `;
+      const countRow = db.prepare(countQuery).get(values) as { total: number };
+      count = countRow.total;
+    }
+
+    // Query to get the achievements
+    let achievementsQuery = `
+      SELECT
+        a.*,
+        COALESCE(json_group_array(DISTINCT al.label), '[]') AS labels,
+        COALESCE(json_group_array(r.id), '[]') AS requirements,
+        COALESCE(
+          json_group_array(
+            json_object(
+              'progression_name', p.name,
+              'required_value', c.required_value,
+              'type', c.type
+            )
+          ),
+          '[]'
+        ) AS criteria
+      ${baseQuery}
+      ${whereClause}
       GROUP BY a.id
     `;
 
     if (filters.sortCriteria) {
-      query += ` ORDER BY a.${filters.sortCriteria}`;
+      achievementsQuery += ` ORDER BY a.${filters.sortCriteria}`;
       if (filters.sortDirection) {
-        query += ` ${filters.sortDirection.toUpperCase()}`;
+        achievementsQuery += ` ${filters.sortDirection.toUpperCase()}`;
       }
     }
 
     if (filters.limit) {
-      query += ' LIMIT ?';
+      achievementsQuery += ' LIMIT ?';
       values.push(filters.limit);
     }
     if (filters.offset) {
-      query += ' OFFSET ?';
+      achievementsQuery += ' OFFSET ?';
       values.push(filters.offset);
     }
 
-    // Execute query
-    const rows = db.prepare(query).all(values) as RawAchievementRow[];
+    const rows = db.prepare(achievementsQuery).all(values) as RawAchievementRow[];
 
     // Parse JSON fields
-    return rows.map((row) => ({
+    const achievements = rows.map((row) => ({
       ...row,
       requirements: JSON.parse(row.requirements),
       criteria: JSON.parse(row.criteria),
+      labels: JSON.parse(row.labels),
     }));
+
+    return { count, achievements };
   }
 
 
-  static getAchievements(filters : AchievementSelectRequestFilters) : Achievement[] {
-    const rows = Achievement.getAchievementsRawFormat(filters);
-    return rows.map((row) => Achievement.fromRow(row));
+  static getAchievements(filters: AchievementSelectRequestFilters): { count: number | null, achievements: Achievement[] } {
+    const { count, achievements } = Achievement.getAchievementsRawFormat(filters);
+    return {
+      count,
+      achievements: achievements.map(Achievement.fromRow),
+    };
+  }
+
+
+  static getGroups(): string[] {
+    const db = db_model.openDB();
+    const rows = db.prepare('SELECT DISTINCT "group" FROM achievements').all();
+    return rows.map((row) => (row as any).group);
+  }
+
+  static getCategories(): string[] {
+    const db = db_model.openDB();
+    const rows = db.prepare('SELECT DISTINCT category FROM achievements').all();
+    return rows.map((row) => (row as any).category);
+  }
+
+  static getLabels(): string[] {
+    const db = db_model.openDB();
+    const rows = db.prepare('SELECT DISTINCT label FROM achievement_labels').all();
+    return rows.map((row) => (row as any).label);
   }
 
 }
