@@ -4,13 +4,27 @@
  * @date 2024-11-11
  */
 
-import * as fs from 'fs';
 import { db_model } from '../model';
 
 interface ProgressionDict {
-    id?: number;
-    name: string;
-    value?: number;
+  id?: number;
+  name: string;
+  value: string | number | Date | boolean;
+  type: string;
+}
+
+interface ProgressionRow {
+  id: number;
+  name: string;
+  value: string;
+  type: string;
+}
+
+export interface ProgressionSelectRequestFilters {
+  offset?: number;
+  limit?: number;
+  name?: string;
+  type?: string;
 }
 
 /**
@@ -20,13 +34,10 @@ interface ProgressionDict {
  * @property {number} id - The ID of the progression.
  * @property {string} name - The name of the progression.
  * @property {number} value - The value of the progression.
- * @method fromObject - Creates an instance of Progression from an object.
  * @method fromRow - Creates an instance of Progression from a database row.
  * @method fromDB - Retrieves all progressions from the database.
- * @method toObject - Converts an instance of Progression to an object.
  * @method toRow - Inserts an instance of Progression into the database.
  * @method toDB - Inserts multiple instances of Progression into the database.
- * @method toJsonFile - Writes an array of Progression instances to a JSON file.
  * @method updateValue - Updates the value of the progression.
  * @method addValue - Adds a value to the progression.
  * @method updateValueFromName - Updates the value of a progression by name.
@@ -38,315 +49,276 @@ interface ProgressionDict {
  * @default Progression
  */
 class Progression {
-    private id?: number;
-    public name: string;
-    public value: number;
+  private id?: number;
+  public name: string;
+  public value: string | number | Date | boolean;
+  public type: string;
 
-    constructor(data: ProgressionDict) {
-        this.name = data.name;
-        this.value = data.value || 0;
+  public static readonly INSERT_QUERY = `INSERT INTO progressions
+    (name,value,"type") VALUES (?,?,?)
+    ON CONFLICT(name) DO UPDATE SET
+      "type" = excluded."type"`;
+
+  public static readonly RAW_UPDATE_QUERY = `
+    -- Update the Progression value and return progression ID
+    WITH updated_progression AS (
+      UPDATE progressions
+      SET value = UPDATE_STRATEGY_PLACEHOLDER
+      WHERE PROGRESSION_SELECTOR_PLACEHOLDER
+      RETURNING id AS progression_id, value AS updated_value
+    ),
+    -- Find achievements impacted by the updated progression
+    impacted_achievements AS (
+      SELECT DISTINCT a.id AS achievement_id
+      FROM achievements a
+      JOIN achievement_criterias ac ON a.id = ac.achievement_id
+      LEFT JOIN achievement_requirements ar ON a.id = ar.achievement_id
+      LEFT JOIN achievements required ON ar.requirement_id = required.id
+      JOIN updated_progression up ON ac.progression_id = up.progression_id
+      WHERE a.achieved = FALSE
+        AND (required.id IS NULL OR required.achieved = TRUE) -- All requirements met
+    ),
+    -- Validate criteria for each impacted achievement
+    valid_achievements AS (
+      SELECT ia.achievement_id
+      FROM impacted_achievements ia
+      JOIN achievement_criterias ac ON ia.achievement_id = ac.achievement_id
+      JOIN progressions p ON ac.progression_id = p.id
+      WHERE
+        CASE ac.comparison_operator
+          WHEN '=' THEN p.value = ac.required_value
+          WHEN '<' THEN p.value < ac.required_value
+          WHEN '>' THEN p.value > ac.required_value
+          WHEN '<=' THEN p.value <= ac.required_value
+          WHEN '>=' THEN p.value >= ac.required_value
+          ELSE 0
+        END
+      GROUP BY ia.achievement_id
+      HAVING COUNT(*) = (SELECT COUNT(*) FROM achievement_criterias WHERE achievement_id = ia.achievement_id)
+    ),
+    -- Mark validated achievements as achieved
+    achieved_achievements AS (
+      UPDATE achievements
+      SET achieved = TRUE, achievedAt = CURRENT_TIMESTAMP
+      WHERE id IN (SELECT achievement_id FROM valid_achievements)
+      RETURNING id AS achievement_id, title, icon, category, "group", labels, description, tier, points, hidden, repeatable, achieved, achievedAt
+    )
+    -- Return the details of newly achieved achievements
+    SELECT *
+    FROM achieved_achievements
+    ;`;
+
+  constructor(data: ProgressionDict) {
+    this.name = data.name;
+    this.value = data.value || 0;
+    this.type = data.type || 'number';
+  }
+
+  // ==================== FROM methods ====================
+
+  /**
+   * Creates an instance of Progression from a database row.
+   *
+   * @memberof Progression
+   * @method fromRow
+   * @static
+   *
+   * @param {any} row - The database row to create an instance from.
+   * @returns {Progression} - An instance of Progression.
+   */
+  static fromRow(row: any): Progression {
+    return new Progression({
+      id: row.id,
+      name: row.name,
+      value: row.value,
+      type: row.type,
+    });
+  }
+
+
+  /**
+   * Retrieves all progressions from the database.
+   *
+   * @memberof Progression
+   * @method fromDB
+   * @static
+   *
+   * @returns {Progression[]} - An array of all progressions.
+   */
+  static fromDB(): Progression[] {
+    const db = db_model.openDB();
+    const query = 'SELECT * FROM progressions';
+    const rows = db.prepare(query).all();
+    return rows.map((row) => Progression.fromRow(row));
+  }
+
+  // ==================== TO methods ====================
+
+  /**
+   * Inserts an instance of Progression into the database.
+   *
+   * @memberof Progression
+   * @method toRow
+   *
+   * @returns {void}
+   */
+  toRow(): void {
+    const db = db_model.openDB();
+
+    const statement = db.prepare(Progression.INSERT_QUERY);
+    const info = statement.run([this.name, this.value, this.type]);
+
+    // Change the id of the instance to the id of the row if it was inserted
+    if (info.changes && info.lastInsertRowid) {
+      this.id = Number(info.lastInsertRowid);
+    }
+  }
+
+
+  /**
+   * Inserts multiple instances of Progression into the database.
+   *
+   * @memberof Progression
+   * @method toDB
+   * @static
+   *
+   * @param {Progression[]} progressions - An array of Progression instances to insert.
+   * @returns {void}
+   */
+  static toDB(progressions: Progression[]): void {
+    const db = db_model.openDB();
+    const statement = db.prepare(Progression.INSERT_QUERY);
+    db.transaction((progressions) => {
+      for (const progression of progressions) {
+        statement.run([progression.name, progression.value, progression.type]);
+      }
+    })(progressions);
+
+  }
+
+  // ==================== UPDATE ====================
+  /**
+   * Adds a value to the progression.
+   *
+   * @memberof Progression
+   * @method increaseValue
+   *
+   * @param {number} value - The value to add to the progression.
+   * @returns {{[key: string]: any}[]} - An array of newly achieved achievements.
+   */
+  static addValue(filters: ProgressionSelectRequestFilters, value: number | string = 1): {[key: string]: any}[] {
+    const update_strategy = `CASE
+        WHEN value IS NULL THEN ?
+        WHEN "type" = 'number' THEN CAST(value AS INTEGER) + ?
+        WHEN "type" = 'integer' THEN CAST(value AS INTEGER) + ?
+        WHEN "type" = 'float' THEN CAST(value AS FLOAT) + ?
+        WHEN "type" = 'date' THEN DATETIME(value, ?)
+        WHEN "type" = 'datetime' THEN DATETIME(value, ?)
+        ELSE RAISE(ABORT, 'Invalid type for addValue Progression')
+      END`;
+
+    let [selectorColumn, selectorValue]  = parseUpdateFilters(filters);
+    let query = Progression.RAW_UPDATE_QUERY.replace('PROGRESSION_SELECTOR_PLACEHOLDER', selectorColumn).replace('UPDATE_STRATEGY_PLACEHOLDER', update_strategy);
+
+    const db = db_model.openDB();
+    return (db.prepare(query).get([value, value, value, value, value, value, selectorValue]) as {[key: string]: any}[]);
+  }
+
+  /**
+   * Updates the value of progressions that match the given filter
+   *
+   * @memberof Progression
+   * @method updateValue
+   * @static
+   *
+   * @param {ProgressionSelectRequestFilters} filters - The filters to apply to the query.
+   * @param {string} value - The new value of the progression.
+   * @returns {AchievementRow[]} - An array of newly achieved achievements.
+   */
+  static updateValue(filters : ProgressionSelectRequestFilters, value: string): {[key: string]: any}[] {
+      let [selectorColumn, selectorValue] = parseUpdateFilters(filters);
+      let query = Progression.RAW_UPDATE_QUERY.replace('PROGRESSION_SELECTOR_PLACEHOLDER', selectorColumn).replace('UPDATE_STRATEGY_PLACEHOLDER', '?');
+
+    const db = db_model.openDB();
+    return db.prepare(query).all([value, selectorValue]) as {[key: string]: any}[];
+  }
+
+  // ==================== GET ====================
+
+  /**
+   * Retrieves progressions from the database with the given filters.
+   *
+   * @memberof Progression
+   * @method getProgressionsRawFormat
+   * @static
+   *
+   * @param {ProgressionSelectRequestFilters} filters - The filters to apply to the query.
+   * @returns {ProgressionRow[]} - An array of progressions in raw format.
+   */
+  static getProgressionsRawFormat(filters: ProgressionSelectRequestFilters) : ProgressionRow[] {
+    const db = db_model.openDB();
+    let query = 'SELECT * FROM progressions';
+    let where = [];
+    let values = [];
+
+    if (filters.name) {
+      where.push('name = ?');
+      values.push(filters.name);
     }
 
-
-    // ==================== FROM methods ====================
-
-    /**
-     * Creates an instance of Progression from an object.
-     *
-     * @memberof Progression
-     * @method fromObject
-     * @static
-     *
-     * @param {ProgressionDict} data - The object to create an instance from.
-     * @returns {Progression} - An instance of Progression.
-     */
-    static fromObject(data: ProgressionDict): Progression {
-        return new Progression(data);
+    if (filters.type) {
+      where.push('type = ?');
+      values.push(filters.type);
     }
 
-
-    /**
-     * Creates an instance of Progression from a database row.
-     *
-     * @memberof Progression
-     * @method fromRow
-     * @static
-     *
-     * @param {any} row - The database row to create an instance from.
-     * @returns {Progression} - An instance of Progression.
-     */
-    static fromRow(row: any): Progression {
-        return new Progression({
-            id: row.id,
-            name: row.name,
-            value: row.value,
-        });
+    if (where.length > 0) {
+      query += ` WHERE ${where.join(' AND ')}`;
     }
 
-
-    /**
-     * Retrieves all progressions from the database.
-     *
-     * @memberof Progression
-     * @method fromDB
-     * @static
-     *
-     * @returns {Progression[]} - An array of all progressions.
-     */
-    static fromDB(): Progression[] {
-        const db = db_model.openDB();
-        const query = 'SELECT * FROM progressions';
-        const rows = db.prepare(query).all();
-        return rows.map((row) => Progression.fromRow(row));
+    if (filters.limit) {
+      query += ' LIMIT ?';
+      values.push(filters.limit);
     }
 
-
-    // ==================== TO methods ====================
-
-    /**
-     * Converts an instance of Progression to an object.
-     *
-     * @memberof Progression
-     * @method toObject
-     *
-     * @returns {ProgressionDict} - An object representation of the Progression.
-     */
-    toObject(): ProgressionDict {
-        return {
-            id: this.id,
-            name: this.name,
-            value: this.value,
-        };
+    if (filters.offset) {
+      query += ' OFFSET ?';
+      values.push(filters.offset);
     }
 
-
-    /**
-     * Inserts an instance of Progression into the database.
-     *
-     * @memberof Progression
-     * @method toRow
-     *
-     * @returns {void}
-     */
-    toRow(): void {
-        const query = `INSERT INTO progressions
-        (name,value) VALUES (?,?)
-        ON CONFLICT(name) DO NOTHING`;
-
-        const db = db_model.openDB();
-
-        const statement = db.prepare(query);
-        const info = statement.run([this.name, this.value]);
-
-        // Change the id of the instance to the id of the row if it was inserted
-        if (info.changes && info.lastInsertRowid) {
-            this.id = Number(info.lastInsertRowid);
-        }
-    }
+    return db.prepare(query).all(values) as ProgressionRow[];
+  }
 
 
-    /**
-     * Inserts multiple instances of Progression into the database.
-     *
-     * @memberof Progression
-     * @method toDB
-     * @static
-     *
-     * @param {Progression[]} progressions - An array of Progression instances to insert.
-     * @returns {void}
-     */
-    static toDB(progressions: Progression[]) {
-        const db = db_model.openDB();
-        const query = `INSERT INTO progressions
-        (name,value) VALUES (?,?)
-        ON CONFLICT(name) DO NOTHING`;
+  /**
+   * Retrieves progressions from the database with the given filters.
+   *
+   * @memberof Progression
+   * @method getProgressions
+   * @static
+   *
+   * @param {ProgressionSelectRequestFilters} filters - The filters to apply to the query.
+   * @returns {Progression[]} - An array of progressions.
+   */
+  static getProgressions(filters: ProgressionSelectRequestFilters): Progression[] {
+    const rows = Progression.getProgressionsRawFormat(filters);
+    return rows.map((row) => Progression.fromRow(row));
+  }
 
-        const statement = db.prepare(query);
-        db.transaction((progressions) => {
-            for (const progression of progressions) {
-                const info = statement.run([progression.name, progression.value]);
+}
 
-                // Change the id of the instance to the id of the row if it was inserted
-                if (info.changes && info.lastInsertRowid) {
-                    progression.id = Number(info.lastInsertRowid);
-                }
-            }
-        })(progressions);
-
-    }
-
-    /**
-     * Writes an array of Progression instances to a JSON file.
-     *
-     * @memberof Progression
-     * @method toJsonFile
-     *
-     * @param {Progression[]} instances - An array of Progression instances to write to the file.
-     * @param {string} filePath - The path to the file to write to.
-     * @returns {void}
-     */
-    static toJsonFile(instances: Progression[], filePath: string): void {
-        const data = instances.map((achievement) => achievement.toObject());
-        fs.writeFileSync(filePath, JSON.stringify(data, null), 'utf-8');
-    }
-
-
-    // ==================== UPDATE ====================
-
-
-    /**
-     * Updates the value of the progression.
-     *
-     * @memberof Progression
-     * @method updateValue
-     *
-     * @param {number} value - The new value of the progression.
-     * @returns {void}
-     */
-    updateValue(value: number): void {
-        this.value = value;
-        const query = `UPDATE progressions SET value = ? WHERE id = ?`;
-
-        const db = db_model.openDB();
-        const statement = db.prepare(query);
-        statement.run([value, this.id]);
-    }
-
-
-    /**
-     * Adds a value to the progression.
-     *
-     * @memberof Progression
-     * @method addValue
-     *
-     * @param {number} value - The value to add to the progression.
-     * @returns {void}
-     */
-    addValue(value: number = 1): void {
-        this.value += value;
-        const query = `UPDATE progressions SET value = value + ? WHERE id = ?`;
-
-        const db = db_model.openDB();
-        const statement = db.prepare(query);
-        statement.run([value, this.id]);
-    }
-
-    /**
-     * Updates the value of a progression by name.
-     *
-     * @memberof Progression
-     * @method updateValueFromName
-     * @static
-     *
-     * @param {string} name - The name of the progression to update.
-     * @param {number} value - The new value of the progression.
-     * @returns {void}
-     */
-    static updateValueFromName(name: string, value: number): void {
-        const query = `UPDATE progressions SET value = ? WHERE name = ?`;
-
-        const db = db_model.openDB();
-        const statement = db.prepare(query);
-        statement.run([value, name]);
-    }
-
-
-    /**
-     * Adds a value to a progression by name.
-     *
-     * @memberof Progression
-     * @method addValueFromName
-     * @static
-     *
-     * @param {string} name - The name of the progression to update.
-     * @param {number} value - The value to add to the progression.
-     * @returns {void}
-     */
-    static addValueFromName(name: string, value: number = 1): void {
-        const query = `UPDATE progressions SET value = value + ? WHERE name = ?`;
-
-        const db = db_model.openDB();
-        const statement = db.prepare(query);
-        statement.run([value, name]);
-    }
-
-
-    // ==================== GET ====================
-
-    /**
-     * Retrieves a progression by name.
-     *
-     * @memberof Progression
-     * @method getProgressionFromName
-     * @static
-     *
-     * @param {string} name - The name of the progression to retrieve.
-     * @returns {Progression} - The progression with the given name.
-     */
-    static getProgressionFromName(name: string): Progression {
-        const query = `SELECT * FROM progressions WHERE name = ?`;
-
-        const db = db_model.openDB();
-        const row = db.prepare(query).get(name);
-        return Progression.fromRow(row);
-    }
-
-
-    /**
-     * Retrieves the value of a progression by name.
-     *
-     * @memberof Progression
-     * @method getValueFromName
-     * @static
-     *
-     * @param {string} name - The name of the progression to retrieve the value of.
-     * @returns {number} - The value of the progression with the given name.
-     */
-    static getValueFromName(name: string): number {
-        const query = `SELECT value FROM progressions WHERE name = ?`;
-
-        const db = db_model.openDB();
-        const row = db.prepare(query).get(name);
-        return Progression.fromRow(row).value;
-    }
-
-
-    /**
-     * Retrieves a progression by ID.
-     *
-     * @memberof Progression
-     * @method getProgressionFromId
-     * @static
-     *
-     * @param {number} id - The ID of the progression to retrieve.
-     * @returns {Progression} - The progression with the given ID.
-     */
-    static getProgressionFromId(id: number): Progression {
-        const query = `SELECT * FROM progressions WHERE id = ?`;
-
-        const db = db_model.openDB();
-        const row = db.prepare(query).get(id);
-        return Progression.fromRow(row);
-    }
-
-
-    /**
-     * Retrieves the value of a progression by ID.
-     *
-     * @memberof Progression
-     * @method getValueFromId
-     * @static
-     *
-     * @param {number} id - The ID of the progression to retrieve the value of.
-     * @returns {number} - The value of the progression with the given ID.
-     */
-    static getValueFromId(id: number): number {
-        const query = `SELECT value FROM progressions WHERE id = ?`;
-
-        const db = db_model.openDB();
-        const row = db.prepare(query).get(id);
-        return Progression.fromRow(row).value;
-    }
+function parseUpdateFilters(filters: ProgressionSelectRequestFilters): [string, string] {
+  let selectorValue : string;
+  let selectorColumn : string;
+  if (filters.name) {
+    selectorColumn = ' name = ?';
+    selectorValue = filters.name;
+  } else if (filters.type) {
+    selectorColumn = ' type = ?';
+    selectorValue = filters.type;
+  } else {
+    throw new Error('No filters provided');
+  }
+  return [selectorColumn, selectorValue];
 }
 
 export default Progression;
