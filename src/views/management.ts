@@ -44,18 +44,14 @@ export namespace AchievementsWebview {
     let reactScriptUri = panel.webview.asWebviewUri(
       vscode.Uri.file(path.join(__dirname, 'webview.js'))
     );
-    let cssUri = panel.webview.asWebviewUri(
-      vscode.Uri.file(path.join(path.dirname(__dirname), 'src', 'views', 'styles', 'containers.css'))
-    );
     return `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <title>Achievements</title>
-    <link rel="stylesheet" href="${cssUri}">
   </head>
   <body>
-    <div id="root"></div>
+    <div id="achievement-view"></div>
     <script src="${panel.webview.cspSource}"></script>
     <script>
       window.imageUris = ${JSON.stringify(getPackagedImages(context, panel.webview))}
