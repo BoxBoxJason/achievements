@@ -1,3 +1,5 @@
+import { awardAchievement } from "../../listeners/awarder";
+import logger from "../../utils/logger";
 import Progression from "../model/tables/Progression";
 
 export interface ProgressionDict {
@@ -35,9 +37,16 @@ export namespace ProgressionController {
  */
   export function increaseProgression(criteria_name: string, increase: number | string = 1): void {
     // Update the progression value and retrieve all progressions
-    let value = Progression.addValue({ name: criteria_name }, increase);
-    let criterias = progressionsToObject(Progression.fromDB());
-
+    try {
+      const updatedProgressionsIds = Progression.addValue({ name: criteria_name }, increase);
+      const updatedAchievements = Progression.achieveCompletedAchievements(updatedProgressionsIds.map((progression) => progression.id));
+      for (let achievement of updatedAchievements) {
+        // Notify the user of the unlocked achievement
+        awardAchievement(achievement.title);
+      }
+    } catch (error) {
+      logger.error(`Failed to increase progression: ${(error as Error).message}`);
+    }
   }
 
 }
