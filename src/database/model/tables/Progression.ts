@@ -4,6 +4,7 @@
  * @date 2024-11-11
  */
 
+import logger from '../../../utils/logger';
 import { db_model } from '../model';
 
 interface ProgressionDict {
@@ -40,12 +41,6 @@ export interface ProgressionSelectRequestFilters {
  * @method toDB - Inserts multiple instances of Progression into the database.
  * @method updateValue - Updates the value of the progression.
  * @method addValue - Adds a value to the progression.
- * @method updateValueFromName - Updates the value of a progression by name.
- * @method addValueFromName - Adds a value to a progression by name.
- * @method getProgressionFromName - Retrieves a progression by name.
- * @method getValueFromName - Retrieves the value of a progression by name.
- * @method getProgressionFromId - Retrieves a progression by ID.
- * @method getValueFromId - Retrieves the value of a progression by ID.
  * @default Progression
  */
 class Progression {
@@ -95,18 +90,13 @@ class Progression {
         END
       GROUP BY ia.achievement_id
       HAVING COUNT(*) = (SELECT COUNT(*) FROM achievement_criterias WHERE achievement_id = ia.achievement_id)
-    ),
-    -- Mark validated achievements as achieved
-    achieved_achievements AS (
-      UPDATE achievements
-      SET achieved = TRUE, achievedAt = CURRENT_TIMESTAMP
-      WHERE id IN (SELECT achievement_id FROM valid_achievements)
-      RETURNING id AS achievement_id, title, icon, category, "group", labels, description, tier, points, hidden, repeatable, achieved, achievedAt
     )
-    -- Return the details of newly achieved achievements
-    SELECT *
-    FROM achieved_achievements
-    ;`;
+    -- Mark validated achievements as achieved and return their details
+    UPDATE achievements
+    SET achieved = TRUE, achievedAt = CURRENT_TIMESTAMP
+    WHERE id IN (SELECT achievement_id FROM valid_achievements)
+    RETURNING id AS achievement_id, title, icon, category, "group", labels, description, tier, points, hidden, repeatable, achieved, achievedAt;
+  `;
 
   constructor(data: ProgressionDict) {
     this.name = data.name;
@@ -174,7 +164,6 @@ class Progression {
     }
   }
 
-
   /**
    * Inserts multiple instances of Progression into the database.
    *
@@ -197,6 +186,50 @@ class Progression {
   }
 
   // ==================== UPDATE ====================
+
+  static achieveCompletedAchievements(progressionIds: number[]): { id: number; title: string; achievedAt: string }[] {
+    if (progressionIds.length === 0) {
+      return []; // No progressions to process
+    }
+
+    const updateAchievementsQuery = `
+      -- Validate and mark achievements related to specific progressions as completed
+      WITH valid_achievements AS (
+        SELECT ia.id AS achievement_id
+        FROM achievements ia
+        JOIN achievement_criterias ac ON ia.id = ac.achievement_id
+        JOIN progressions p ON ac.progression_id = p.id
+        WHERE p.id IN (${progressionIds.map(() => '?').join(', ')}) -- Only consider updated progressions
+          AND ia.achieved = FALSE
+          AND
+          CASE ac.comparison_operator
+            WHEN '=' THEN p.value = ac.required_value
+            WHEN '<' THEN CAST(p.value AS REAL) < CAST(ac.required_value AS REAL)
+            WHEN '>' THEN CAST(p.value AS REAL) > CAST(ac.required_value AS REAL)
+            WHEN '<=' THEN CAST(p.value AS REAL) <= CAST(ac.required_value AS REAL)
+            WHEN '>=' THEN CAST(p.value AS REAL) >= CAST(ac.required_value AS REAL)
+            ELSE 0
+          END
+        GROUP BY ia.id
+        HAVING COUNT(*) = (
+          SELECT COUNT(*)
+          FROM achievement_criterias
+          WHERE achievement_id = ia.id
+        )
+      )
+      UPDATE achievements
+      SET achieved = TRUE, achievedAt = CURRENT_TIMESTAMP
+      WHERE id IN (SELECT achievement_id FROM valid_achievements)
+      RETURNING id, title, achievedAt;
+    `;
+
+    const db = db_model.openDB();
+
+    // Pass the progressionIds as parameters to the query
+    return db.prepare(updateAchievementsQuery).all(progressionIds) as { id: number; title: string; achievedAt: string }[];
+  }
+
+
   /**
    * Adds a value to the progression.
    *
@@ -204,24 +237,29 @@ class Progression {
    * @method increaseValue
    *
    * @param {number} value - The value to add to the progression.
-   * @returns {{[key: string]: any}[]} - An array of newly achieved achievements.
+   * @returns {{[key: string]: any}[]} - An array of updated progressions
    */
-  static addValue(filters: ProgressionSelectRequestFilters, value: number | string = 1): {[key: string]: any}[] {
-    const update_strategy = `CASE
-        WHEN value IS NULL THEN ?
-        WHEN "type" = 'number' THEN CAST(value AS INTEGER) + ?
-        WHEN "type" = 'integer' THEN CAST(value AS INTEGER) + ?
-        WHEN "type" = 'float' THEN CAST(value AS FLOAT) + ?
-        WHEN "type" = 'date' THEN DATETIME(value, ?)
-        WHEN "type" = 'datetime' THEN DATETIME(value, ?)
-        ELSE RAISE(ABORT, 'Invalid type for addValue Progression')
-      END`;
-
-    let [selectorColumn, selectorValue]  = parseUpdateFilters(filters);
-    let query = Progression.RAW_UPDATE_QUERY.replace('PROGRESSION_SELECTOR_PLACEHOLDER', selectorColumn).replace('UPDATE_STRATEGY_PLACEHOLDER', update_strategy);
+  static addValue(filters: ProgressionSelectRequestFilters, value: number | string = 1): { id: number }[] {
+    const addValueQuery = `
+      UPDATE progressions
+      SET value =
+        CASE
+          WHEN value IS NULL THEN ?
+          WHEN "type" = 'number' THEN CAST(value AS INTEGER) + ?
+          WHEN "type" = 'integer' THEN CAST(value AS INTEGER) + ?
+          WHEN "type" = 'float' THEN CAST(value AS FLOAT) + ?
+          WHEN "type" = 'date' THEN DATETIME(value, ?)
+          WHEN "type" = 'datetime' THEN DATETIME(value, ?)
+          ELSE NULL
+        END
+      WHERE SELECTOR_PLACEHOLDER
+      RETURNING id;
+      `;
 
     const db = db_model.openDB();
-    return (db.prepare(query).get([value, value, value, value, value, value, selectorValue]) as {[key: string]: any}[]);
+    const [selectorColumn, selectorValue] = parseUpdateFilters(filters);
+
+    return db.prepare(addValueQuery.replace('SELECTOR_PLACEHOLDER', selectorColumn)).all([value, value, value, value, value, value, selectorValue]) as { id: number }[];
   }
 
   /**
@@ -235,12 +273,12 @@ class Progression {
    * @param {string} value - The new value of the progression.
    * @returns {AchievementRow[]} - An array of newly achieved achievements.
    */
-  static updateValue(filters : ProgressionSelectRequestFilters, value: string): {[key: string]: any}[] {
-      let [selectorColumn, selectorValue] = parseUpdateFilters(filters);
-      let query = Progression.RAW_UPDATE_QUERY.replace('PROGRESSION_SELECTOR_PLACEHOLDER', selectorColumn).replace('UPDATE_STRATEGY_PLACEHOLDER', '?');
+  static updateValue(filters: ProgressionSelectRequestFilters, value: string): { [key: string]: any }[] {
+    let [selectorColumn, selectorValue] = parseUpdateFilters(filters);
+    let query = Progression.RAW_UPDATE_QUERY.replace('PROGRESSION_SELECTOR_PLACEHOLDER', selectorColumn).replace('UPDATE_STRATEGY_PLACEHOLDER', '?');
 
     const db = db_model.openDB();
-    return db.prepare(query).all([value, selectorValue]) as {[key: string]: any}[];
+    return db.prepare(query).all([value, selectorValue]) as { [key: string]: any }[];
   }
 
   // ==================== GET ====================
@@ -255,7 +293,7 @@ class Progression {
    * @param {ProgressionSelectRequestFilters} filters - The filters to apply to the query.
    * @returns {ProgressionRow[]} - An array of progressions in raw format.
    */
-  static getProgressionsRawFormat(filters: ProgressionSelectRequestFilters) : ProgressionRow[] {
+  static getProgressionsRawFormat(filters: ProgressionSelectRequestFilters): ProgressionRow[] {
     const db = db_model.openDB();
     let query = 'SELECT * FROM progressions';
     let where = [];
@@ -307,8 +345,8 @@ class Progression {
 }
 
 function parseUpdateFilters(filters: ProgressionSelectRequestFilters): [string, string] {
-  let selectorValue : string;
-  let selectorColumn : string;
+  let selectorValue: string;
+  let selectorColumn: string;
   if (filters.name) {
     selectorColumn = ' name = ?';
     selectorValue = filters.name;
