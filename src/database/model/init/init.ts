@@ -57,13 +57,13 @@ export namespace db_init {
       Achievement.fromStackingTemplateToDB(template);
     }
 
-    // Files Deleted
-    logger.debug('Creating files deleted achievements');
-    Achievement.fromStackingTemplateToDB(StackingTemplates.files.filesDeletedTemplate());
+    // Directories Created
+    logger.debug('Creating directories created achievements');
+    Achievement.fromStackingTemplateToDB(StackingTemplates.files.directoriesCreatedTemplate());
 
-    // Files Moved
-    logger.debug('Creating files moved achievements');
-    Achievement.fromStackingTemplateToDB(StackingTemplates.files.filesMovedTemplate());
+    // Resources Deleted
+    logger.debug('Creating resources deleted achievements');
+    Achievement.fromStackingTemplateToDB(StackingTemplates.files.resourceDeletedTemplate());
 
     //////////////////////// GIT ////////////////////////
     // Commits
@@ -117,7 +117,7 @@ export namespace db_init {
         });
         progressions.push(progression);
       } else if (criteria === constants.criteria.LINES_OF_CODE_LANGUAGE) {
-        for (const language of constants.labels.LANGUAGES) {
+        for (const language of Object.values(constants.labels.LANGUAGES)) {
           const progression = new Progression({
             name: criteria.replace('%s', language),
             type: 'integer',
@@ -126,7 +126,7 @@ export namespace db_init {
           progressions.push(progression);
         }
       } else if (criteria === constants.criteria.FILES_CREATED_LANGUAGE) {
-        for (const language of constants.labels.LANGUAGES) {
+        for (const language of Object.values(constants.labels.LANGUAGES)) {
           const progression = new Progression({
             name: criteria.replace('%s', language),
             type: 'integer',
