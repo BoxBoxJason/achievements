@@ -22,7 +22,7 @@ export namespace StackingTemplates {
       iconDir: 'creator',
       category: constants.category.FILES,
       group: 'Files Created',
-      labels: [constants.category.FILES, constants.labels.FILES_CREATED],
+      labels: [constants.category.FILES, constants.labels.RESOURCE_CREATED],
       criterias: [constants.criteria.FILES_CREATED],
       criteriasFunctions: [STANDARD_MEDIUM_CRITERIA_FUNCTION],
       description: `Create ${constants.criteria.FILES_CREATED} files`,
@@ -34,12 +34,12 @@ export namespace StackingTemplates {
     });
 
     export const filesCreatedLanguageTemplates = (): StackingAchievementTemplate[] =>
-      constants.labels.LANGUAGES.map(language => ({
+      Object.values(constants.labels.LANGUAGES).map(language => ({
         title: `LANGUAGE Creator %d`.replace('LANGUAGE', language),
         iconDir: `%s_creator`.replace('%s', language),
         category: constants.category.FILES,
         group: 'Files Created',
-        labels: [constants.category.FILES, constants.labels.FILES_CREATED],
+        labels: [constants.category.FILES, constants.labels.RESOURCE_CREATED],
         criterias: [constants.criteria.FILES_CREATED_LANGUAGE.replace('%s', language)],
         criteriasFunctions: [STANDARD_HARD_CRITERIA_FUNCTION],
         description: `Create FILES files in LANGUAGE`.replace('LANGUAGE', language).replace('FILES', constants.criteria.FILES_CREATED_LANGUAGE.replace('%s', language)),
@@ -50,15 +50,15 @@ export namespace StackingTemplates {
         requires: [],
       }));
 
-    export const filesDeletedTemplate = (): StackingAchievementTemplate => ({
-      title: 'The Eraser %d',
-      iconDir: 'eraser',
+    export const directoriesCreatedTemplate = (): StackingAchievementTemplate => ({
+      title: 'Shaper %d',
+      iconDir: 'mover',
       category: constants.category.FILES,
-      group: 'Files Deleted',
-      labels: [constants.category.FILES, constants.labels.FILES_DELETED],
-      criterias: [constants.criteria.FILES_DELETED],
-      criteriasFunctions: [STANDARD_HARD_CRITERIA_FUNCTION],
-      description: `Delete ${constants.criteria.FILES_DELETED} files`,
+      group: 'Resource Created',
+      labels: [constants.category.FILES, constants.labels.RESOURCE_CREATED],
+      criterias: [constants.criteria.DIRECTORY_CREATED],
+      criteriasFunctions: [STANDARD_INFERNAL_CRITERIA_FUNCTION],
+      description: `Create ${constants.criteria.DIRECTORY_CREATED} directories`,
       minTier: 0,
       maxTier: 10,
       pointsFunction: STANDARD_POINTS_FUNCTION,
@@ -66,21 +66,22 @@ export namespace StackingTemplates {
       requires: [],
     });
 
-    export const filesMovedTemplate = (): StackingAchievementTemplate => ({
-      title: 'Please bro just one more refactor %d',
-      iconDir: 'mover',
+    export const resourceDeletedTemplate = (): StackingAchievementTemplate => ({
+      title: 'Destroyer %d',
+      iconDir: 'destroyer',
       category: constants.category.FILES,
-      group: 'Files Moved',
-      labels: [constants.category.FILES, constants.labels.FILES_MOVED],
-      criterias: [constants.criteria.FILES_MOVED],
+      group: 'Resource Deleted',
+      labels: [constants.category.FILES, constants.labels.RESOURCE_DELETED],
+      criterias: [constants.criteria.RESOURCE_DELETED],
       criteriasFunctions: [STANDARD_INFERNAL_CRITERIA_FUNCTION],
-      description: `Move (or rename) ${constants.criteria.FILES_MOVED} files`,
+      description: `Delete ${constants.criteria.RESOURCE_DELETED} files or directories`,
       minTier: 0,
       maxTier: 10,
       pointsFunction: STANDARD_POINTS_FUNCTION,
       hidden: false,
       requires: [],
     });
+
   }
 
   export namespace git {
@@ -201,7 +202,7 @@ export namespace StackingTemplates {
     });
 
     export const linesOfCodeLanguageTemplates = (): StackingAchievementTemplate[] =>
-      constants.labels.LANGUAGES.map(language => ({
+      Object.values(constants.labels.LANGUAGES).map(language => ({
         title: `LANGUAGE Speaker %d`.replace('LANGUAGE', language),
         iconDir: `%s_speaker`.replace('%s', language),
         category: constants.category.PRODUCTIVITY,
