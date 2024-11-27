@@ -76,12 +76,12 @@ export namespace logger {
      * @memberof logger
      * @function debug
      *
-     * @param {string} message - The message to log
+     * @param {any[]} args - The message to log
      * @returns void
      */
-    export function debug(message: string) {
+    export function debug(...args: any[]) {
         if (logLevel <= LOG_LEVELS.DEBUG) {
-            logMessage(LOG_LEVELS_SLUG.DEBUG, message);
+            logMessage(LOG_LEVELS_SLUG.DEBUG, ...args);
         }
     }
 
@@ -91,12 +91,12 @@ export namespace logger {
      * @memberof logger
      * @function info
      *
-     * @param {string} message - The message to log
+     * @param {any[]} args - The message to log
      * @returns void
      */
-    export function info(message: string) {
+    export function info(...args: any[]) {
         if (logLevel <= LOG_LEVELS.INFO) {
-            logMessage(LOG_LEVELS_SLUG.INFO, message);
+            logMessage(LOG_LEVELS_SLUG.INFO, ...args);
         }
     }
 
@@ -106,12 +106,12 @@ export namespace logger {
      * @memberof logger
      * @function warn
      *
-     * @param {string} message - The message to log
+     * @param {any[]} args - The message to log
      * @returns void
      */
-    export function warn(message: string) {
+    export function warn(...args: any[]) {
         if (logLevel <= LOG_LEVELS.WARN) {
-            logMessage(LOG_LEVELS_SLUG.WARN, message);
+            logMessage(LOG_LEVELS_SLUG.WARN, ...args);
         }
     }
 
@@ -121,13 +121,13 @@ export namespace logger {
      * @memberof logger
      * @function error
      *
-     * @param {string} message - The message to log
+     * @param {any[]} args - The message to log
      * @returns void
      */
-    export function error(message: string) {
+    export function error(...args: any[]) {
         if (logLevel <= LOG_LEVELS.ERROR) {
-            logMessage(LOG_LEVELS_SLUG.ERROR, message);
-            vscode.window.showErrorMessage(message);
+            logMessage(LOG_LEVELS_SLUG.ERROR, ...args);
+            vscode.window.showErrorMessage(args.join(' '));
         }
     }
 
@@ -137,13 +137,13 @@ export namespace logger {
      * @memberof logger
      * @function fatal
      *
-     * @param {string} message - The message to log
+     * @param {any[]} args - The message to log
      * @returns void
      */
-    export function fatal(message: string) {
+    export function fatal(...args: any[]) {
         if (logLevel <= LOG_LEVELS.FATAL) {
-            logMessage(LOG_LEVELS_SLUG.FATAL, message);
-            vscode.window.showErrorMessage(message);
+            logMessage(LOG_LEVELS_SLUG.FATAL, ...args);
+            vscode.window.showErrorMessage(args.join(' '));
         }
         exit(1);
     }
@@ -155,21 +155,37 @@ export namespace logger {
      * @function logMessage
      *
      * @param {string} level - The log level
-     * @param {string} message - The message to log
+     * @param {any[]} args - The message to log
      * @returns void
      */
-    function logMessage(level: string, message: string) {
+    function logMessage(level: string, ...args: any[]) {
         const timestamp = getFormattedTime();
-        const logMessage = `${timestamp}: ${level}: ${message}`;
+        const logMessage = `${timestamp}: ${level}: ${args.map(arg => formatArg(arg)).join(' ')}`;
 
-        // Log to the output channel
         outputChannel.appendLine(logMessage);
-
-        // Log to the console
         console.log(logMessage);
-
-        // Log to file
         logToFile(logMessage);
+    }
+
+
+    /**
+     * Formats an argument for logging
+     *
+     * @memberof logger
+     * @function formatArg
+     *
+     * @param {any}
+     * @returns {string} the formatted argument
+     */
+    function formatArg(arg: any): string {
+        if (typeof arg === 'object') {
+            try {
+                return JSON.stringify(arg);
+            } catch {
+                return '[Object]';
+            }
+        }
+        return String(arg);
     }
 
     /**
@@ -182,14 +198,10 @@ export namespace logger {
      * @returns void
      */
     function logToFile(message: string) {
-
         try {
-            // Create the log directory if it doesn't exist
             const logDir = path.dirname(logFilePath);
             fs.mkdirSync(logDir, { recursive: true });
             rotateLogFile();
-
-            // Append the log message to the file
             fs.appendFileSync(logFilePath, message + '\n');
         } catch (error) {
             outputChannel.appendLine(`${LOG_LEVELS_SLUG.ERROR}: Failed to write log to file: ${(error as Error).message}`);
