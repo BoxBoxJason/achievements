@@ -1,8 +1,19 @@
 
+/**
+ * Migrations for the database schema, contains the initial schema and any future migrations.
+ * Tables are defined here
+ *
+ * @module migrations
+ * @requires better-sqlite3
+ * @see logger
+ *
+ * @author BoxBoxJason
+ */
 import BetterSqlite3 from 'better-sqlite3';
 import logger from "../../utils/logger";
 
-
+// ==================== TYPES ====================
+// Migration object type
 interface Migration {
   version: number;
   description: string;
@@ -10,7 +21,17 @@ interface Migration {
   down: () => void;
 }
 
-export function applyMigration(db: BetterSqlite3.Database, wantedVersion: number) {
+// ==================== MODULE FUNCTIONS ====================
+
+/**
+ * Applies the migration to the database
+ *
+ * @param {BetterSqlite3.Database} db - The database to apply the migration to
+ * @param {number} wantedVersion - The version to migrate to
+ *
+ * @returns {void}
+ */
+export function applyMigration(db: BetterSqlite3.Database, wantedVersion: number = -1): void {
   const migrations: { [key: number]: Migration } = {
     1: {
       version: 1,

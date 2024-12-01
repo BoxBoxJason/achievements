@@ -1,11 +1,32 @@
+/**
+ * File events listeners for achievements extension
+ *
+ * @namespace fileListeners
+ * @author BoxBoxJason
+ */
+
 import * as vscode from 'vscode';
 import { ProgressionController } from '../database/controller/progressions';
 import { constants } from '../constants';
 import path from 'path';
 
+/**
+ * File related events listeners functions and handlers
+ *
+ * @namespace fileListeners
+ * @function createFileListeners - Create file related events listeners
+ * @function handleCreateEvent - Handler for file creation event
+ * @function handleDeleteEvent - Handler for file deletion event
+ */
 export namespace fileListeners {
 
-  export function createFileListeners(context: vscode.ExtensionContext) {
+  /**
+   * Create file related events listeners
+   *
+   * @param {vscode.ExtensionContext} context - Extension context
+   * @returns {void}
+   */
+  export function createFileListeners(context: vscode.ExtensionContext) : void {
     // Watcher for resources
     const resourcesWatcher = vscode.workspace.createFileSystemWatcher('**/*', false, false, false);
 
@@ -13,6 +34,14 @@ export namespace fileListeners {
     resourcesWatcher.onDidDelete(handleDeleteEvent);
   }
 
+  /**
+   * Handler for file creation event
+   *
+   * @memberof fileListeners
+   *
+   * @param {vscode.Uri} uri - Uri of the created file
+   * @returns {void}
+   */
   function handleCreateEvent(uri: vscode.Uri): void {
     const stats = vscode.workspace.fs.stat(uri);
     stats.then((stat) => {
@@ -35,7 +64,14 @@ export namespace fileListeners {
     });
   }
 
-
+  /**
+   * Handler for file deletion event
+   *
+   * @memberof fileListeners
+   *
+   * @param {vscode.Uri} uri - Uri of the deleted file
+   * @returns {void}
+   */
   function handleDeleteEvent(uri: vscode.Uri): void {
     ProgressionController.increaseProgression(constants.criteria.RESOURCE_DELETED);
   }

@@ -1,5 +1,8 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
+/**
+ * Achievements extension for Visual Studio Code main file
+ *
+ * @author BoxBoxJason
+ */
 import * as vscode from 'vscode';
 import { db_model } from './database/model/model';
 import logger from './utils/logger';

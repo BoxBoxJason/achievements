@@ -1,11 +1,27 @@
+/**
+ * Progressions Controller module
+ *
+ * @namespace ProgressionsController
+ * @author BoxBoxJason
+ */
+
 import { awardAchievement } from "../../listeners/awarder";
 import logger from "../../utils/logger";
 import Progression from "../model/tables/Progression";
 
+// ==================== TYPES ====================
 export interface ProgressionDict {
   [key: string]: string | number | Date | boolean;
 }
 
+// ==================== MODULE FUNCTIONS ====================
+/**
+ * Progression Controller module functions
+ * @namespace ProgressionController
+ *
+ * @function progressionsToObject - Convert a list of progressions to a dictionary
+ * @function increaseProgression - Increase the progression value of a criteria and check if any achievements have been unlocked
+ */
 export namespace ProgressionController {
 
   /**
