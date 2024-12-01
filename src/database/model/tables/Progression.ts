@@ -47,7 +47,7 @@ export interface ProgressionSelectRequestFilters {
  * @default Progression
  */
 class Progression {
-  private id?: number;
+  public id?: number;
   public name: string;
   public value: string | number | Date | boolean;
   public type: string;
@@ -56,50 +56,6 @@ class Progression {
     (name,value,"type") VALUES (?,?,?)
     ON CONFLICT(name) DO UPDATE SET
       "type" = excluded."type"`;
-
-  public static readonly RAW_UPDATE_QUERY = `
-    -- Update the Progression value and return progression ID
-    WITH updated_progression AS (
-      UPDATE progressions
-      SET value = UPDATE_STRATEGY_PLACEHOLDER
-      WHERE PROGRESSION_SELECTOR_PLACEHOLDER
-      RETURNING id AS progression_id, value AS updated_value
-    ),
-    -- Find achievements impacted by the updated progression
-    impacted_achievements AS (
-      SELECT DISTINCT a.id AS achievement_id
-      FROM achievements a
-      JOIN achievement_criterias ac ON a.id = ac.achievement_id
-      LEFT JOIN achievement_requirements ar ON a.id = ar.achievement_id
-      LEFT JOIN achievements required ON ar.requirement_id = required.id
-      JOIN updated_progression up ON ac.progression_id = up.progression_id
-      WHERE a.achieved = FALSE
-        AND (required.id IS NULL OR required.achieved = TRUE) -- All requirements met
-    ),
-    -- Validate criteria for each impacted achievement
-    valid_achievements AS (
-      SELECT ia.achievement_id
-      FROM impacted_achievements ia
-      JOIN achievement_criterias ac ON ia.achievement_id = ac.achievement_id
-      JOIN progressions p ON ac.progression_id = p.id
-      WHERE
-        CASE ac.comparison_operator
-          WHEN '=' THEN p.value = ac.required_value
-          WHEN '<' THEN p.value < ac.required_value
-          WHEN '>' THEN p.value > ac.required_value
-          WHEN '<=' THEN p.value <= ac.required_value
-          WHEN '>=' THEN p.value >= ac.required_value
-          ELSE 0
-        END
-      GROUP BY ia.achievement_id
-      HAVING COUNT(*) = (SELECT COUNT(*) FROM achievement_criterias WHERE achievement_id = ia.achievement_id)
-    )
-    -- Mark validated achievements as achieved and return their details
-    UPDATE achievements
-    SET achieved = TRUE, achievedAt = CURRENT_TIMESTAMP
-    WHERE id IN (SELECT achievement_id FROM valid_achievements)
-    RETURNING id AS achievement_id, title, icon, category, "group", labels, description, tier, points, hidden, repeatable, achieved, achievedAt;
-  `;
 
   constructor(data: ProgressionDict) {
     this.name = data.name;
@@ -254,7 +210,7 @@ class Progression {
    * @returns {{[key: string]: any}[]} - An array of updated progressions
    */
   static addValue(filters: ProgressionSelectRequestFilters, value: number | string = 1): { id: number }[] {
-    const addValueQuery = `
+    const ADD_VALUE_QUERY = `
       UPDATE progressions
       SET value =
         CASE
@@ -273,7 +229,7 @@ class Progression {
     const db = db_model.openDB();
     const [selectorColumn, selectorValue] = parseUpdateFilters(filters);
 
-    return db.prepare(addValueQuery.replace('SELECTOR_PLACEHOLDER', selectorColumn)).all([value, value, value, value, value, value, selectorValue]) as { id: number }[];
+    return db.prepare(ADD_VALUE_QUERY.replace('SELECTOR_PLACEHOLDER', selectorColumn)).all([value, value, value, value, value, value, selectorValue]) as { id: number }[];
   }
 
   /**
@@ -287,12 +243,18 @@ class Progression {
    * @param {string} value - The new value of the progression.
    * @returns {AchievementRow[]} - An array of newly achieved achievements.
    */
-  static updateValue(filters: ProgressionSelectRequestFilters, value: string): { [key: string]: any }[] {
+  static updateValue(filters: ProgressionSelectRequestFilters, value: string): { id: number }[] {
+    const UPDATE_VALUE_QUERY = `
+      UPDATE progressions
+      SET value = ?
+      WHERE SELECTOR_PLACEHOLDER
+      RETURNING id;
+      `;
     let [selectorColumn, selectorValue] = parseUpdateFilters(filters);
-    let query = Progression.RAW_UPDATE_QUERY.replace('PROGRESSION_SELECTOR_PLACEHOLDER', selectorColumn).replace('UPDATE_STRATEGY_PLACEHOLDER', '?');
+    let query = UPDATE_VALUE_QUERY.replace('SELECTOR_PLACEHOLDER', selectorColumn);
 
     const db = db_model.openDB();
-    return db.prepare(query).all([value, selectorValue]) as { [key: string]: any }[];
+    return db.prepare(query).all([value, selectorValue]) as { id: number }[];
   }
 
   // ==================== GET ====================
