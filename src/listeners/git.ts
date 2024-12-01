@@ -15,7 +15,7 @@ import { constants } from '../constants';
  * Git related events listeners functions and handlers
  *
  * @namespace gitListeners
- * @function createGitListeners - Create git related events listeners
+ * @function activate - Create git related events listeners
  */
 export namespace gitListeners {
 
@@ -25,7 +25,8 @@ export namespace gitListeners {
    * @param {vscode.ExtensionContext} context - Extension context
    * @returns {void}
    */
-  export function createGitListeners(context: vscode.ExtensionContext) : void {
+  export function activate(context: vscode.ExtensionContext) : void {
+    logger.debug('Activating git listeners');
     const gitExtension = vscode.extensions.getExtension('vscode.git')?.exports as GitExtension;
     if (!gitExtension) {
       logger.error('Git extension not found, git listeners will not be created');
@@ -52,6 +53,8 @@ export namespace gitListeners {
     gitAPI.onDidPublish(() => {
       ProgressionController.increaseProgression(constants.criteria.PUSHES);
     }, null, context.subscriptions);
+
+    logger.debug('Git listeners activated');
   }
 
 }

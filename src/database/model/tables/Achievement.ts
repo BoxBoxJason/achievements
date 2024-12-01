@@ -286,7 +286,7 @@ class Achievement {
    * @param {StackingAchievementTemplate} template - The template to create the achievements from
    * @returns
    */
-  static fromStackingTemplateToDB(template: StackingAchievementTemplate): void {
+  static fromStackingTemplateToDB(template: StackingAchievementTemplate, multiplier : number = 1): void {
     const {
       title,
       iconDir,
@@ -320,7 +320,7 @@ class Achievement {
       let currentDescription = description;
       for (let i = 0; i < criterias.length; i++) {
         const value = criteriasFunctions[i](tier);
-        criteriaMap[criterias[i]] = value;
+        criteriaMap[criterias[i]] = value * multiplier;
         currentDescription = currentDescription.replace(criterias[i], String(value));
       }
 
