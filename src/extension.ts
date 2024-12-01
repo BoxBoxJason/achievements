@@ -5,7 +5,8 @@ import { db_model } from './database/model/model';
 import logger from './utils/logger';
 import { config } from './config/config';
 import { AchievementsWebview } from './views/management';
-import { listeners } from './listeners/files';
+import { fileListeners } from './listeners/files';
+import { gitListeners } from './listeners/git';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -77,7 +78,9 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(showAchievementsCommand);
 
 	// ==================== LISTENERS ====================
-	listeners.createFileListeners(context);
+	fileListeners.createFileListeners(context);
+
+	gitListeners.createGitListeners(context);
 }
 
 // This method is called when your extension is deactivated
