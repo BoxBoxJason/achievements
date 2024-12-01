@@ -1,5 +1,6 @@
 {
 	"compilerOptions": {
+		"typeRoots": ["./node_modules/@types", "./typings"],
 		"module": "Node16",
 		"jsx": "react-jsx",
 		"target": "ES2022",

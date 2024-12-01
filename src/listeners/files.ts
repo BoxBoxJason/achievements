@@ -1,10 +1,9 @@
 import * as vscode from 'vscode';
-import logger from '../utils/logger';
 import { ProgressionController } from '../database/controller/progressions';
 import { constants } from '../constants';
 import path from 'path';
 
-export namespace listeners {
+export namespace fileListeners {
 
   export function createFileListeners(context: vscode.ExtensionContext) {
     // Watcher for resources
