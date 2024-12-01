@@ -68,6 +68,22 @@ export namespace StackingTemplates {
         requires: [],
       }));
 
+    export const filesRenamedCountTemplate = (): StackingAchievementTemplate => ({
+      title: 'Please Bro, Just One more Refactor %d',
+      iconDir: 'renamer',
+      category: constants.category.FILES,
+      group: 'Files Renamed',
+      labels: [constants.category.FILES, constants.labels.RESOURCE_CREATED],
+      criterias: [constants.criteria.FILES_RENAMED],
+      criteriasFunctions: [STANDARD_INFERNAL_CRITERIA_FUNCTION],
+      description: `Rename or Move ${constants.criteria.FILES_RENAMED} files`,
+      minTier: 0,
+      maxTier: 10,
+      pointsFunction: STANDARD_POINTS_FUNCTION,
+      hidden: false,
+      requires: [],
+    });
+
     export const directoriesCreatedTemplate = (): StackingAchievementTemplate => ({
       title: 'Shaper %d',
       iconDir: 'mover',
@@ -268,17 +284,17 @@ export namespace StackingTemplates {
       requires: [],
     });
 
-    export const timeSpentTemplate = (): StackingAchievementTemplate => ({
+    export const totalTimeSpentTemplate = (): StackingAchievementTemplate => ({
       title: 'Shower Avoider %d',
       iconDir: 'shower_avoider',
       category: constants.category.PRODUCTIVITY,
       group: 'Time Spent',
       labels: [constants.category.PRODUCTIVITY, constants.labels.TIME_SPENT],
-      criterias: [constants.criteria.TIME_SPENT],
+      criterias: [constants.criteria.TOTAL_TIME_SPENT],
       criteriasFunctions: [STANDARD_INFERNAL_CRITERIA_FUNCTION],
-      description: `Spend ${constants.criteria.TIME_SPENT} hours coding`,
+      description: `Spend ${constants.criteria.TOTAL_TIME_SPENT} hours coding`,
       minTier: 0,
-      maxTier: 15,
+      maxTier: 13,
       pointsFunction: STANDARD_POINTS_FUNCTION,
       hidden: false,
       requires: [],
