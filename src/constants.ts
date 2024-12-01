@@ -6,39 +6,39 @@ import path from 'path';
 
 export namespace constants {
   //////////////////////// CATEGORIES ////////////////////////
-  export const category = {
-    FILES: 'files',
-    GIT: 'git',
-    PRODUCTIVITY: 'productivity',
-    VSCODE: 'vscode'
-  } as const;
+  export const enum category {
+    FILES= 'files',
+    GIT= 'git',
+    PRODUCTIVITY= 'productivity',
+    VSCODE= 'vscode'
+  };
 
   //////////////////////// CRITERIAS ////////////////////////
-  export const criteria = {
-    LINES_OF_CODE: 'linesOfCodeCount',
-    LINES_OF_CODE_LANGUAGE: 'linesOfCodeCount_%s',
-    LINES_OF_COMMENTS: 'linesOfCommentsCount',
-    NUMBER_OF_PASTES: 'pastesCount',
-    ERRORS_FIXED: 'errorsFixedCount',
-    DIRECTORY_CREATED: 'directoryCreatedCount',
-    RESOURCE_DELETED: 'resourceDeletedCount',
-    FILES_CREATED: 'filesCreatedCount',
-    FILES_CREATED_LANGUAGE: 'filesCreatedCount_%s',
-    COMMITS: 'commitsCount',
-    BRANCHES_CREATED: 'branchesCreatedCount',
-    MERGES_AND_REBASES: 'mergesAndRebasesCount',
-    AMENDS: 'amendsCount',
-    FORCED_PUSHES: 'forcedPushesCount',
-    PUSHES: 'pushesCount',
-    NUMBER_OF_SIMULTANEOUS_TABS: 'simultaneousTabsCount',
-    TIME_SPENT: 'timeSpentCount',
-    EXTENSIONS_INSTALLED: 'extensionsInstalledCount',
-    EXTENSIONS_OUTDATED: 'extensionsOutdatedCount',
-    THEMES_INSTALLED: 'themesInstalledCount',
-    DEBUGGER_SESSIONS: 'debuggerSessionsCount',
-    TERMINAL_COMMANDS: 'terminalCommandsCount',
-    CODE_SNIPPETS: 'codeSnippetsCount',
-  } as const;
+  export const enum criteria {
+    LINES_OF_CODE= 'linesOfCodeCount',
+    LINES_OF_CODE_LANGUAGE= 'linesOfCodeCount_%s',
+    LINES_OF_COMMENTS= 'linesOfCommentsCount',
+    NUMBER_OF_PASTES= 'pastesCount',
+    ERRORS_FIXED= 'errorsFixedCount',
+    DIRECTORY_CREATED= 'directoryCreatedCount',
+    RESOURCE_DELETED= 'resourceDeletedCount',
+    FILES_CREATED= 'filesCreatedCount',
+    FILES_CREATED_LANGUAGE= 'filesCreatedCount_%s',
+    COMMITS= 'commitsCount',
+    BRANCHES_CREATED= 'branchesCreatedCount',
+    MERGES_AND_REBASES= 'mergesAndRebasesCount',
+    AMENDS= 'amendsCount',
+    FORCED_PUSHES= 'forcedPushesCount',
+    PUSHES= 'pushesCount',
+    NUMBER_OF_SIMULTANEOUS_TABS= 'simultaneousTabsCount',
+    TIME_SPENT= 'timeSpentCount',
+    EXTENSIONS_INSTALLED= 'extensionsInstalledCount',
+    EXTENSIONS_OUTDATED= 'extensionsOutdatedCount',
+    THEMES_INSTALLED= 'themesInstalledCount',
+    DEBUGGER_SESSIONS= 'debuggerSessionsCount',
+    TERMINAL_COMMANDS= 'terminalCommandsCount',
+    CODE_SNIPPETS= 'codeSnippetsCount',
+  };
 
   //////////////////////// LABELS ////////////////////////
   export const labels = {
