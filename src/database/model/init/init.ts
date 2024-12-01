@@ -1,5 +1,14 @@
 /**
- * Main function for creating achievements from stacking templates.
+ * Database init module
+ *
+ * @namespace db_init
+ * @description This module initializes the database with default achievements and progressions
+ * @see Achievement
+ * @see StackingTemplates
+ * @see Progression
+ * @see constants
+ * @see logger
+ * @author BoxBoxJason
  */
 
 import Achievement from '../tables/Achievement';
@@ -8,9 +17,24 @@ import Progression from '../tables/Progression';
 import { constants } from '../../../constants';
 import logger from '../../../utils/logger';
 
-
+/**
+ * Database init module functions
+ *
+ * @namespace db_init
+ *
+ * @function activate - Initializes the database with default achievements and progressions
+ * @function createAchievementsFromStackingTemplates - Creates achievements from the stacking templates
+ * @function createIntegerProgressions - Creates integer progressions
+ */
 export namespace db_init {
 
+  /**
+   * Creates default achievements from the stacking templates
+   *
+   * @memberof db_init
+   *
+   * @returns {void}
+   */
   function createAchievementsFromStackingTemplates() {
     // Create the achievements from the stacking templates
     logger.debug('Creating achievements from stacking templates');
@@ -82,9 +106,9 @@ export namespace db_init {
     logger.debug('Creating amends achievements');
     Achievement.fromStackingTemplateToDB(StackingTemplates.git.amendsTemplate());
 
-    // Forced Pushes
-    logger.debug('Creating forced pushes achievements');
-    Achievement.fromStackingTemplateToDB(StackingTemplates.git.forcedPushesTemplate());
+    // // Forced Pushes
+    // logger.debug('Creating forced pushes achievements');
+    // Achievement.fromStackingTemplateToDB(StackingTemplates.git.forcedPushesTemplate());
 
     // Pushes
     logger.debug('Creating pushes achievements');
@@ -104,6 +128,13 @@ export namespace db_init {
     Achievement.fromStackingTemplateToDB(StackingTemplates.vscode.themesInstalledTemplate());
   }
 
+  /**
+   * Creates default integer progressions in the database
+   *
+   * @memberof db_init
+   *
+   * @returns {void}
+   */
   function createIntegerProgressions() {
     logger.debug('Creating integer progressions');
     let progressions: Progression[] = [];
@@ -139,6 +170,13 @@ export namespace db_init {
     Progression.toDB(progressions);
   }
 
+  /**
+   * Initializes the database with default achievements and progressions
+   *
+   * @memberof db_init
+   *
+   * @returns {void}
+   */
   export function activate() {
     logger.info('Populating database with default achievements and progressions');
     createIntegerProgressions();

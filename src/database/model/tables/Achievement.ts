@@ -1,18 +1,18 @@
 /**
- * Achievement class definition and methods
+ * Achievement class definition and methods, used for database operations
  *
- * Contains JSON output method
- * Contains builder method to create achievements from a template
- * @module Achievement
+ * @class Achievement
  * @author BoxBoxJason
- * @date 2024-11-11
  */
 
 import * as path from 'path';
 import { db_model } from '../model';
 import { parseValue } from '../../../utils/types';
 
-interface StackingAchievementTemplate {
+// ==================== TYPES ====================
+
+// Stacking achievement template, used to create a list of achievements
+export interface StackingAchievementTemplate {
   title: string;
   iconDir: string;
   category: string;
@@ -27,7 +27,7 @@ interface StackingAchievementTemplate {
   hidden: boolean;
   requires: number[];
 }
-
+// Achievement dictionary, used to create an achievement
 export interface AchievementDict {
   id?: number;
   title: string;
@@ -45,7 +45,7 @@ export interface AchievementDict {
   achieved?: boolean;
   achievedAt?: Date;
 }
-
+// Achievement select request filters, used to filter achievements
 export interface AchievementSelectRequestFilters {
   offset?: number;
   limit?: number;
@@ -61,7 +61,7 @@ export interface AchievementSelectRequestFilters {
   sortDirection?: string;
   count?: boolean;
 }
-
+// Achievement row, used to represent an achievement row from the database
 interface RawAchievementRow {
   id: number;
   title: string;
@@ -79,7 +79,7 @@ interface RawAchievementRow {
   requirements: string;
   criteria: string;
 }
-
+// Achievement row, used to represent an achievement row from the database
 export interface AchievementRow {
   id: number;
   title: string;
@@ -130,7 +130,7 @@ export interface AchievementRow {
  * @method getAchievements - Retrieves achievements based on a list of criterias
  */
 class Achievement {
-
+  // ==================== CLASS VARIABLES ====================
   public static readonly ACHIEVEMENT_INSERT_QUERY = `INSERT INTO achievements
     (title, icon, category, "group", description, tier, points, hidden, repeatable, achieved, achievedAt)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -187,6 +187,7 @@ class Achievement {
     `;
   private static ICONS_DIR = path.join('icons', 'achievements');
 
+  // ==================== PROPERTIES ====================
   public id?: number;
   public title: string;
   public icon: string;
@@ -633,7 +634,16 @@ class Achievement {
     return { count, achievements };
   }
 
-
+  /**
+   * Retrieves achievements based on a list of criterias
+   *
+   * @static
+   * @memberof Achievement
+   * @method getAchievements
+   *
+   * @param {AchievementSelectRequestFilters} filters - The filters to apply
+   * @returns {Achievement[]} - The list of achievements
+   */
   static getAchievements(filters: AchievementSelectRequestFilters): { count: number | null, achievements: Achievement[] } {
     const { count, achievements } = Achievement.getAchievementsRawFormat(filters);
     return {
@@ -642,19 +652,46 @@ class Achievement {
     };
   }
 
-
+  // ==================== DATABASE ====================
+  /**
+   * Retrieves the available groups from the database
+   *
+   * @static
+   * @memberof Achievement
+   * @method getGroups
+   *
+   * @returns {string[]} - The list of groups
+   */
   static getGroups(): string[] {
     const db = db_model.openDB();
     const rows = db.prepare('SELECT DISTINCT "group" FROM achievements').all();
     return rows.map((row) => (row as any).group);
   }
 
+  /**
+   * Retrieves the available categories from the database
+   *
+   * @static
+   * @memberof Achievement
+   * @method getCategories
+   *
+   * @returns {string[]} - The list of categories
+   */
   static getCategories(): string[] {
     const db = db_model.openDB();
     const rows = db.prepare('SELECT DISTINCT category FROM achievements').all();
     return rows.map((row) => (row as any).category);
   }
 
+  /**
+   * Retrieves the available labels from the database
+   *
+   * @static
+   * @memberof Achievement
+   * @method getLabels
+   *
+   * @returns {string[]} - The list of labels
+   */
   static getLabels(): string[] {
     const db = db_model.openDB();
     const rows = db.prepare('SELECT DISTINCT label FROM achievement_labels').all();
@@ -664,4 +701,3 @@ class Achievement {
 }
 
 export default Achievement;
-export { StackingAchievementTemplate };

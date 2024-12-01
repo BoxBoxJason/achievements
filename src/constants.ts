@@ -1,9 +1,16 @@
 /**
- * constants module stores the shared constants for the achievements builder
+ * constants module stores the shared constants for the achievements extension
+ *
+ * @author BoxBoxJason
  */
 
 import path from 'path';
 
+/**
+ * Constants for the achievements extension
+ *
+ * @namespace constants
+ */
 export namespace constants {
   //////////////////////// CATEGORIES ////////////////////////
   export const enum category {

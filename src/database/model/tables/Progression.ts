@@ -1,26 +1,29 @@
 /**
  * Progression database model, represents each achievement criteria value
+ *
+ * @class Progression
  * @author: BoxBoxJason
- * @date 2024-11-11
  */
 
-import logger from '../../../utils/logger';
 import { db_model } from '../model';
 
+// ==================== TYPES ====================
+
+// Progression dictionary, defines the structure of the progression object, always json serializable
 interface ProgressionDict {
   id?: number;
   name: string;
   value: string | number | Date | boolean;
   type: string;
 }
-
+// Progression row, represents a progression in raw format
 interface ProgressionRow {
   id: number;
   name: string;
   value: string;
   type: string;
 }
-
+// Progression select request filters, defines the structure of the filters object
 export interface ProgressionSelectRequestFilters {
   offset?: number;
   limit?: number;
@@ -187,6 +190,17 @@ class Progression {
 
   // ==================== UPDATE ====================
 
+  /**
+   * Achieves achievements related to specific progressions if their criteria are met.
+   * Returns an array of newly achieved achievements.
+   *
+   * @memberof Progression
+   * @method achieveCompletedAchievements
+   * @static
+   *
+   * @param {number[]} progressionIds - The IDs of the progressions to process.
+   * @returns {{ id: number; title: string; achievedAt: string }[]} - An array of newly achieved achievements.
+   */
   static achieveCompletedAchievements(progressionIds: number[]): { id: number; title: string; achievedAt: string }[] {
     if (progressionIds.length === 0) {
       return []; // No progressions to process
