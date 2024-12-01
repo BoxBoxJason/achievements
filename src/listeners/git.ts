@@ -1,12 +1,31 @@
+/**
+ * Git events listeners for achievements extension
+ *
+ * @namespace gitListeners
+ * @author BoxBoxJason
+ */
+
 import * as vscode from 'vscode';
 import type { GitExtension, Repository } from '../../types/git';
 import logger from '../utils/logger';
 import { ProgressionController } from '../database/controller/progressions';
 import { constants } from '../constants';
 
+/**
+ * Git related events listeners functions and handlers
+ *
+ * @namespace gitListeners
+ * @function createGitListeners - Create git related events listeners
+ */
 export namespace gitListeners {
 
-  export function createGitListeners(context: vscode.ExtensionContext) {
+  /**
+   * Create git related events listeners
+   *
+   * @param {vscode.ExtensionContext} context - Extension context
+   * @returns {void}
+   */
+  export function createGitListeners(context: vscode.ExtensionContext) : void {
     const gitExtension = vscode.extensions.getExtension('vscode.git')?.exports as GitExtension;
     if (!gitExtension) {
       logger.error('Git extension not found, git listeners will not be created');
