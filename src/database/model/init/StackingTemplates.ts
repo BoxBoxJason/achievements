@@ -1,12 +1,19 @@
 /**
  * Stacking Achievements Templates represents achievements that are based on a stacking criteria.
+ *
+ * @namespace StackingTemplates
+ * @see constants
  * @author: BoxBoxJason
- * @date 2024-11-11
  */
 
 import { constants } from '../../../constants';
 import { StackingAchievementTemplate } from '../tables/Achievement';
 
+/**
+ * Stacking Achievements Templates namespace
+ *
+ * @namespace StackingTemplates
+ */
 export namespace StackingTemplates {
   //////////////////////// CRITERIA FUNCTIONS ////////////////////////
   export const STANDARD_EASY_CRITERIA_FUNCTION = (x: number) => 10 ** x;
@@ -15,8 +22,19 @@ export namespace StackingTemplates {
   export const STANDARD_INFERNAL_CRITERIA_FUNCTION = (x: number) => (2 ** Math.max(0, (x - 1) >> 1)) * (3 ** (x === 1 ? 1 : 0)) * (5 ** (x >> 1));
   export const STANDARD_POINTS_FUNCTION = STANDARD_INFERNAL_CRITERIA_FUNCTION;
 
+  /**
+   * Files stacking templates, achievements based on files criteria
+   *
+   * @namespace files
+   * @memberof StackingTemplates
+   *
+   * @function filesCreatedTemplate - Files created stacking template
+   * @function filesCreatedLanguageTemplates - Files created by language stacking templates
+   * @function directoriesCreatedTemplate - Directories created stacking template
+   * @function resourceDeletedTemplate - Resource deleted stacking template
+   */
   export namespace files {
-    //////////////////////// FILES STACKING TEMPLATES ////////////////////////
+
     export const filesCreatedTemplate = (): StackingAchievementTemplate => ({
       title: 'Creator %d',
       iconDir: 'creator',
@@ -150,24 +168,8 @@ export namespace StackingTemplates {
       requires: [],
     });
 
-    export const forcedPushesTemplate = (): StackingAchievementTemplate => ({
-      title: 'Good Luck Everyone %d',
-      iconDir: 'forcer',
-      category: constants.category.GIT,
-      group: 'Forced Pushes',
-      labels: [constants.category.GIT, constants.labels.FORCED_PUSHES],
-      criterias: [constants.criteria.FORCED_PUSHES],
-      criteriasFunctions: [STANDARD_INFERNAL_CRITERIA_FUNCTION],
-      description: `Force push ${constants.criteria.FORCED_PUSHES} times`,
-      minTier: 0,
-      maxTier: 10,
-      pointsFunction: STANDARD_POINTS_FUNCTION,
-      hidden: false,
-      requires: [],
-    });
-
     export const pushesTemplate = (): StackingAchievementTemplate => ({
-      title: 'Ship fast, talk later %d',
+      title: 'Product Shipping %d',
       iconDir: 'pusher',
       category: constants.category.GIT,
       group: 'Pushes',

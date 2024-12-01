@@ -1,14 +1,24 @@
 /**
  * Achievements controller contains functions to interact with achievements and progressions
  *
- * @module achievements
+ * @namespace AchievementController
  * @author BoxBoxJason
- * @date 2024-11-12
  */
 
 import { queries } from '../../views/viewconst';
 import Achievement, { AchievementRow, AchievementSelectRequestFilters } from '../model/tables/Achievement';
 
+// ==================== MODULE FUNCTIONS ====================
+/**
+ * Achievement controller module
+ * @namespace AchievementController
+ *
+ * @function getAchievableAchievementsByCriterias - Retrieve all achievements that are achievable by the given criterias
+ * @function getAchievements - Retrieve achievements in a raw format given a set of filters
+ * @function getJsonAchievements - Retrieve achievements in a raw format given a set of filters
+ * @function getJsonFilters - Retrieve the categories, groups, and labels of all achievements
+ * @function parseFilters - Parse the filters and set default values if necessary
+ */
 export namespace AchievementController {
   // ==================== GET FUNCTIONS ====================
 
@@ -33,24 +43,60 @@ export namespace AchievementController {
    *
    * @param {AchievementSelectRequestFilters} filters - The filters to apply
    * @returns {Achievement[]} - The list of achievements
+   * @throws {Error} - If the filters are invalid
+   * @throws {Error} - If the sort criteria is invalid
+   * @throws {Error} - If the sort direction is invalid
+   * @throws {Error} - If the limit is negative
    */
   export function getAchievements(filters: AchievementSelectRequestFilters): { count : number | null, achievements: Achievement[]} {
     filters = parseFilters(filters);
     return Achievement.getAchievements(filters);
   }
 
-
+  /**
+   * Retrieve achievements in a raw format given a set of filters
+   *
+   * @memberof achievements
+   * @function getJsonAchievements
+   *
+   * @param {AchievementSelectRequestFilters} filters - The filters to apply
+   * @returns {AchievementRow[]} - The list of achievements
+   * @throws {Error} - If the filters are invalid
+   * @throws {Error} - If the sort criteria is invalid
+   * @throws {Error} - If the sort direction is invalid
+   * @throws {Error} - If the limit is negative
+   * @throws {Error} - If the offset is negative
+   */
   export function getJsonAchievements(filters: AchievementSelectRequestFilters): { count : number | null, achievements: AchievementRow[]} {
     filters = parseFilters(filters);
     return Achievement.getAchievementsRawFormat(filters);
   }
 
+  /**
+   * Retrieve the categories, groups, and labels of all achievements
+   *
+   * @memberof achievements
+   * @function getJsonFilters
+   *
+   * @returns {{categories: string[], groups: string[], labels: string[]}} - The categories, groups, and labels
+   */
   export function getJsonFilters() : { categories: string[], groups: string[], labels: string[] } {
     return { categories: Achievement.getCategories(), groups: Achievement.getGroups(), labels: Achievement.getLabels()};
   }
 
-  // ==================== PATCH FUNCTIONS ====================
-
+  /**
+   * Parse the filters and set default values if necessary
+   *
+   * @memberof achievements
+   * @function parseFilters
+   *
+   * @param {AchievementSelectRequestFilters} filters - The filters to parse
+   * @returns {AchievementSelectRequestFilters} - The parsed filters
+   * @throws {Error} - If the sort criteria is invalid
+   * @throws {Error} - If the sort direction is invalid
+   * @throws {Error} - If the limit is negative
+   * @throws {Error} - If the offset is negative
+   */
   function parseFilters(filters: AchievementSelectRequestFilters): AchievementSelectRequestFilters {
     // Set default values for filters
     // If the hidden filter is not provided, set it to false
