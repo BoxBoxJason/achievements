@@ -9,6 +9,7 @@ import * as vscode from 'vscode';
 import { ProgressionController } from '../database/controller/progressions';
 import { constants } from '../constants';
 import path from 'path';
+import logger from '../utils/logger';
 
 /**
  * File related events listeners functions and handlers
@@ -26,12 +27,18 @@ export namespace fileListeners {
    * @param {vscode.ExtensionContext} context - Extension context
    * @returns {void}
    */
-  export function createFileListeners(context: vscode.ExtensionContext) : void {
+  export function activate(context: vscode.ExtensionContext) : void {
+    logger.debug('Activating file listeners');
     // Watcher for resources
     const resourcesWatcher = vscode.workspace.createFileSystemWatcher('**/*', false, false, false);
 
     resourcesWatcher.onDidCreate(handleCreateEvent);
     resourcesWatcher.onDidDelete(handleDeleteEvent);
+
+    vscode.workspace.onDidRenameFiles((event) => {
+      ProgressionController.increaseProgression(constants.criteria.FILES_RENAMED, event.files.length);
+    }, null, context.subscriptions);
+    logger.debug('File listeners activated');
   }
 
   /**

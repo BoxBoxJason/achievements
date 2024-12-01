@@ -64,7 +64,7 @@ export namespace db_init {
 
     // Time Spent Coding
     logger.debug('Creating time spent coding achievements');
-    Achievement.fromStackingTemplateToDB(StackingTemplates.productivity.timeSpentTemplate());
+    Achievement.fromStackingTemplateToDB(StackingTemplates.productivity.totalTimeSpentTemplate(), 3600);
 
     // Number of Simultaneous Tabs
     logger.debug('Creating number of simultaneous tabs achievements');
@@ -84,6 +84,10 @@ export namespace db_init {
     // Directories Created
     logger.debug('Creating directories created achievements');
     Achievement.fromStackingTemplateToDB(StackingTemplates.files.directoriesCreatedTemplate());
+
+    // Files Renamed
+    logger.debug('Creating files renamed achievements');
+    Achievement.fromStackingTemplateToDB(StackingTemplates.files.filesRenamedCountTemplate());
 
     // Resources Deleted
     logger.debug('Creating resources deleted achievements');

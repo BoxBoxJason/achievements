@@ -105,8 +105,15 @@ export function applyMigration(db: BetterSqlite3.Database, wantedVersion: number
               "type" TEXT NOT NULL,
               value TEXT NOT NULL
             )`).run();
-        });
 
+          // Daily session time spent table
+          db.prepare(`
+            CREATE TABLE IF NOT EXISTS daily_sessions (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              date TEXT UNIQUE NOT NULL,
+              duration INTEGER NOT NULL
+            )`).run();
+        });
         createTablesTransaction();
       },
       down: () => {
@@ -116,6 +123,8 @@ export function applyMigration(db: BetterSqlite3.Database, wantedVersion: number
           db.prepare('DROP TABLE IF EXISTS achievement_requirements').run();
           db.prepare('DROP TABLE IF EXISTS progressions').run();
           db.prepare('DROP TABLE IF EXISTS achievement_criterias').run();
+          db.prepare('DROP TABLE IF EXISTS achievement_labels').run();
+          db.prepare('DROP TABLE IF EXISTS daily_sessions').run();
         });
 
         dropTablesTransaction();

@@ -10,6 +10,7 @@ import { config } from './config/config';
 import { AchievementsWebview } from './views/management';
 import { fileListeners } from './listeners/files';
 import { gitListeners } from './listeners/git';
+import { timeListeners } from './listeners/time';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -81,12 +82,13 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(showAchievementsCommand);
 
 	// ==================== LISTENERS ====================
-	fileListeners.createFileListeners(context);
-
-	gitListeners.createGitListeners(context);
+	fileListeners.activate(context);
+	gitListeners.activate(context);
+	timeListeners.activate(context);
 }
 
 // This method is called when your extension is deactivated
 export function deactivate() {
+	timeListeners.deactivate();
 	db_model.deactivate();
 }

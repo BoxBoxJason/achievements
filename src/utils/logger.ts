@@ -160,7 +160,7 @@ export namespace logger {
      */
     function logMessage(level: string, ...args: any[]) {
         const timestamp = getFormattedTime();
-        const logMessage = `${timestamp}: ${level}: ${args.map(arg => formatArg(arg)).join(' ')}`;
+        const logMessage = `ACHIEVEMENTS ${timestamp}: ${level}: ${args.map(arg => formatArg(arg)).join(' ')}`;
 
         outputChannel.appendLine(logMessage);
         console.log(logMessage);
