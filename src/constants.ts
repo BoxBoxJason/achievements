@@ -14,7 +14,7 @@ export namespace constants {
   };
 
   //////////////////////// CRITERIAS ////////////////////////
-  export const enum criteria {
+  export enum criteria {
     LINES_OF_CODE= 'linesOfCodeCount',
     LINES_OF_CODE_LANGUAGE= 'linesOfCodeCount_%s',
     LINES_OF_COMMENTS= 'linesOfCommentsCount',
