@@ -32,9 +32,8 @@ export namespace fileListeners {
     // Watcher for resources
     const resourcesWatcher = vscode.workspace.createFileSystemWatcher('**/*', false, false, false);
 
-    resourcesWatcher.onDidCreate(handleCreateEvent);
-    resourcesWatcher.onDidDelete(handleDeleteEvent);
-
+    resourcesWatcher.onDidCreate(handleCreateEvent, null, context.subscriptions);
+    resourcesWatcher.onDidDelete(handleDeleteEvent, null, context.subscriptions);
     vscode.workspace.onDidRenameFiles((event) => {
       ProgressionController.increaseProgression(constants.criteria.FILES_RENAMED, event.files.length);
     }, null, context.subscriptions);
