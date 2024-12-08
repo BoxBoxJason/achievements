@@ -115,7 +115,6 @@ export namespace StackingTemplates {
       hidden: false,
       requires: [],
     });
-
   }
 
   export namespace git {
@@ -288,7 +287,7 @@ export namespace StackingTemplates {
       title: 'Shower Avoider %d',
       iconDir: 'shower_avoider',
       category: constants.category.PRODUCTIVITY,
-      group: 'Time Spent',
+      group: 'time spent',
       labels: [constants.category.PRODUCTIVITY, constants.labels.TIME_SPENT],
       criterias: [constants.criteria.TOTAL_TIME_SPENT],
       criteriasFunctions: [STANDARD_INFERNAL_CRITERIA_FUNCTION],
@@ -398,23 +397,54 @@ export namespace StackingTemplates {
       hidden: false,
       requires: [],
     });
+
+    export const failedTerminalCommandsTemplate = (): StackingAchievementTemplate => ({
+      title: 'Failure achiever %d',
+      iconDir: 'failed_terminal',
+      category: constants.category.VSCODE,
+      group: 'Terminal Commands',
+      labels: [constants.category.VSCODE, constants.labels.TERMINAL_COMMANDS],
+      criterias: [constants.criteria.FAILED_TERMINAL_COMMANDS],
+      criteriasFunctions: [STANDARD_INFERNAL_CRITERIA_FUNCTION],
+      description: `Get ${constants.criteria.FAILED_TERMINAL_COMMANDS} non zero terminal commands output`,
+      minTier: 0,
+      maxTier: 10,
+      pointsFunction: STANDARD_POINTS_FUNCTION,
+      hidden: false,
+      requires: [],
+    });
+
+    export const successfulTerminalCommandsTemplate = (): StackingAchievementTemplate => ({
+      title: 'Works on my Machine %d',
+      iconDir: 'successful_terminal',
+      category: constants.category.VSCODE,
+      group: 'Terminal Commands',
+      labels: [constants.category.VSCODE, constants.labels.TERMINAL_COMMANDS],
+      criterias: [constants.criteria.SUCCESSFUL_TERMINAL_COMMANDS],
+      criteriasFunctions: [STANDARD_INFERNAL_CRITERIA_FUNCTION],
+      description: `Get ${constants.criteria.SUCCESSFUL_TERMINAL_COMMANDS} zero terminal commands output`,
+      minTier: 0,
+      maxTier: 10,
+      pointsFunction: STANDARD_POINTS_FUNCTION,
+      hidden: false,
+      requires: [],
+    });
+
+    export const codeSnippetsTemplate = (): StackingAchievementTemplate => ({
+      title: 'Snippets Master %d',
+      iconDir: 'code_snippet',
+      category: constants.category.PRODUCTIVITY,
+      group: 'Code Snippets',
+      labels: [constants.category.PRODUCTIVITY, constants.labels.CODE_SNIPPETS],
+      criterias: [constants.criteria.CODE_SNIPPETS],
+      criteriasFunctions: [STANDARD_INFERNAL_CRITERIA_FUNCTION],
+      description: `Use ${constants.criteria.CODE_SNIPPETS} code snippets`,
+      minTier: 0,
+      maxTier: 10,
+      pointsFunction: STANDARD_POINTS_FUNCTION,
+      hidden: false,
+      requires: [],
+    });
   }
-
-  export const codeSnippetsTemplate = (): StackingAchievementTemplate => ({
-    title: 'Snippets Master %d',
-    iconDir: 'code_snippet',
-    category: constants.category.PRODUCTIVITY,
-    group: 'Code Snippets',
-    labels: [constants.category.PRODUCTIVITY, constants.labels.CODE_SNIPPETS],
-    criterias: [constants.criteria.CODE_SNIPPETS],
-    criteriasFunctions: [STANDARD_INFERNAL_CRITERIA_FUNCTION],
-    description: `Use ${constants.criteria.CODE_SNIPPETS} code snippets`,
-    minTier: 0,
-    maxTier: 10,
-    pointsFunction: STANDARD_POINTS_FUNCTION,
-    hidden: false,
-    requires: [],
-  });
-
 
 }
