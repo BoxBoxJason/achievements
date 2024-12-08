@@ -286,7 +286,7 @@ class Achievement {
    * @param {StackingAchievementTemplate} template - The template to create the achievements from
    * @returns
    */
-  static fromStackingTemplateToDB(template: StackingAchievementTemplate, multiplier : number = 1): void {
+  static fromStackingTemplateToDB(template: StackingAchievementTemplate, multiplier: number = 1): void {
     const {
       title,
       iconDir,
@@ -361,16 +361,16 @@ class Achievement {
     for (let i = 0; i < tierTitles.length; i++) {
       // Include template requirements
       requires.forEach((requirementId) => {
-        requirementByIdData.push([requirementId,tierTitles[i]]);
+        requirementByIdData.push([requirementId, tierTitles[i]]);
       });
 
       labels.forEach((label) => {
-        labelsData.push([label,tierTitles[i]]);
+        labelsData.push([label, tierTitles[i]]);
       });
 
       if (i > 0) {
         // Include previous tier as requirement
-        requirementData.push([tierTitles[i - 1],tierTitles[i]]);
+        requirementData.push([tierTitles[i - 1], tierTitles[i]]);
       }
 
     }
@@ -650,6 +650,29 @@ class Achievement {
       count,
       achievements: achievements.map(Achievement.fromRow),
     };
+  }
+
+
+  /**
+ * Retrieves the total number of achievements and the total number of achieved achievements.
+ *
+ * @static
+ * @memberof Achievement
+ * @method getAchievementStats
+ *
+ * @returns {{ totalAchievements: number, achievedCount: number }} - The total achievements and achieved achievements.
+ */
+  static getAchievementStats(): { totalAchievements: number, achievedCount: number } {
+    const db = db_model.openDB();
+
+    // Query to count total achievements and total achieved achievements
+    const query = `
+    SELECT
+      (SELECT COUNT(*) FROM achievements) AS totalAchievements,
+      (SELECT COUNT(*) FROM achievements WHERE achieved = 1) AS achievedCount
+  `;
+
+    return db.prepare(query).get() as { totalAchievements: number, achievedCount: number };
   }
 
   // ==================== DATABASE ====================

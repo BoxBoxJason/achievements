@@ -9,6 +9,7 @@ import path from "path";
 import fs from "fs";
 import logger from "../utils/logger";
 import * as vscode from "vscode";
+import { webview } from "../views/viewconst";
 
 // ==================== TYPES ====================
 // Config interface, defines the structure of the config object, always json serializable
@@ -17,6 +18,7 @@ export interface Config {
   logLevel: string;
   notifications: boolean;
   logDirectory: string;
+  username: string;
 }
 
 // ==================== MODULE VARIABLES ====================
@@ -65,7 +67,8 @@ export namespace config {
         enabled: true,
         logLevel: 'INFO',
         notifications: true,
-        logDirectory: path.join(extensionStorage, 'logs')
+        logDirectory: path.join(extensionStorage, 'logs'),
+        username: webview.DEFAULT_USER,
       };
       initialized = true;
       saveConfig();
@@ -73,6 +76,38 @@ export namespace config {
     logger.setLogLevel(appConfig.logLevel);
     logger.setLogDir(appConfig.logDirectory);
     initialized = true;
+
+    // Prompt the user to set an username if it is the default one
+    if (appConfig.username === webview.DEFAULT_USER) {
+      handleSetUsername();
+    }
+  }
+
+  /**
+   * Prompts the user to set their username
+   *
+   * @memberof config
+   * @function handleSetUsername
+   *
+   * @returns {void}
+   */
+  function handleSetUsername() {
+    vscode.window.showInformationMessage('For a better experience, please set your username', 'Set Username').then((selection) => {
+      if (selection === 'Set Username') {
+        vscode.window.showInputBox({
+          prompt: 'Enter your username',
+          placeHolder: webview.DEFAULT_USER,
+          validateInput: (input) => {
+            return input.trim() ? null : 'Username cannot be empty';
+          }
+        })
+          .then((username) => {
+            if (username) {
+              setUsername(username);
+            }
+          });
+      }
+    });
   }
 
   /**
@@ -211,6 +246,66 @@ export namespace config {
     if (appConfig.notifications) {
       vscode.window.showInformationMessage(notificationMessage);
     }
+  }
+
+  /**
+   * Returns whether the notifications are enabled
+   *
+   * @memberof config
+   * @function notificationsEnabled
+   *
+   * @returns {boolean} - Whether the notifications are enabled
+   * @throws {Error} - If the module has not been initialized
+   */
+  export function notificationsEnabled(): boolean {
+    if (!initialized) {
+      logger.error('Config module not initialized');
+      throw new Error('config module not initialized');
+    }
+    return appConfig.notifications;
+  }
+
+  /**
+   * Sets the username
+   *
+   * @memberof config
+   * @function setUsername
+   *
+   * @param {string} username - The username
+   * @returns {void}
+   * @throws {Error} - If the module has not been initialized
+   * @throws {Error} - If the username is empty
+   */
+  export function setUsername(username: string): void {
+    username = username.trim();
+    if (!initialized) {
+      logger.error('Config module not initialized');
+      throw new Error('config module not initialized');
+    }
+    if (!username) {
+      logger.error('Username cannot be empty');
+      throw new Error('username cannot be empty');
+    }
+    appConfig.username = username;
+    saveConfig();
+    logger.info(`Username set to: ${username}`);
+  }
+
+  /**
+   * Returns the username
+   *
+   * @memberof config
+   * @function getUsername
+   *
+   * @returns {string} - The username
+   * @throws {Error} - If the module has not been initialized
+   */
+  export function getUsername(): string {
+    if (!initialized) {
+      logger.error('Config module not initialized');
+      throw new Error('config module not initialized');
+    }
+    return appConfig.username;
   }
 
 }

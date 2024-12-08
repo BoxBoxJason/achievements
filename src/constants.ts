@@ -50,6 +50,7 @@ export namespace constants {
     DEBUGGER_SESSIONS= 'debuggerSessionsCount',
     TERMINAL_COMMANDS= 'terminalCommandsCount',
     CODE_SNIPPETS= 'codeSnippetsCount',
+    POINTS= 'pointsCount',
   };
 
   //////////////////////// LABELS ////////////////////////
