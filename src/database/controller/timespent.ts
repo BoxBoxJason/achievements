@@ -2,10 +2,19 @@ import { DailySession } from "../model/tables/DailySession";
 import { constants } from '../../constants';
 import logger from "../../utils/logger";
 import { ProgressionController } from "./progressions";
+import Progression from "../model/tables/Progression";
 
-
+/**
+ * Controller for the time spent counters
+ */
 export namespace TimeSpentController {
 
+  /**
+   * Update the time spent counters from the sessions
+   * This function will update the daily, bi-monthly, monthly, yearly and total time spent counters
+   *
+   * @returns void
+   */
   export function updateTimeSpentFromSessions() : void {
     const currentDate = new Date();
     const currentDateString = currentDate.toISOString().split('T')[0];
@@ -41,6 +50,17 @@ export namespace TimeSpentController {
     ProgressionController.updateProgression(constants.criteria.TOTAL_TIME_SPENT, totalDuration.toString());
 
     logger.debug('JOB: Time spent counters updated');
+  }
+
+  /**
+   * Get the time spent counters
+   * This function will return the daily, bi-monthly, monthly, yearly and total time spent counters
+   *
+   * @returns { [key: string]: number } - The time spent counters
+   */
+  export function getTimeSpent(progressions : {[key : string]: number}) : { [key: string]: number } {
+    const toLookFor = [constants.criteria.DAILY_TIME_SPENT, constants.criteria.TWO_WEEKS_TIME_SPENT, constants.criteria.MONTHLY_TIME_SPENT, constants.criteria.YEARLY_TIME_SPENT, constants.criteria.TOTAL_TIME_SPENT] as string[];
+    return Object.fromEntries(Object.entries(progressions).filter(([key, value]) => toLookFor.includes(key)));
   }
 
 }

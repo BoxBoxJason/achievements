@@ -2,6 +2,7 @@ import * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import SearchBar from './components/SearchBar';
 import AchievementHolder from './components/AchievementsHolder';
+import UserStats from './components/UserStats';
 import { webview } from './viewconst';
 import styled, { keyframes } from 'styled-components';
 
@@ -91,12 +92,26 @@ const App: React.FC = () => {
           width: 'fit-content',
           marginLeft: '10px',
           fontSize: '3rem',
-          fontFamily: 'Impact, Haettenschweiler, Arial Narrow Bold, sans-serif',
+          fontFamily: webview.fonts.HEADER_FONT,
           letterSpacing: '2px',
           fontWeight: 'bolder',
         }}>Achievements</h1>
 
       </div>
+
+      <div className='profile-container' style={{
+        width: '80%',
+        minWidth: '400px',
+        maxWidth: '1000px',
+        borderTopLeftRadius: '5px',
+        borderTopRightRadius: '5px',
+        paddingTop: '10px',
+        paddingBottom: '10px',
+        backgroundColor: `${webview.colors.BUTTON_GRAY}44`,
+      }}>
+        <UserStats />
+      </div>
+
       <div className='achievements-container' style={{
         backgroundColor: webview.colors.HOLDER_BACKGROUND_DARK_BLUE,
         width: '80%',
@@ -108,6 +123,7 @@ const App: React.FC = () => {
         justifyContent: 'center',
         gap: 10,
       }}>
+
         {/* Search Bar */}
         <SearchBar
           setFilters={setFilters}
