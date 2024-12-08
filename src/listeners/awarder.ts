@@ -6,6 +6,8 @@
  */
 
 import * as vscode from 'vscode';
+import { config } from '../config/config';
+import logger from '../utils/logger';
 
 /**
  * Award an achievement to the user
@@ -14,10 +16,13 @@ import * as vscode from 'vscode';
  * @returns {void}
  */
 export function awardAchievement(achievement: string): void {
-  vscode.window.showInformationMessage(`🏆 Achievement unlocked: ${achievement}`, 'Browse Achievements')
-    .then((selection) => {
-      if (selection === 'Browse Achievements') {
-        vscode.commands.executeCommand('achievements.show');
-      }
-    });
+  if (config.notificationsEnabled()) {
+    vscode.window.showInformationMessage(`🏆 Achievement unlocked: ${achievement}`, 'Browse Achievements')
+      .then((selection) => {
+        if (selection === 'Browse Achievements') {
+          vscode.commands.executeCommand('achievements.show');
+        }
+      });
+  }
+  logger.info(`Achievement unlocked: ${achievement}`);
 }

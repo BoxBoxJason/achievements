@@ -67,7 +67,7 @@ const UserStats: React.FC = () => {
           textTransform: 'uppercase',
         }}>
           <span>{achievedCount} of {totalAchievements} achievements earned</span>
-          <span>({totalAchievements === 0 ? 100 : (achievedCount / totalAchievements) * 100} %)</span>
+          <span>({(totalAchievements === 0 ? 100 : (achievedCount / totalAchievements) * 100).toFixed(2)}%)</span>
         </div>
         <div className="progress-bar-wrapper" style={{
           width: '100%',

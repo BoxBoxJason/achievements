@@ -172,7 +172,7 @@ class Progression {
    * @param {number[]} progressionIds - The IDs of the progressions to process.
    * @returns {{ id: number; title: string; achievedAt: string }[]} - An array of newly achieved achievements.
    */
-  static achieveCompletedAchievements(progressionIds: number[]): { id: number; title: string; achievedAt: string }[] {
+  static achieveCompletedAchievements(progressionIds: number[]): { id: number; title: string; achievedAt: string, points: number }[] {
     if (progressionIds.length === 0) {
       return []; // No progressions to process
     }
@@ -205,13 +205,13 @@ class Progression {
       UPDATE achievements
       SET achieved = TRUE, achievedAt = CURRENT_TIMESTAMP
       WHERE id IN (SELECT achievement_id FROM valid_achievements)
-      RETURNING id, title, achievedAt;
+      RETURNING id, title, achievedAt, points;
     `;
 
     const db = db_model.openDB();
 
     // Pass the progressionIds as parameters to the query
-    return db.prepare(updateAchievementsQuery).all(progressionIds) as { id: number; title: string; achievedAt: string }[];
+    return db.prepare(updateAchievementsQuery).all(progressionIds) as { id: number; title: string; achievedAt: string; points: number}[];
   }
 
 
@@ -258,8 +258,13 @@ class Progression {
    * @param {string} value - The new value of the progression.
    * @returns {AchievementRow[]} - An array of newly achieved achievements.
    */
-  static updateValue(filters: ProgressionSelectRequestFilters, value: string): { id: number }[] {
-    const UPDATE_VALUE_QUERY = `
+  static updateValue(filters: ProgressionSelectRequestFilters, value: string, maximize : boolean = false): { id: number }[] {
+    const UPDATE_VALUE_QUERY = maximize ? `
+      UPDATE progressions
+      SET value = ?
+      WHERE SELECTOR_PLACEHOLDER AND value < ?
+      RETURNING id;
+      ` : `
       UPDATE progressions
       SET value = ?
       WHERE SELECTOR_PLACEHOLDER
@@ -269,7 +274,7 @@ class Progression {
     let query = UPDATE_VALUE_QUERY.replace('SELECTOR_PLACEHOLDER', selectorColumn);
 
     const db = db_model.openDB();
-    return db.prepare(query).all([value, selectorValue]) as { id: number }[];
+    return db.prepare(query).all(maximize ? [value, selectorValue, value] : [value, selectorValue]) as { id: number }[];
   }
 
   // ==================== GET ====================

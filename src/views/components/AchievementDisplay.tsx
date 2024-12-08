@@ -6,6 +6,13 @@ const AchievementDisplay: React.FC<AchievementDict> = (achievementDict: Achievem
 
   const imageUris = (window as any).imageUris || {}
 
+  const parseDateString = (dateString: string): string => {
+    const splitDate = dateString.split('T');
+    const date = splitDate[0];
+    const time = splitDate[1].split('.')[0];
+    return `${date} @${time}`;
+  };
+
   return (
     <div className='achievement-display' style={{
       display: 'flex',
@@ -67,7 +74,7 @@ const AchievementDisplay: React.FC<AchievementDict> = (achievementDict: Achievem
           color: achievementDict.achieved ? webview.colors.GRAY_TEXT : webview.colors.RED_TEXT,
         }}>
           {achievementDict.achieved && achievementDict.achievedAt
-            ? `Unlocked: ${achievementDict.achievedAt || 'Date not available'}`
+            ? `Unlocked: ${parseDateString(achievementDict.achievedAt as any) || 'Date not available'}`
             : 'Not Achieved'}
         </span>
       </div>
