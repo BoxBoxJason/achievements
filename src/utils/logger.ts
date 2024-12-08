@@ -8,6 +8,7 @@ import { exit } from 'process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { config } from '../config/config';
 
 export namespace logger {
     // Log levels
@@ -95,6 +96,24 @@ export namespace logger {
      * @returns void
      */
     export function info(...args: any[]) {
+        if (logLevel <= LOG_LEVELS.INFO) {
+            logMessage(LOG_LEVELS_SLUG.INFO, ...args);
+        }
+    }
+
+    /**
+     * Logs a notification message and shows a notification (if enabled)
+     *
+     * @memberof logger
+     * @function notify
+     *
+     * @param {any[]} args - The message to log
+     * @returns void
+     */
+    export function notify(...args: any[]) {
+        if (config.notificationsEnabled()) {
+            vscode.window.showInformationMessage(args.join(' '));
+        }
         if (logLevel <= LOG_LEVELS.INFO) {
             logMessage(LOG_LEVELS_SLUG.INFO, ...args);
         }

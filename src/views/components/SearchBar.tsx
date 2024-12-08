@@ -66,7 +66,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ setFilters, limit, setLimit }) =>
     try {
       const data: PostMessage = event.data;
 
-      if (data.command === webview.commands.SET_ACHIEVEMENTS_FILTERS) {
+      if (data.command === webview.commands.DISPLAY_ACHIEVEMENTS_FILTERS) {
         setAvailableLabels(data.data.labels);
       }
     } catch (e) {
