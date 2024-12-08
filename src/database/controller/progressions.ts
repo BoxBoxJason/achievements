@@ -5,6 +5,7 @@
  * @author BoxBoxJason
  */
 
+import { constants } from "../../constants";
 import { awardAchievement } from "../../listeners/awarder";
 import logger from "../../utils/logger";
 import Progression from "../model/tables/Progression";
@@ -59,10 +60,14 @@ export namespace ProgressionController {
     try {
       const updatedProgressionsIds = Progression.addValue({ name: criteriaName }, increase);
       const updatedAchievements = Progression.achieveCompletedAchievements(updatedProgressionsIds.map((progression) => progression.id));
+      let awardedPoints = 0;
       for (let achievement of updatedAchievements) {
         // Notify the user of the unlocked achievement
         awardAchievement(achievement.title);
+        awardedPoints += achievement.points;
       }
+      Progression.addValue({name: constants.criteria.POINTS}, awardedPoints);
+
     } catch (error) {
       logger.error(`Failed to increase progression: ${(error as Error).message}`);
     }
@@ -78,9 +83,9 @@ export namespace ProgressionController {
    * @param {string} value - The new value of the criteria
    * @returns {void}
    */
-  export function updateProgression(criteriaName: string, value: string): void {
+  export function updateProgression(criteriaName: string, value: string | number | Date | boolean, maximize : boolean = false): void {
     try {
-      const updatedProgressionsIds = Progression.updateValue({ name: criteriaName }, value);
+      const updatedProgressionsIds = Progression.updateValue({ name: criteriaName }, value.toString(), maximize);
       const updatedAchievements = Progression.achieveCompletedAchievements(updatedProgressionsIds.map((progression) => progression.id));
       for (let achievement of updatedAchievements) {
         // Notify the user of the unlocked achievement
