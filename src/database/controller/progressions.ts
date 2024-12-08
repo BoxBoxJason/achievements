@@ -33,11 +33,14 @@ export namespace ProgressionController {
    * @param {Progression[]} progressions - The list of progressions to convert
    * @returns {ProgressionDict} - The progressions as a dictionary
    */
-  function progressionsToObject(progressions: Progression[]): ProgressionDict {
+  export function getProgressions(): ProgressionDict {
+
+    const progressions = Progression.getProgressions({});
     let progressionDict: ProgressionDict = Object();
     for (let progression of progressions) {
       progressionDict[progression.name] = progression.value;
     }
+
     return progressionDict;
   }
 
@@ -75,7 +78,7 @@ export namespace ProgressionController {
    * @param {string} value - The new value of the criteria
    * @returns {void}
    */
-  export function updateProgression(criteriaName : string, value : string) : void {
+  export function updateProgression(criteriaName: string, value: string): void {
     try {
       const updatedProgressionsIds = Progression.updateValue({ name: criteriaName }, value);
       const updatedAchievements = Progression.achieveCompletedAchievements(updatedProgressionsIds.map((progression) => progression.id));

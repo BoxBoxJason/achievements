@@ -16,7 +16,7 @@ const AchievementDisplay: React.FC<AchievementDict> = (achievementDict: Achievem
       alignItems: 'center',
       margin: '5px 0',
       padding: '3px',
-      backgroundColor: webview.colors.ACHIEVEMENT_BACKGROUND_GREY,
+      backgroundColor: webview.colors.ACHIEVEMENT_BACKGROUND_GRAY,
     }}
     >
       {/* Icon */}

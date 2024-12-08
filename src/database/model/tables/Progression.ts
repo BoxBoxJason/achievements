@@ -76,10 +76,25 @@ class Progression {
    * @returns {Progression} - An instance of Progression.
    */
   static fromRow(row: any): Progression {
+    let value = row.value as string | number | Date | boolean;
+    switch (row.type) {
+      case 'string': case 'text':
+       value = row.value.toString();
+        break;
+      case 'number': case 'integer': case 'float':
+        value = Number(row.value);
+        break;
+      case 'date': case 'datetime':
+        value = new Date(row.value);
+        break;
+      case 'boolean':
+        value = Boolean(row.value);
+        break;
+    }
     return new Progression({
       id: row.id,
       name: row.name,
-      value: row.value,
+      value,
       type: row.type,
     });
   }
@@ -301,7 +316,6 @@ class Progression {
 
     return db.prepare(query).all(values) as ProgressionRow[];
   }
-
 
   /**
    * Retrieves progressions from the database with the given filters.
