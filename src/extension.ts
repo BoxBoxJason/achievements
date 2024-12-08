@@ -11,6 +11,8 @@ import { AchievementsWebview } from './views/management';
 import { fileListeners } from './listeners/files';
 import { gitListeners } from './listeners/git';
 import { timeListeners } from './listeners/time';
+import { tabListeners } from './listeners/tabs';
+import { terminalListeners } from './listeners/terminal';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -85,6 +87,8 @@ export function activate(context: vscode.ExtensionContext) {
 	fileListeners.activate(context);
 	gitListeners.activate(context);
 	timeListeners.activate(context);
+	tabListeners.activate(context);
+	terminalListeners.activate(context);
 }
 
 // This method is called when your extension is deactivated

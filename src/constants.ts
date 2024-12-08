@@ -49,6 +49,8 @@ export namespace constants {
     THEMES_INSTALLED= 'themesInstalledCount',
     DEBUGGER_SESSIONS= 'debuggerSessionsCount',
     TERMINAL_COMMANDS= 'terminalCommandsCount',
+    FAILED_TERMINAL_COMMANDS= 'failedTerminalCommandsCount',
+    SUCCESSFUL_TERMINAL_COMMANDS= 'successfulTerminalCommandsCount',
     CODE_SNIPPETS= 'codeSnippetsCount',
     POINTS= 'pointsCount',
   };
