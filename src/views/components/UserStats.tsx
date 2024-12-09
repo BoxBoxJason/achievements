@@ -5,7 +5,7 @@ import { PostMessage } from '../request';
 const UserStats: React.FC = () => {
   const [username, setUsername] = useState(webview.DEFAULT_USER);
   const [totalAchievements, setTotalAchievements] = useState(0);
-  const [totalPoints, setTotalPoints] = useState(0);
+  const [totalExp, setTotalExp] = useState(0);
   const [achievedCount, setAchievedCount] = useState(0);
   const [timeSpent, setTimeSpent] = useState({
     [queries.criteria.DAILY_TIME_SPENT]: 0,
@@ -35,7 +35,7 @@ const UserStats: React.FC = () => {
       if (data.command === webview.commands.SET_PROFILE) {
         setUsername(data.data.username);
         setTotalAchievements(data.data.totalAchievements);
-        setTotalPoints(data.data.totalPoints);
+        setTotalExp(data.data.totalExp);
         setAchievedCount(data.data.achievedCount);
         setTimeSpent(data.data.timeSpent);
       }
@@ -92,7 +92,7 @@ const UserStats: React.FC = () => {
         justifyContent: 'space-between',
         alignItems: 'center',
       }}>
-        <ProfileBox value={totalPoints.toString()} label="Points" />
+        <ProfileBox value={totalExp.toString()} label="XP" />
         <ProfileBox value={`${((timeSpent[queries.criteria.TWO_WEEKS_TIME_SPENT] || 0) / 3600).toFixed(1)}h`} label="Past 2 weeks" />
         <ProfileBox value={`${((timeSpent[queries.criteria.MONTHLY_TIME_SPENT] || 0) / 3600).toFixed(1)}h`} label="This Month" />
         <ProfileBox value={`${((timeSpent[queries.criteria.YEARLY_TIME_SPENT] || 0)/ 3600).toFixed(1)}h`} label="This Year" />

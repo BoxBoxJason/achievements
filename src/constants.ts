@@ -22,37 +22,59 @@ export namespace constants {
 
   //////////////////////// CRITERIAS ////////////////////////
   export enum criteria {
+    // Lines of code
     LINES_OF_CODE= 'linesOfCodeCount',
+    // Lines of code per language
     LINES_OF_CODE_LANGUAGE= 'linesOfCodeCount_%s',
+    // Lines of comment
     LINES_OF_COMMENTS= 'linesOfCommentsCount',
+    // Number of pastes
     NUMBER_OF_PASTES= 'pastesCount',
+    // Errors fixed
     ERRORS_FIXED= 'errorsFixedCount',
+    // Directory created
     DIRECTORY_CREATED= 'directoryCreatedCount',
-    RESOURCE_DELETED= 'resourceDeletedCount',
-    FILES_RENAMED= 'filesRenamedCount',
+    // Files created
     FILES_CREATED= 'filesCreatedCount',
+    // Files created per language
     FILES_CREATED_LANGUAGE= 'filesCreatedCount_%s',
+    // Resource deleted
+    RESOURCE_DELETED= 'resourceDeletedCount',
+    // Files renamed
+    FILES_RENAMED= 'filesRenamedCount',
+    // Number of commits
     COMMITS= 'commitsCount',
     BRANCHES_CREATED= 'branchesCreatedCount',
     MERGES_AND_REBASES= 'mergesAndRebasesCount',
     AMENDS= 'amendsCount',
     FORCED_PUSHES= 'forcedPushesCount',
     PUSHES= 'pushesCount',
+    // Opened tabs
     NUMBER_OF_SIMULTANEOUS_TABS= 'simultaneousTabsCount',
+    // Time spent (daily)
     DAILY_TIME_SPENT= 'dailyTimeSpentCount',
+    // Time spent (bi-monthly)
     TWO_WEEKS_TIME_SPENT= 'twoWeeksTimeSpentCount',
+    // Time spent (monthly)
     MONTHLY_TIME_SPENT= 'monthlyTimeSpentCount',
+    // Time spent (yearly)
     YEARLY_TIME_SPENT= 'yearlyTimeSpentCount',
+    // Time spent (total)
     TOTAL_TIME_SPENT= 'totalTimeSpentCount',
+    // Extensions installed
     EXTENSIONS_INSTALLED= 'extensionsInstalledCount',
+    // Outdated extensions
     EXTENSIONS_OUTDATED= 'extensionsOutdatedCount',
+    // Themes installed
     THEMES_INSTALLED= 'themesInstalledCount',
+    // Theme changed
+    THEME_CHANGED= 'themeChangedCount',
     DEBUGGER_SESSIONS= 'debuggerSessionsCount',
     TERMINAL_COMMANDS= 'terminalCommandsCount',
     FAILED_TERMINAL_COMMANDS= 'failedTerminalCommandsCount',
     SUCCESSFUL_TERMINAL_COMMANDS= 'successfulTerminalCommandsCount',
     CODE_SNIPPETS= 'codeSnippetsCount',
-    POINTS= 'pointsCount',
+    EXP= 'expCount',
   };
 
   //////////////////////// LABELS ////////////////////////
@@ -64,19 +86,17 @@ export namespace constants {
     RESOURCE_CREATED: 'resource created',
     RESOURCE_DELETED: 'resource deleted',
     COMMITS: 'commits',
-    BRANCHES_CREATED: 'branches created',
+    BRANCHES: 'branches',
     MERGES_AND_REBASES: 'merges and rebases',
     AMENDS: 'amends',
-    FORCED_PUSHES: 'forced pushes',
     PUSHES: 'pushes',
-    NUMBER_OF_SIMULTANEOUS_TABS: 'number of simultaneous tabs',
-    TIME_SPENT: 'time spent',
-    EXTENSIONS_INSTALLED: 'extensions installed',
-    EXTENSIONS_OUTDATED: 'extensions outdated',
-    THEMES_INSTALLED: 'themes installed',
-    DEBUGGER_SESSIONS: 'debugger sessions',
-    TERMINAL_COMMANDS: 'terminal commands',
-    CODE_SNIPPETS: 'code snippets',
+    TABS: 'tabs',
+    TIME: 'time',
+    EXTENSIONS: 'extensions',
+    THEMES: 'themes',
+    DEBUGGER: 'debugger',
+    TERMINAL: 'terminal',
+    SNIPPETS: 'snippets',
     LANGUAGES: {
       JAVA: 'java',
       PYTHON: 'python',
