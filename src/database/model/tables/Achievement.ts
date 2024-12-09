@@ -23,7 +23,7 @@ export interface StackingAchievementTemplate {
   description: string;
   minTier: number;
   maxTier: number;
-  pointsFunction: (tier: number) => number;
+  expFunction: (tier: number) => number;
   hidden: boolean;
   requires: number[];
 }
@@ -38,7 +38,7 @@ export interface AchievementDict {
   criteria: { [key: string]: any };
   description: string;
   tier: number;
-  points: number;
+  exp: number;
   hidden: boolean;
   requires: number[];
   repeatable: boolean;
@@ -71,7 +71,7 @@ interface RawAchievementRow {
   labels: string;
   description: string;
   tier: number;
-  points: number;
+  exp: number;
   hidden: boolean;
   achieved: boolean;
   achievedAt: string | null;
@@ -89,7 +89,7 @@ export interface AchievementRow {
   labels: string[];
   description: string;
   tier: number;
-  points: number;
+  exp: number;
   hidden: boolean;
   achieved: boolean;
   achievedAt: string | null;
@@ -116,7 +116,7 @@ export interface AchievementRow {
  * @property {Criteria} criteria - The criteria of the achievement
  * @property {string} description - The description of the achievement
  * @property {number} tier - The tier of the achievement
- * @property {number} points - The points of the achievement
+ * @property {number} exp - The exp of the achievement
  * @property {boolean} hidden - The hidden status of the achievement
  * @property {number[]} requires - The list of required achievements to unlock this achievement
  * @property {boolean} repeatable - The repeatable status of the achievement
@@ -132,7 +132,7 @@ export interface AchievementRow {
 class Achievement {
   // ==================== CLASS VARIABLES ====================
   public static readonly ACHIEVEMENT_INSERT_QUERY = `INSERT INTO achievements
-    (title, icon, category, "group", description, tier, points, hidden, repeatable, achieved, achievedAt)
+    (title, icon, category, "group", description, tier, exp, hidden, repeatable, achieved, achievedAt)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(title) DO UPDATE SET
       icon = excluded.icon,
@@ -140,7 +140,7 @@ class Achievement {
       "group" = excluded."group",
       description = excluded.description,
       tier = excluded.tier,
-      points = excluded.points,
+      exp = excluded.exp,
       hidden = excluded.hidden,
       repeatable = excluded.repeatable
       `;
@@ -197,7 +197,7 @@ class Achievement {
   public criteria: { [key: string]: any };
   public description: string;
   public tier: number;
-  public points: number;
+  public exp: number;
   public hidden: boolean;
   public requires: number[];
   public repeatable: boolean;
@@ -225,7 +225,7 @@ class Achievement {
       criteria,
       description,
       tier,
-      points,
+      exp,
       hidden,
       requires,
       repeatable
@@ -244,7 +244,7 @@ class Achievement {
     description = description.trim();
     if (!description) { throw new Error('description must not be empty'); }
     if (tier < 0) { throw new Error('tier must be a positive integer'); }
-    if (points < 0) { throw new Error('points must be a positive integer'); }
+    if (exp < 0) { throw new Error('exp must be a positive integer'); }
     requires.forEach((requirement) => {
       if (requirement < 0) {
         throw new Error('requirement must be an existing achievement id');
@@ -263,7 +263,7 @@ class Achievement {
     this.criteria = criteria;
     this.description = description;
     this.tier = tier;
-    this.points = points;
+    this.exp = exp;
     this.hidden = hidden;
     this.requires = requires;
     this.repeatable = repeatable;
@@ -298,7 +298,7 @@ class Achievement {
       description,
       minTier,
       maxTier,
-      pointsFunction,
+      expFunction,
       hidden,
       requires,
     } = template;
@@ -324,7 +324,7 @@ class Achievement {
         currentDescription = currentDescription.replace(criterias[i], String(value));
       }
 
-      const currentPoints = pointsFunction(tier);
+      const currentPoints = expFunction(tier);
       tierTitles.push(currentTitle); // Store titles for linking requirements later
 
       // Prepare the data for achievements insert
@@ -446,7 +446,7 @@ class Achievement {
       }, {}),
       description: row.description,
       tier: row.tier,
-      points: row.points,
+      exp: row.exp,
       hidden: Boolean(row.hidden),
       requires: row.requirements, // Directly use the array of IDs
       repeatable: Boolean(row.repeatable),

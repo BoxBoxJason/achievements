@@ -56,7 +56,7 @@ export function applyMigration(db: BetterSqlite3.Database, wantedVersion: number
               "group" TEXT NOT NULL,
               description TEXT NOT NULL,
               tier INTEGER NOT NULL,
-              points INTEGER NOT NULL,
+              exp INTEGER NOT NULL,
               hidden INTEGER NOT NULL,
               repeatable INTEGER NOT NULL,
               achieved BOOLEAN NOT NULL DEFAULT FALSE,

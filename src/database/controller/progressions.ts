@@ -63,11 +63,8 @@ export namespace ProgressionController {
       let awardedPoints = 0;
       for (let achievement of updatedAchievements) {
         // Notify the user of the unlocked achievement
-        awardAchievement(achievement.title);
-        awardedPoints += achievement.points;
+        awardAchievement(achievement);
       }
-      Progression.addValue({name: constants.criteria.POINTS}, awardedPoints);
-
     } catch (error) {
       logger.error(`Failed to increase progression: ${(error as Error).message}`);
     }
@@ -89,7 +86,7 @@ export namespace ProgressionController {
       const updatedAchievements = Progression.achieveCompletedAchievements(updatedProgressionsIds.map((progression) => progression.id));
       for (let achievement of updatedAchievements) {
         // Notify the user of the unlocked achievement
-        awardAchievement(achievement.title);
+        awardAchievement(achievement);
       }
     } catch (error) {
       logger.error(`Failed to update progression: ${(error as Error).message}`);

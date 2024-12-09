@@ -32,7 +32,7 @@ export namespace webview {
 }
 
 export namespace queries {
-  export const VALID_SORT_CRITERIA = ['achieved', 'title', 'category', '"group"', 'achievedAt', 'tier', 'points'];
+  export const VALID_SORT_CRITERIA = ['achieved', 'title', 'category', '"group"', 'achievedAt', 'tier', 'exp'];
 
   export enum criteria {
     DAILY_TIME_SPENT= 'dailyTimeSpentCount',
