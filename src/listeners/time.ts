@@ -49,6 +49,7 @@ export namespace timeListeners {
       }
     }, 60000);
 
+    TimeSpentController.updateTimeSpentFromSessions();
     // Periodic (15 minutes) recompute of the total time spent
     setInterval(() => {
       logger.debug('CRONJOB: time spent update');
