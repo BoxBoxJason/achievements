@@ -172,7 +172,7 @@ class Progression {
    * @param {number[]} progressionIds - The IDs of the progressions to process.
    * @returns {{ id: number; title: string; achievedAt: string }[]} - An array of newly achieved achievements.
    */
-  static achieveCompletedAchievements(progressionIds: number[]): { id: number; title: string; achievedAt: string, points: number }[] {
+  static achieveCompletedAchievements(progressionIds: number[]): { id: number; title: string; achievedAt: string, exp: number }[] {
     if (progressionIds.length === 0) {
       return []; // No progressions to process
     }
@@ -205,13 +205,13 @@ class Progression {
       UPDATE achievements
       SET achieved = TRUE, achievedAt = CURRENT_TIMESTAMP
       WHERE id IN (SELECT achievement_id FROM valid_achievements)
-      RETURNING id, title, achievedAt, points;
+      RETURNING id, title, achievedAt, exp;
     `;
 
     const db = db_model.openDB();
 
     // Pass the progressionIds as parameters to the query
-    return db.prepare(updateAchievementsQuery).all(progressionIds) as { id: number; title: string; achievedAt: string; points: number}[];
+    return db.prepare(updateAchievementsQuery).all(progressionIds) as { id: number; title: string; achievedAt: string; exp: number}[];
   }
 
 

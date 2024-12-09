@@ -55,7 +55,7 @@ export namespace backendRequests {
         username: config.getUsername(),
         timeSpent: TimeSpentController.getTimeSpent(progressions),
         ...Achievement.getAchievementStats(),
-        totalPoints: progressions[constants.criteria.POINTS],
+        totalExp: progressions[constants.criteria.EXP],
       }
     });
   }
