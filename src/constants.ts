@@ -69,10 +69,16 @@ export namespace constants {
     THEMES_INSTALLED= 'themesInstalledCount',
     // Theme changed
     THEME_CHANGED= 'themeChangedCount',
+    // Debugger sessions started
     DEBUGGER_SESSIONS= 'debuggerSessionsCount',
-    TERMINAL_COMMANDS= 'terminalCommandsCount',
-    FAILED_TERMINAL_COMMANDS= 'failedTerminalCommandsCount',
-    SUCCESSFUL_TERMINAL_COMMANDS= 'successfulTerminalCommandsCount',
+    // Breakpoints created
+    BREAKPOINTS= 'breakpointsCount',
+    // VSCode tasks commands executed
+    TERMINAL_TASKS= 'taskCommandsCount',
+    // VSCode tasks commands failed (exit code != 0)
+    FAILED_TERMINAL_TASKS= 'failedTaskCommandsCount',
+    // VSCode tasks commands successful (exit code == 0)
+    SUCCESSFUL_TERMINAL_TASKS= 'successfulTaskCommandsCount',
     CODE_SNIPPETS= 'codeSnippetsCount',
     EXP= 'expCount',
   };
