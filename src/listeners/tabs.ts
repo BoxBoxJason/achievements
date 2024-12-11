@@ -17,5 +17,4 @@ export namespace tabListeners {
       ProgressionController.updateProgression(constants.criteria.NUMBER_OF_SIMULTANEOUS_TABS, tabCount);
     }, null, context.subscriptions);
   }
-
 }
