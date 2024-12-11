@@ -12,8 +12,9 @@ import { fileListeners } from './listeners/files';
 import { gitListeners } from './listeners/git';
 import { timeListeners } from './listeners/time';
 import { tabListeners } from './listeners/tabs';
-import { terminalListeners } from './listeners/terminal';
+import { taskListeners } from './listeners/tasks';
 import { extensionsListeners } from './listeners/extensions';
+import { debugListeners } from './listeners/debug';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -89,8 +90,9 @@ export function activate(context: vscode.ExtensionContext) {
 	gitListeners.activate(context);
 	timeListeners.activate(context);
 	tabListeners.activate(context);
-	terminalListeners.activate(context);
+	taskListeners.activate(context);
 	extensionsListeners.activate(context);
+	debugListeners.activate(context);
 }
 
 // This method is called when your extension is deactivated
