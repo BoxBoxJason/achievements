@@ -197,4 +197,14 @@ export namespace constants {
     WEBVIEW_OUT_FILE: path.join('dist','webview.js'),
   } as const;
 
+  export const listeners = {
+    DEBUG: 'debug',
+    EXTENSIONS: 'extensions',
+    FILES: 'files',
+    GIT: 'git',
+    TABS: 'tabs',
+    TASKS: 'tasks',
+    TIME: 'time',
+  } as const;
+
 }
