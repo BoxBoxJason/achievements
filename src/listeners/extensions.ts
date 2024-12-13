@@ -26,7 +26,7 @@ export namespace extensionsListeners {
    * @returns {void}
    */
   export function activate(context: vscode.ExtensionContext): void {
-    if (!config.isListenerEnabled(constants.listeners.EXTENSIONS)) {
+    if (config.isListenerEnabled(constants.listeners.EXTENSIONS)) {
       logger.info('Starting extensions events listeners');
 
       vscode.extensions.onDidChange(() => {

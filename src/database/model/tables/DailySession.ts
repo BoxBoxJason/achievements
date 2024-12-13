@@ -14,21 +14,27 @@ export class DailySession {
 
   constructor(date?: string, duration?: number) {
     this.date = date || new Date().toISOString().split('T')[0];
-    // Check that date respects the format YYYY-MM-DD
     if (!this.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
       throw new Error('date must be in the format YYYY-MM-DD');
     }
     this.duration = duration || 0;
-    // Check that duration is a positive integer
     if (!Number.isInteger(this.duration) || this.duration < 0) {
       throw new Error('duration must be a positive integer');
     }
-
+  
     const db = db_model.openDB();
-    const statement = db.prepare(DailySession.INSERT_QUERY);
-    const info = statement.run(this.date, this.duration);
-    if (info.lastInsertRowid) {
-      this.id = Number(info.lastInsertRowid);
+    const existingSession = db.prepare(`SELECT * FROM daily_sessions WHERE date = ?`).get(this.date) as DailySessionDict;
+  
+    if (!existingSession) {
+      const statement = db.prepare(DailySession.INSERT_QUERY);
+      const info = statement.run(this.date, this.duration);
+      if (info.lastInsertRowid) {
+        this.id = Number(info.lastInsertRowid);
+      }
+    } else {
+      // Populate this instance with existing data
+      this.id = existingSession.id;
+      this.duration = existingSession.duration;
     }
   }
 
