@@ -16,29 +16,101 @@
   "activationEvents": [
     "onStartupFinished"
   ],
-  "extensionDependencies": ["vscode.git"],
+  "extensionDependencies": [
+    "vscode.git"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "achievements.enable",
-        "title": "Achievements: Enable"
+        "title": "Achievements: Enable / Disable"
       },
       {
-        "command": "achievements.disable",
-        "title": "Achievements: Disable"
-      },
-      {
-        "command": "achievements.configuration",
-        "title": "Achievements: Configuration"
-      },
-      {
-        "command": "achievements.notifications",
-        "title": "Achievements: enable/disable notifications"
+        "command": "achievements.settings",
+        "title": "Achievements: Settings"
       },
       {
         "command": "achievements.show",
         "title": "Achievements: Show"
+      }
+    ],
+    "configuration": [
+      {
+        "title": "achievements",
+        "properties": {
+          "achievements.enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable or disable the Achievements extension."
+          },
+          "achievements.logLevel": {
+            "type": "string",
+            "default": "INFO",
+            "enum": [
+              "DEBUG",
+              "INFO",
+              "WARN",
+              "ERROR",
+              "FATAL"
+            ],
+            "description": "Set the log level for the extension."
+          },
+          "achievements.notifications": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable or disable Achievements extension notifications."
+          },
+          "achievements.logDirectory": {
+            "type": "string",
+            "default": "",
+            "description": "Specify the directory for log files.",
+            "pattern": "^(?:[a-zA-Z]:\\\\|/)(?:[^<>:\"|?*]+/)*[^<>:\"|?*]*$",
+            "patternErrorMessage": "The log directory must be an absolute path with valid characters."
+          },
+          "achievements.username": {
+            "type": "string",
+            "default": "Guest",
+            "description": "Set your username for the Achievements extension.",
+            "pattern": "^(?!\\s*$).+",
+            "patternErrorMessage": "Username cannot be empty or consist only of whitespace."
+          },
+          "achievements.listeners.debug": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable or disable debug events listeners for the Achievements extension."
+          },
+          "achievements.listeners.extensions": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable or disable extensions / themes events listeners for the Achievements extension."
+          },
+          "achievements.listeners.files": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable or disable file events listeners for the Achievements extension."
+          },
+          "achievements.listeners.git": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable or disable git evens listeners for the Achievements extension."
+          },
+          "achievements.listeners.tabs": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable or disable tabs events listeners for the Achievements extension."
+          },
+          "achievements.listeners.tasks": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable or disable tasks events listeners for the Achievements extension."
+          },
+          "achievements.listeners.time": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable or disable time events listeners for the Achievements extension."
+          }
+        }
       }
     ]
   },
