@@ -10,6 +10,7 @@ import { ProgressionController } from '../database/controller/progressions';
 import { constants } from '../constants';
 import path from 'path';
 import logger from '../utils/logger';
+import { config } from '../config/config';
 
 /**
  * File related events listeners functions and handlers
@@ -28,19 +29,27 @@ export namespace fileListeners {
    * @returns {void}
    */
   export function activate(context: vscode.ExtensionContext): void {
-    logger.debug('Activating file listeners');
-    // Watcher for resources
-    const resourcesWatcher = vscode.workspace.createFileSystemWatcher('**/*', false, false, false);
+    if (!config.isListenerEnabled(constants.listeners.FILES)) {
+      logger.info('Starting file events listeners');
+  
+      // Watcher for resources
+      const resourcesWatcher = vscode.workspace.createFileSystemWatcher('**/*', false, false, false);
 
-    resourcesWatcher.onDidCreate(handleCreateEvent, null, context.subscriptions);
-    resourcesWatcher.onDidDelete(handleDeleteEvent, null, context.subscriptions);
-    vscode.workspace.onDidRenameFiles(handleRenameEvent, null, context.subscriptions);
-    logger.debug('File listeners activated');
+      resourcesWatcher.onDidCreate(handleCreateEvent, null, context.subscriptions);
+      resourcesWatcher.onDidDelete(handleDeleteEvent, null, context.subscriptions);
+      vscode.workspace.onDidRenameFiles(handleRenameEvent, null, context.subscriptions);
+      logger.debug('File listeners activated');
 
-    // Text document changes
-    vscode.workspace.onDidChangeTextDocument(handleTextChangedEvent, null, context.subscriptions);
-    // Diagnostics changes
-    vscode.languages.onDidChangeDiagnostics(handleDiagnosticChangedEvent, null, context.subscriptions);
+      // Text document changes
+      vscode.workspace.onDidChangeTextDocument(handleTextChangedEvent, null, context.subscriptions);
+      // Diagnostics changes
+      vscode.languages.onDidChangeDiagnostics(handleDiagnosticChangedEvent, null, context.subscriptions);
+
+      logger.debug('File listeners activated');
+
+    } else {
+      logger.info('File listeners are disabled');
+    }
   }
 
   /**
