@@ -19,17 +19,19 @@ export interface Config {
   notifications: boolean;
   logDirectory: string;
   username: string;
+  listeners: {
+    debug: boolean;
+    extensions: boolean;
+    files: boolean;
+    git: boolean;
+    tabs: boolean;
+    tasks: boolean;
+    time: boolean;
+  }
 }
 
-// ==================== MODULE VARIABLES ====================
-// The path to the global storage directory
-let extensionStorage: string;
-// Flag to check if the module has been initialized
-let initialized = false;
-// The config object, stores the configuration of the extension
-let appConfig: Config;
-// The name of the config file
-const CONFIG_FILENAME = 'extension.json';
+// ==================== VARIABLES ====================
+let defaultLogDir : string = '';
 
 // ==================== MODULE FUNCTIONS ====================
 /**
@@ -57,28 +59,14 @@ export namespace config {
    * @returns {void}
    */
   export function activate(context: vscode.ExtensionContext): void {
-    extensionStorage = context.globalStorageUri.fsPath;
-    try {
-      // Parse the json config file and store it in the appConfig variable
-      appConfig = require(path.join(extensionStorage, CONFIG_FILENAME));
-    } catch (error) {
-      logger.warn(`Failed to load config file: ${error}`);
-      appConfig = {
-        enabled: true,
-        logLevel: 'INFO',
-        notifications: true,
-        logDirectory: path.join(extensionStorage, 'logs'),
-        username: webview.DEFAULT_USER,
-      };
-      initialized = true;
-      saveConfig();
-    }
-    logger.setLogLevel(appConfig.logLevel);
-    logger.setLogDir(appConfig.logDirectory);
-    initialized = true;
+    defaultLogDir = path.join(context.globalStorageUri.fsPath, 'logs');
+
+    const config = getConfig();
+    logger.setLogLevel(config.logLevel);
+    logger.setLogDir(config.logDirectory);
 
     // Prompt the user to set an username if it is the default one
-    if (appConfig.username === webview.DEFAULT_USER) {
+    if (config.username === webview.DEFAULT_USER) {
       handleSetUsername();
     }
   }
@@ -111,28 +99,6 @@ export namespace config {
   }
 
   /**
-   * Saves the config object to the config file
-   *
-   * @memberof config
-   * @function saveConfig
-   *
-   * @returns {void}
-   * @throws {Error} - If the module has not been initialized
-   */
-  export function saveConfig(): void {
-    if (!initialized) {
-      logger.error('Config module not initialized');
-      throw new Error('config module not initialized');
-    }
-    try {
-      // Save the appConfig variable to the json config file
-      fs.writeFileSync(path.join(extensionStorage, CONFIG_FILENAME), JSON.stringify(appConfig, null, 4));
-    } catch (error) {
-      logger.error(`Failed to save config file: ${error}`);
-    }
-  }
-
-  /**
    * Returns the config object as a readonly object
    *
    * @memberof config
@@ -142,10 +108,36 @@ export namespace config {
    * @throws {Error} - If the module has not been initialized
    */
   export function getConfig(): Readonly<Config> {
-    if (!initialized) {
-      throw new Error('config module not initialized');
+    const extensionRawConfig = vscode.workspace.getConfiguration('achievements');
+    let extensionConfig : Config = {
+      enabled: extensionRawConfig.get<boolean>('enabled', true),
+      logLevel: extensionRawConfig.get<string>('logLevel', 'info'),
+      notifications: extensionRawConfig.get<boolean>('notifications', true),
+      logDirectory: extensionRawConfig.get<string>('logDirectory', defaultLogDir).trim(),
+      username: extensionRawConfig.get<string>('username', webview.DEFAULT_USER).trim(),
+      listeners: {
+        debug: extensionRawConfig.get<boolean>('listeners.debug', true),
+        extensions: extensionRawConfig.get<boolean>('listeners.extensions', true),
+        files: extensionRawConfig.get<boolean>('listeners.files', true),
+        git: extensionRawConfig.get<boolean>('listeners.git', true),
+        tabs: extensionRawConfig.get<boolean>('listeners.tabs', true),
+        tasks: extensionRawConfig.get<boolean>('listeners.tasks', true),
+        time: extensionRawConfig.get<boolean>('listeners.time', true)
+      }
+    };
+    
+    // Check if the log directory is a valid path, if not, set it to the default
+    if ( !path.isAbsolute(extensionConfig.logDirectory) ) {
+      logger.warn(`Invalid log directory path: ${extensionConfig.logDirectory}, setting to default`);
+      updateConfig('logDirectory', defaultLogDir);
+      extensionConfig.logDirectory = defaultLogDir;
     }
-    return appConfig;
+    try {
+      fs.mkdirSync(extensionConfig.logDirectory, { recursive: true });
+    } catch (error) {
+      logger.fatal(`Error creating log directory: ${error}`);
+    }
+    return extensionConfig;
   }
 
   /**
@@ -158,94 +150,15 @@ export namespace config {
    * @returns {void}
    * @throws {Error} - If the module has not been initialized
    */
-  export function enableExtension(enabled: boolean = true): void {
-    appConfig.enabled = enabled;
-    saveConfig();
+  export function enableExtension(): void {
+    const config = getConfig();
+    const enabled = !config.enabled;
+    updateConfig('enabled', enabled);
+
     let enabledString = enabled ? 'enabled' : 'disabled';
     let enabledMessage = `Achievement ${enabledString}!`;
     logger.info(enabledMessage);
     vscode.window.showInformationMessage(enabledMessage);
-  }
-
-  /**
-   * Sets the log level
-   *
-   * @memberof config
-   * @function setLogLevel
-   *
-   * @param {string} level - The log level
-   * @returns {void}
-   * @throws {Error} - If the module has not been initialized
-   */
-  export function setLogLevel(level: string): void {
-    appConfig.logLevel = level;
-    logger.setLogLevel(level);
-    saveConfig();
-  }
-
-  /**
-   * Sets the log directory
-   *
-   * @memberof config
-   * @function setLogDirectory
-   *
-   * @param {string} directory - The log directory
-   * @returns {void}
-   * @throws {Error} - If the module has not been initialized
-   */
-  export function setLogDirectory(directory: string): void {
-    appConfig.logDirectory = directory;
-    logger.setLogDir(directory);
-    saveConfig();
-  }
-
-  /**
-   * Opens the configuration file
-   *
-   * @memberof config
-   * @function openConfiguration
-   *
-   * @returns {void}
-   * @throws {Error} - If the module has not been initialized
-   */
-  export function openConfiguration(): void {
-    if (!initialized) {
-      logger.error('Config module not initialized');
-      throw new Error('config module not initialized');
-    }
-
-    const configFilePath = path.join(extensionStorage, CONFIG_FILENAME);
-
-    if (!fs.existsSync(configFilePath)) {
-      logger.warn('Configuration file does not exist. Creating a new one...');
-      saveConfig();
-    }
-
-    vscode.workspace.openTextDocument(configFilePath).then((doc) => {
-      vscode.window.showTextDocument(doc);
-    }, (error) => {
-      logger.error(`Failed to open configuration file: ${error}`);
-    });
-  }
-
-  /**
-   * Toggles the notifications
-   *
-   * @memberof config
-   * @function toggleNotifications
-   *
-   * @returns {void}
-   * @throws {Error} - If the module has not been initialized
-   */
-  export function toggleNotifications() {
-    appConfig.notifications = !appConfig.notifications;
-    saveConfig();
-    let notificationString = appConfig.notifications ? 'enabled' : 'disabled';
-    let notificationMessage = `Notifications ${notificationString}!`;
-    logger.info(notificationMessage);
-    if (appConfig.notifications) {
-      vscode.window.showInformationMessage(notificationMessage);
-    }
   }
 
   /**
@@ -258,11 +171,7 @@ export namespace config {
    * @throws {Error} - If the module has not been initialized
    */
   export function notificationsEnabled(): boolean {
-    if (!initialized) {
-      logger.error('Config module not initialized');
-      throw new Error('config module not initialized');
-    }
-    return appConfig.notifications;
+    return getConfig().notifications;
   }
 
   /**
@@ -273,21 +182,15 @@ export namespace config {
    *
    * @param {string} username - The username
    * @returns {void}
-   * @throws {Error} - If the module has not been initialized
    * @throws {Error} - If the username is empty
    */
   export function setUsername(username: string): void {
     username = username.trim();
-    if (!initialized) {
-      logger.error('Config module not initialized');
-      throw new Error('config module not initialized');
-    }
     if (!username) {
       logger.error('Username cannot be empty');
       throw new Error('username cannot be empty');
     }
-    appConfig.username = username;
-    saveConfig();
+    updateConfig('username', username);
     logger.info(`Username set to: ${username}`);
   }
 
@@ -301,11 +204,23 @@ export namespace config {
    * @throws {Error} - If the module has not been initialized
    */
   export function getUsername(): string {
-    if (!initialized) {
-      logger.error('Config module not initialized');
-      throw new Error('config module not initialized');
+    return getConfig().username;
+  }
+
+  function updateConfig(key : string, value : any) {
+    const config = vscode.workspace.getConfiguration('achievements');
+    config.update(key, value, vscode.ConfigurationTarget.Global);
+  }
+
+  export function isListenerEnabled(listener: keyof Config["listeners"]): boolean {
+    const listeners = getConfig().listeners;
+  
+    if (listener in listeners) {
+      return listeners[listener];
+    } else {
+      logger.warn(`Listener "${listener}" does not exist`);
+      return false;
     }
-    return appConfig.username;
   }
 
 }

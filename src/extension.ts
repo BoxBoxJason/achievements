@@ -23,10 +23,6 @@ export function activate(context: vscode.ExtensionContext) {
 	config.activate(context);
 	let configuration = config.getConfig();
 
-	// ==================== LOGGER ====================
-	logger.setLogDir(configuration.logDirectory);
-	logger.setLogLevel(configuration.logLevel);
-
 	// ==================== DATABASE ====================
 	if (configuration.enabled) {
 		db_model.activate(context);
@@ -41,24 +37,11 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	context.subscriptions.push(enableCommand);
 
-	// Disable command
-	const disableCommand = vscode.commands.registerCommand('achievements.disable', () => {
-		config.enableExtension(false);
-		logger.info('Achievement disabled!');
-	});
-	context.subscriptions.push(disableCommand);
-
-	// Configuration command
-	const configurationCommand = vscode.commands.registerCommand('achievements.configuration', () => {
-		config.openConfiguration();
+	// Settings command
+	const configurationCommand = vscode.commands.registerCommand('achievements.settings', () => {
+		vscode.commands.executeCommand('workbench.action.openSettings', '@ext:boxboxjason.achievements');
 	});
 	context.subscriptions.push(configurationCommand);
-
-	// Toggle notifications command
-	const toggleNotificationsCommand = vscode.commands.registerCommand('achievements.notifications', () => {
-		config.toggleNotifications();
-	});
-	context.subscriptions.push(toggleNotificationsCommand);
 
 	// Show achievements command, creates a webview panel
 	let currentPanel: vscode.WebviewPanel | undefined = undefined;
