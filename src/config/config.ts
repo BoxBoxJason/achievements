@@ -135,7 +135,9 @@ export namespace config {
     try {
       fs.mkdirSync(extensionConfig.logDirectory, { recursive: true });
     } catch (error) {
-      logger.fatal(`Error creating log directory: ${error}`);
+      logger.error(`Error creating log directory: ${error}, setting to default`);
+      updateConfig('logDirectory', defaultLogDir);
+      extensionConfig.logDirectory = defaultLogDir;
     }
     return extensionConfig;
   }
