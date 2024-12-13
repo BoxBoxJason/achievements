@@ -29,7 +29,7 @@ export namespace fileListeners {
    * @returns {void}
    */
   export function activate(context: vscode.ExtensionContext): void {
-    if (!config.isListenerEnabled(constants.listeners.FILES)) {
+    if (config.isListenerEnabled(constants.listeners.FILES)) {
       logger.info('Starting file events listeners');
   
       // Watcher for resources
@@ -38,7 +38,6 @@ export namespace fileListeners {
       resourcesWatcher.onDidCreate(handleCreateEvent, null, context.subscriptions);
       resourcesWatcher.onDidDelete(handleDeleteEvent, null, context.subscriptions);
       vscode.workspace.onDidRenameFiles(handleRenameEvent, null, context.subscriptions);
-      logger.debug('File listeners activated');
 
       // Text document changes
       vscode.workspace.onDidChangeTextDocument(handleTextChangedEvent, null, context.subscriptions);

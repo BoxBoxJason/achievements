@@ -27,7 +27,7 @@ export namespace gitListeners {
    * @returns {void}
    */
   export function activate(context: vscode.ExtensionContext): void {
-    if (!config.isListenerEnabled(constants.listeners.GIT)) {
+    if (config.isListenerEnabled(constants.listeners.GIT)) {
       logger.info('Starting git events listeners');
 
       const gitExtension = vscode.extensions.getExtension('vscode.git')?.exports as GitExtension;
