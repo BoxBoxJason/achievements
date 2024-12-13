@@ -12,14 +12,15 @@ import Progression from '../database/model/tables/Progression';
 import { constants } from '../constants';
 
 /**
- * Award an achievement to the user
+ * Award an achievement to the user, logs and displays a notification
  *
- * @param {string} achievement - Name of the achievement to award
+ * @param {Object} achievement - The achievement to award
  * @returns {void}
  */
 export function awardAchievement(achievement : { id: number, title : string , exp: number , achievedAt : string}): void {
+  const message = `Achievement unlocked: ${achievement.title} (${achievement.exp} exp)`;
   if (config.notificationsEnabled()) {
-    vscode.window.showInformationMessage(`🏆 Achievement unlocked: ${achievement.title}`, 'Browse Achievements')
+    vscode.window.showInformationMessage(`🏆 ${message}`, 'Browse Achievements')
       .then((selection) => {
         if (selection === 'Browse Achievements') {
           vscode.commands.executeCommand('achievements.show');
@@ -27,5 +28,5 @@ export function awardAchievement(achievement : { id: number, title : string , ex
       });
   }
   Progression.addValue({name: constants.criteria.EXP}, achievement.exp);
-  logger.info(`Achievement unlocked: ${achievement.title} (${achievement.exp} exp)`);
+  logger.info(message);
 }
