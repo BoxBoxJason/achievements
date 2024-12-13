@@ -28,14 +28,7 @@ Achievements is a Visual Studio Code extension that allows you to track your pro
 Initial release of Achievements
 
 #### Added
-- Database
-    - Database model for achievements
-    - Database model for progressions
-    - Database model for requirements
-    - Database model for database schema
-    - Migration manager for database schema
-    - Initial achievements populated in database
-- Over 1000 achievements
+- Over 1200 achievements
     - Git related
     - Code related
     - Debugging related
@@ -44,6 +37,10 @@ Initial release of Achievements
     - Commenting related
     - File related
     - More...
+- Profile
+    - View your profile and completion percentage
+    - View your time spent coding
+    - Check your progressions towards achievements
 - Achievements panel
     - View achievements
     - View progress towards achievements
@@ -54,10 +51,18 @@ Initial release of Achievements
 - Configuration
     - Enable / disable extension
     - Enable / disable notifications
+    - Enable / disable any type of listeners (for privacy)
+    - Define your username
     - Select log level
     - Select log directory
 
+- Database
+    - Database model for achievements
+    - Database model for progressions
+    - Database model for requirements
+    - Database model for database schema
+    - Migration manager for database schema
+    - Initial achievements populated in database
+
 ## Known Issues
 
-### Slow boot time
-The extension takes around 7 seconds to boot up, which might be considered slow. It is currently required because it checks for the database schema / default achievements at boot. Unfortunately, because better-sqlite3 does not support asynchronous operations, the only way to speed up the boot time would be to switch to a different database library.
