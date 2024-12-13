@@ -26,7 +26,7 @@ export namespace debugListeners {
    * @returns {void}
    */
   export function activate(context: vscode.ExtensionContext): void {
-    if (!config.isListenerEnabled(constants.listeners.DEBUG)) {
+    if (config.isListenerEnabled(constants.listeners.DEBUG)) {
       logger.info('Starting debug events listeners');
 
       vscode.debug.onDidStartDebugSession((event: vscode.DebugSession) => {
