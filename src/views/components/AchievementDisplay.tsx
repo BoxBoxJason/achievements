@@ -4,7 +4,7 @@ import { webview } from '../viewconst';
 
 const AchievementDisplay: React.FC<AchievementDict> = (achievementDict: AchievementDict) => {
 
-  const imageUris = (window as any).imageUris || {}
+  const imageUris = (window as any).imageUris || {};
 
   const parseDateString = (dateString: string): string => {
     const splitDate = dateString.split('T');
@@ -28,7 +28,7 @@ const AchievementDisplay: React.FC<AchievementDict> = (achievementDict: Achievem
     >
       {/* Icon */}
       <img className='achievement-icon'
-        src={achievementDict.icon}
+        src={imageUris[achievementDict.icon] || imageUris.PUSHEEN_ERROR}
         onError={(e) => {
           e.currentTarget.src = imageUris.PUSHEEN_ERROR
         }}

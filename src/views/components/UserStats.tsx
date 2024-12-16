@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { queries, webview } from '../viewconst';
-import { PostMessage } from '../request';
+import { PostMessage } from '../icons';
 
 const UserStats: React.FC = () => {
   const [username, setUsername] = useState(webview.DEFAULT_USER);

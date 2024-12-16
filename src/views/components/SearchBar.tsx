@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { queries, webview } from '../viewconst';
-import { PostMessage } from '../request';
+import { PostMessage } from '../icons';
 
 interface SearchBarProps {
   setFilters: React.Dispatch<React.SetStateAction<Record<string, any>>>;

@@ -1,5 +1,6 @@
 import { constants } from './src/constants';
 import * as esbuild from 'esbuild';
+import * as fs from 'fs-extra';
 
 const production = process.argv.includes('--production');
 const watch = process.argv.includes('--watch');
@@ -27,6 +28,8 @@ const esbuildProblemMatcherPlugin: esbuild.Plugin = {
 };
 
 async function main() {
+  // Copy the images to the dist folder
+  await fs.copy('assets', 'dist', { overwrite: true });
   // Build for webview React code
   const ctxWebview = await esbuild.context({
     entryPoints: [...constants.build.WEBVIEW_ENTRYPOINTS],
