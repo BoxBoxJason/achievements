@@ -4,7 +4,7 @@ import { AchievementController } from "../../database/controller/achievements";
 import { ProgressionController } from "../../database/controller/progressions";
 import { TimeSpentController } from "../../database/controller/timespent";
 import Achievement, { AchievementSelectRequestFilters } from "../../database/model/tables/Achievement";
-import { PostMessage } from "../request";
+import { PostMessage } from "../icons";
 import { webview } from "../viewconst";
 import * as vscode from 'vscode';
 
