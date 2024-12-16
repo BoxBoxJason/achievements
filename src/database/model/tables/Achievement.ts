@@ -14,7 +14,7 @@ import { parseValue } from '../../../utils/types';
 // Stacking achievement template, used to create a list of achievements
 export interface StackingAchievementTemplate {
   title: string;
-  iconDir: string;
+  icon: string;
   category: string;
   group: string;
   labels: string[];
@@ -185,7 +185,6 @@ class Achievement {
     )
     SELECT * FROM inserted_achievement
     `;
-  private static ICONS_DIR = path.join('icons', 'achievements');
 
   // ==================== PROPERTIES ====================
   public id?: number;
@@ -256,7 +255,7 @@ class Achievement {
 
     // Assigning properties
     this.title = title;
-    this.icon = path.join(Achievement.ICONS_DIR, icon);
+    this.icon = icon;
     this.category = category;
     this.group = group;
     this.labels = labels;
@@ -289,7 +288,7 @@ class Achievement {
   static fromStackingTemplateToDB(template: StackingAchievementTemplate, multiplier: number = 1): void {
     const {
       title,
-      iconDir,
+      icon,
       category,
       group,
       labels,
@@ -313,7 +312,6 @@ class Achievement {
     // Prepare achievement data
     for (let tier = minTier; tier <= maxTier; tier++) {
       const currentTitle = title.replace('%d', (tier - minTier + 1).toString());
-      const currentIcon = path.join(iconDir, String(tier));
 
       // Calculate criteria values and update description
       const criteriaMap: { [key: string]: any } = {};
@@ -330,7 +328,7 @@ class Achievement {
       // Prepare the data for achievements insert
       achievementData.push([
         currentTitle,
-        currentIcon,
+        icon,
         category,
         group,
         currentDescription,

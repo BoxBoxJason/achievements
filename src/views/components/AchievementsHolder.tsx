@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Achievement from '../../database/model/tables/Achievement';
 import AchievementDisplay from './AchievementDisplay';
-import { PostMessage } from '../request';
+import { PostMessage } from '../icons';
 import { webview } from '../viewconst';
 
 interface AchievementHolderProps {

@@ -1,6 +1,6 @@
 import path from 'path';
 import * as vscode from 'vscode';
-import { getPackagedImages, PostMessage } from './request';
+import { getPackagedImages, PostMessage } from './icons';
 import { backendRequests } from './requests/backend';
 import logger from '../utils/logger';
 
