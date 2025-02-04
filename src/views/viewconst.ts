@@ -78,6 +78,9 @@ export namespace webview {
         HASKELL: ['icons', 'achievements', 'speaker', 'haskell.png'],
         R: ['icons', 'achievements', 'speaker', 'r.png'],
         MARKDOWN: ['icons', 'achievements', 'speaker', 'markdown.png'],
+        YAML: ['icons', 'achievements', 'speaker', 'yaml.png'],
+        TOML: ['icons', 'achievements', 'speaker', 'toml.png'],
+        ASSEMBLY: ['icons', 'achievements', 'speaker', 'assembly.png'],
       } as const;
 
       export const creator: { [key: string]: string[] } = {
@@ -115,6 +118,9 @@ export namespace webview {
         HASKELL: ['icons', 'achievements', 'creator', 'haskell.png'],
         R: ['icons', 'achievements', 'creator', 'r.png'],
         MARKDOWN: ['icons', 'achievements', 'creator', 'markdown.png'],
+        YAML: ['icons', 'achievements', 'creator', 'yaml.png'],
+        TOML: ['icons', 'achievements', 'creator', 'toml.png'],
+        ASSEMBLY: ['icons', 'achievements', 'creator', 'assembly.png'],
       } as const;
 
     }

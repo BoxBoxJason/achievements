@@ -14,73 +14,73 @@ import path from 'path';
 export namespace constants {
   //////////////////////// CATEGORIES ////////////////////////
   export const enum category {
-    FILES= 'files',
-    GIT= 'git',
-    PRODUCTIVITY= 'productivity',
-    VSCODE= 'vscode'
+    FILES = 'files',
+    GIT = 'git',
+    PRODUCTIVITY = 'productivity',
+    VSCODE = 'vscode'
   };
 
   //////////////////////// CRITERIAS ////////////////////////
   export enum criteria {
     // Lines of code
-    LINES_OF_CODE= 'linesOfCodeCount',
+    LINES_OF_CODE = 'linesOfCodeCount',
     // Lines of code per language
-    LINES_OF_CODE_LANGUAGE= 'linesOfCodeCount_%s',
+    LINES_OF_CODE_LANGUAGE = 'linesOfCodeCount_%s',
     // Lines of comment
-    LINES_OF_COMMENTS= 'linesOfCommentsCount',
+    LINES_OF_COMMENTS = 'linesOfCommentsCount',
     // Number of pastes
-    NUMBER_OF_PASTES= 'pastesCount',
+    NUMBER_OF_PASTES = 'pastesCount',
     // Errors fixed
-    ERRORS_FIXED= 'errorsFixedCount',
+    ERRORS_FIXED = 'errorsFixedCount',
     // Directory created
-    DIRECTORY_CREATED= 'directoryCreatedCount',
+    DIRECTORY_CREATED = 'directoryCreatedCount',
     // Files created
-    FILES_CREATED= 'filesCreatedCount',
+    FILES_CREATED = 'filesCreatedCount',
     // Files created per language
-    FILES_CREATED_LANGUAGE= 'filesCreatedCount_%s',
+    FILES_CREATED_LANGUAGE = 'filesCreatedCount_%s',
     // Resource deleted
-    RESOURCE_DELETED= 'resourceDeletedCount',
+    RESOURCE_DELETED = 'resourceDeletedCount',
     // Files renamed
-    FILES_RENAMED= 'filesRenamedCount',
+    FILES_RENAMED = 'filesRenamedCount',
     // Number of commits
-    COMMITS= 'commitsCount',
-    BRANCHES_CREATED= 'branchesCreatedCount',
-    MERGES_AND_REBASES= 'mergesAndRebasesCount',
-    AMENDS= 'amendsCount',
-    FORCED_PUSHES= 'forcedPushesCount',
-    PUSHES= 'pushesCount',
+    COMMITS = 'commitsCount',
+    BRANCHES_CREATED = 'branchesCreatedCount',
+    MERGES_AND_REBASES = 'mergesAndRebasesCount',
+    AMENDS = 'amendsCount',
+    FORCED_PUSHES = 'forcedPushesCount',
+    PUSHES = 'pushesCount',
     // Opened tabs
-    NUMBER_OF_SIMULTANEOUS_TABS= 'simultaneousTabsCount',
+    NUMBER_OF_SIMULTANEOUS_TABS = 'simultaneousTabsCount',
     // Time spent (daily)
-    DAILY_TIME_SPENT= 'dailyTimeSpentCount',
+    DAILY_TIME_SPENT = 'dailyTimeSpentCount',
     // Time spent (bi-monthly)
-    TWO_WEEKS_TIME_SPENT= 'twoWeeksTimeSpentCount',
+    TWO_WEEKS_TIME_SPENT = 'twoWeeksTimeSpentCount',
     // Time spent (monthly)
-    MONTHLY_TIME_SPENT= 'monthlyTimeSpentCount',
+    MONTHLY_TIME_SPENT = 'monthlyTimeSpentCount',
     // Time spent (yearly)
-    YEARLY_TIME_SPENT= 'yearlyTimeSpentCount',
+    YEARLY_TIME_SPENT = 'yearlyTimeSpentCount',
     // Time spent (total)
-    TOTAL_TIME_SPENT= 'totalTimeSpentCount',
+    TOTAL_TIME_SPENT = 'totalTimeSpentCount',
     // Extensions installed
-    EXTENSIONS_INSTALLED= 'extensionsInstalledCount',
+    EXTENSIONS_INSTALLED = 'extensionsInstalledCount',
     // Outdated extensions
-    EXTENSIONS_OUTDATED= 'extensionsOutdatedCount',
+    EXTENSIONS_OUTDATED = 'extensionsOutdatedCount',
     // Themes installed
-    THEMES_INSTALLED= 'themesInstalledCount',
+    THEMES_INSTALLED = 'themesInstalledCount',
     // Theme changed
-    THEME_CHANGED= 'themeChangedCount',
+    THEME_CHANGED = 'themeChangedCount',
     // Debugger sessions started
-    DEBUGGER_SESSIONS= 'debuggerSessionsCount',
+    DEBUGGER_SESSIONS = 'debuggerSessionsCount',
     // Breakpoints created
-    BREAKPOINTS= 'breakpointsCount',
+    BREAKPOINTS = 'breakpointsCount',
     // VSCode tasks commands executed
-    TERMINAL_TASKS= 'taskCommandsCount',
+    TERMINAL_TASKS = 'taskCommandsCount',
     // VSCode tasks commands failed (exit code != 0)
-    FAILED_TERMINAL_TASKS= 'failedTaskCommandsCount',
+    FAILED_TERMINAL_TASKS = 'failedTaskCommandsCount',
     // VSCode tasks commands successful (exit code == 0)
-    SUCCESSFUL_TERMINAL_TASKS= 'successfulTaskCommandsCount',
-    CODE_SNIPPETS= 'codeSnippetsCount',
-    EXP= 'expCount',
+    SUCCESSFUL_TERMINAL_TASKS = 'successfulTaskCommandsCount',
+    CODE_SNIPPETS = 'codeSnippetsCount',
+    EXP = 'expCount',
   };
 
   //////////////////////// LABELS ////////////////////////
@@ -138,8 +138,13 @@ export namespace constants {
       HASKELL: 'haskell',
       R: 'r',
       MARKDOWN: 'markdown',
+      YAML: 'yaml',
+      TOML: 'toml',
+      ASSEMBLY: 'assembly',
     } as const,
     LANGUAGES_EXTENSIONS: {
+      '.asm': 'assembly',
+      '.a51': 'assembly',
       '.java': 'java',
       '.py': 'python',
       '.js': 'javascript',
@@ -191,14 +196,17 @@ export namespace constants {
       '.r': 'r',
       '.R': 'r',
       '.md': 'markdown',
+      '.yaml': 'yaml',
+      '.yml': 'yaml',
+      '.toml': 'toml',
     } as { [key: string]: string },
   } as const;
 
   export const build = {
-    EXTENSION_ENTRYPOINTS: [path.join('src','extension.ts')],
-    EXTENSION_OUT_FILE: path.join('dist','extension.js'),
-    WEBVIEW_ENTRYPOINTS: [path.join('src','views','index.tsx')],
-    WEBVIEW_OUT_FILE: path.join('dist','webview.js'),
+    EXTENSION_ENTRYPOINTS: [path.join('src', 'extension.ts')],
+    EXTENSION_OUT_FILE: path.join('dist', 'extension.js'),
+    WEBVIEW_ENTRYPOINTS: [path.join('src', 'views', 'index.tsx')],
+    WEBVIEW_OUT_FILE: path.join('dist', 'webview.js'),
   } as const;
 
   export const listeners = {
