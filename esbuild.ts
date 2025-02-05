@@ -3,8 +3,6 @@ import * as esbuild from 'esbuild';
 import * as fs from 'fs-extra';
 
 const production = process.argv.includes('--production');
-const watch = process.argv.includes('--watch');
-
 /**
  * An esbuild plugin to match and log problems during the build.
  * @type {esbuild.Plugin}
@@ -13,7 +11,7 @@ const esbuildProblemMatcherPlugin: esbuild.Plugin = {
   name: 'esbuild-problem-matcher',
   setup(build: esbuild.PluginBuild) {
     build.onStart(() => {
-      console.log('[watch] build started');
+      console.log('build started');
     });
     build.onEnd((result) => {
       result.errors.forEach(({ text, location }) => {
@@ -22,7 +20,7 @@ const esbuildProblemMatcherPlugin: esbuild.Plugin = {
           console.error(`    ${location.file}:${location.line}:${location.column}:`);
         }
       });
-      console.log('[watch] build finished');
+      console.log('build finished');
     });
   },
 };
@@ -62,20 +60,13 @@ async function main() {
     ],
   });
 
-  if (watch) {
-    // Run watch mode concurrently for both builds
-    await Promise.all([
-      ctxWebview.watch(),
-      ctxExtension.watch(),
-    ]);
-  } else {
-    // Single builds
-    await ctxWebview.rebuild();
-    await ctxWebview.dispose();
-    await ctxExtension.rebuild();
-    await ctxExtension.dispose();
-  }
+  // Single builds
+  await ctxWebview.rebuild();
+  await ctxWebview.dispose();
+  await ctxExtension.rebuild();
+  await ctxExtension.dispose();
 }
+
 
 main().catch(e => {
   console.error(e);

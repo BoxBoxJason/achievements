@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@layer components {
+  .filter-field {
+    @apply flex flex-col items-center m-1.5;
+  }
+
+  .filter-input {
+    @apply bg-filter-gray text-text-gray;
+  }
+
+  .filter-select {
+    @apply bg-filter-gray text-text-gray p-1.5 border-none rounded-sm break-normal;
+  }
+
+  .page-switch-button {
+    @apply flex items-center text-5xl border-none bg-none rounded-md h-fit px-1.5;
+  }
+
+  .page-switch-button-active {
+    @apply text-white cursor-pointer hover:bg-filter-gray;
+  }
+
+  .page-switch-button-inactive {
+    @apply text-text-gray cursor-not-allowed hover:bg-none;
+  }
+}
+
+@theme {
+  --color-background-dark-blue: #0e141b;
+  --color-background-gray: #23262e;
+  --color-filter-gray: #252a31;
+  --color-text-gray: #7d7e7f;
+  --color-text-red: #820000;
+  --color-completion-blue: #179efb;
+  --color-button-transparent-gray: rgba(119, 119, 119, 0.27);
+}

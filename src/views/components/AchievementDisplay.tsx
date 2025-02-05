@@ -14,65 +14,33 @@ const AchievementDisplay: React.FC<AchievementDict> = (achievementDict: Achievem
   };
 
   return (
-    <div className='achievement-display' style={{
-      display: 'flex',
-      flexDirection: 'row',
-      width: '90%',
-      minWidth: '300px',
-      height: '70px',
-      alignItems: 'center',
-      margin: '5px 0',
-      padding: '3px',
-      backgroundColor: webview.colors.ACHIEVEMENT_BACKGROUND_GRAY,
-    }}
-    >
+    <div className="achievement-display flex flex-row w-9/10 min-w-xs h-18 items-center my-1.5 p-1 bg-background-gray">
       {/* Icon */}
-      <img className='achievement-icon'
+      <img className="achievement-icon w-18 h-18 mr-2.5 shrink-0 max-w-full max-h-full object-contain"
         src={imageUris[achievementDict.icon] || imageUris.PUSHEEN_ERROR}
         onError={(e) => {
           e.currentTarget.src = imageUris.PUSHEEN_ERROR
         }}
         alt={`${achievementDict.title} Icon`}
         style={{
-          flexShrink: 0,
-          width: '70px',
-          height: '70px',
-          marginRight: '10px',
           imageRendering: 'pixelated',
         }}
       />
 
       {/* Text Content */}
-      <div className='achievement-body' style={{
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '100%',
-        padding: '10px 5px',
-      }}>
+      <div className="achievement-body flex flex-row justify-between w-full py-2.5 px-1.5">
         <div className='achievement-body-text'>
           {/* Title */}
-          <h3 style={{
-            fontWeight: 'bold',
-            width: 'fit-content',
-            textTransform: 'capitalize',
-            padding: 0,
-            margin: '0 0 5px 0',
-          }}>
+          <h3 className="font-bold w-fit p-0 mb-1.5 capitalize">
             {achievementDict.title}
           </h3>
 
           {/* Description */}
-          <p className='achievement-description' style={{
-            margin: 0,
-            padding: 0,
-          }}>{achievementDict.description}</p>
+          <p className="achievement-description m-0 p-0">{achievementDict.description}</p>
         </div>
 
         {/* Status */}
-        <span className='achievement-status' style={{
-          color: achievementDict.achieved ? webview.colors.GRAY_TEXT : webview.colors.RED_TEXT,
-        }}>
+        <span className={`achievement-status ${achievementDict.achieved ? 'text-text-gray' : 'text-text-red'}`}>
           {achievementDict.achieved && achievementDict.achievedAt
             ? `Unlocked: ${parseDateString(achievementDict.achievedAt as any) || 'Date not available'}`
             : 'Not Achieved'}

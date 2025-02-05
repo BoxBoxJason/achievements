@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import styled from 'styled-components';
 import { queries, webview } from '../viewconst';
 import { PostMessage } from '../icons';
 
@@ -8,23 +7,6 @@ interface SearchBarProps {
   limit: number;
   setLimit: React.Dispatch<React.SetStateAction<number>>;
 }
-
-const FilterField = styled.label`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 5px;
-`;
-
-const StyledSelect = styled.select`
-  background-color: ${webview.colors.FILTER_INPUT_GRAY};
-  color: ${webview.colors.GRAY_TEXT};
-  padding: 5px;
-  border: none;
-  border-radius: 2px;
-  word-break: normal;
-`;
-
 
 const SearchBar: React.FC<SearchBarProps> = ({ setFilters, limit, setLimit }) => {
   const [partialTitle, setPartialTitle] = useState('');
@@ -75,83 +57,41 @@ const SearchBar: React.FC<SearchBarProps> = ({ setFilters, limit, setLimit }) =>
   };
 
   return (
-    <div className='search-bar' style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      maxWidth: '100%',
-      minWidth: '80%',
-      justifyContent: 'center',
-      paddingBottom: '10px',
-      paddingTop: '10px',
-    }}>
+    <div className="search-bar flex flex-col items-center justify-center max-w-full min-w-4/5 p-2.5">
 
       {showFilters && (
-        <div className='filters-container' style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '10px',
-          justifyContent: 'center',
-        }}>
-          <input className='search-bar-input' style={{
-            backgroundColor: webview.colors.FILTER_INPUT_GRAY,
-            color: webview.colors.GRAY_TEXT,
-            padding: '5px',
-            marginBottom: '5px',
-            minWidth: '150px',
-            width: '50%',
-            maxWidth: '500px',
-            border: 'none',
-            borderRadius: '2px',
-          }}
+        <div className="filters-container flex flex-col items-center gap-2.5 justify-center">
+          <input className="search-bar-input w-1/2 max-w-lg p-1.5 mb-1.5 min-w-38 rounded-xs border-none filter-input"
             type="text"
             value={partialTitle}
             onChange={(e) => setPartialTitle(e.target.value)}
             placeholder="Search"
           />
-          <div className='filters-sub-container' style={{
-            display: 'flex',
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            justifyContent: 'space-between',
-            width: '100%',
-          }}>
-            <FilterField>
-              <span style={{
-                marginBottom: '5px',
-              }}>Achievable</span>
+          <div className="filters-sub-container flex flex-row flex-wrap justify-between w-full">
+            <div className="filter-field">
+              <span className="mb-1.5">Achievable</span>
               <input
+                className="filter-input"
                 type="checkbox"
                 checked={!!achievable}
                 onChange={(e) => setAchievable(e.target.checked ? true : undefined)}
-                style={{
-                  backgroundColor: webview.colors.FILTER_INPUT_GRAY,
-                  color: webview.colors.GRAY_TEXT,
-                }}
               />
-            </FilterField>
+            </div>
 
-            <FilterField>
-              <span style={{
-                marginBottom: '5px',
-              }}>Achieved</span>
+            <div className="filter-field">
+              <span className="mb-1.5">Achieved</span>
               <input
                 type="checkbox"
+                className="filter-input"
                 checked={!!achieved}
                 onChange={(e) => setAchieved(e.target.checked ? true : undefined)}
-                style={{
-                  backgroundColor: webview.colors.FILTER_INPUT_GRAY,
-                  color: webview.colors.GRAY_TEXT,
-                }}
               />
-            </FilterField>
+            </div>
 
-            <FilterField>
-              <span style={{
-                marginBottom: '5px',
-              }}>Label</span>
-              <StyledSelect
+            <div className="filter-field">
+              <span className="mb-1.5">Label</span>
+              <select
+                className="filter-select"
                 value={label || ''}
                 onChange={(e) => setLabel(e.target.value || undefined)}
               >
@@ -161,14 +101,13 @@ const SearchBar: React.FC<SearchBarProps> = ({ setFilters, limit, setLimit }) =>
                     {label}
                   </option>
                 ))}
-              </StyledSelect>
-            </FilterField>
+              </select>
+            </div>
 
-            <FilterField>
-              <span style={{
-                marginBottom: '5px',
-              }}>Sort Criteria</span>
-              <StyledSelect
+            <div className="filter-field">
+              <span className="mb-1.5" >Sort Criteria</span>
+              <select
+                className="filter-select"
                 value={sortCriteria || ''}
                 onChange={(e) => setSortCriteria(e.target.value || undefined)}
               >
@@ -178,53 +117,39 @@ const SearchBar: React.FC<SearchBarProps> = ({ setFilters, limit, setLimit }) =>
                     {criteria.replace(/"/g, '')}
                   </option>
                 ))}
-              </StyledSelect>
-            </FilterField>
+              </select>
+            </div>
 
-            <FilterField>
-              <span style={{
-                marginBottom: '5px',
-              }}>Sort Direction</span>
-              <div className='radio-container' style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-              }}>
+            <div className="filter-field">
+              <span className="m-1.5">Sort Direction</span>
+              <div className="radio-container flex flex-col align-start">
                 <label>
                   <input
+                    className="filter-input"
                     type="radio"
                     name="sortDirection"
                     value="asc"
                     checked={sortDirection === 'asc'}
                     onChange={() => setSortDirection('asc')}
-                    style={{
-                      backgroundColor: webview.colors.FILTER_INPUT_GRAY,
-                      color: webview.colors.GRAY_TEXT,
-                    }}
                   />
                   Ascending
                 </label>
                 <label>
                   <input
+                    className="filter-input"
                     type="radio"
                     name="sortDirection"
                     value="desc"
                     checked={sortDirection === 'desc'}
                     onChange={() => setSortDirection('desc')}
-                    style={{
-                      backgroundColor: webview.colors.FILTER_INPUT_GRAY,
-                      color: webview.colors.GRAY_TEXT,
-                    }}
                   />
                   Descending
                 </label>
               </div>
-            </FilterField>
+            </div>
 
-            <FilterField>
-              <span style={{
-                marginBottom: '5px',
-              }}>Achievement per Page</span>
+            <div className="filter-field">
+              <span className="mb-1.5">Achievement per Page</span>
               <input
                 type="number"
                 value={limit}
@@ -234,25 +159,13 @@ const SearchBar: React.FC<SearchBarProps> = ({ setFilters, limit, setLimit }) =>
                 }}
                 min={1}
                 max={2000}
-                style={{
-                  backgroundColor: webview.colors.FILTER_INPUT_GRAY,
-                  color: webview.colors.GRAY_TEXT,
-                  padding: '5px',
-                  border: 'none',
-                  borderRadius: '2px',
-                }}
-              />
-            </FilterField>
+                className="p-1.5 border-none rounded-xs filter-input" />
+            </div>
           </div>
         </div>
       )}
 
-      <button onClick={() => setShowFilters((prev) => !prev)} style={{
-        width: 'fit-content',
-        padding: '10px 20px',
-        border: 'none',
-        borderRadius: '2px',
-      }}>
+      <button onClick={() => setShowFilters((prev) => !prev)} className="w-fit py-1.5 px-5 border-none rounded-lg bg-white text-base text-black">
         {showFilters ? 'Hide Filters' : 'Show Filters'}
       </button>
     </div>
