@@ -19,6 +19,7 @@ export namespace AchievementsWebview {
       {
         enableScripts: true,
         retainContextWhenHidden: true,
+
       }
     );
     panel.webview.html = getDefaultWebviewContentReact(context, panel);
@@ -49,6 +50,7 @@ export namespace AchievementsWebview {
   <head>
     <meta charset="UTF-8" />
     <title>Achievements</title>
+    <link rel="stylesheet" type="text/css" href="${panel.webview.asWebviewUri(vscode.Uri.file(path.join(context.extensionPath, 'dist', 'style', 'main.css')))}">
   </head>
   <body>
     <div id="achievement-view"></div>

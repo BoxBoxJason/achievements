@@ -12,17 +12,6 @@ export namespace webview {
     RETRIEVE_PROFILE = 'profile-select',
   };
 
-
-  export enum colors {
-    HOLDER_BACKGROUND_DARK_BLUE = '#0e141b',
-    ACHIEVEMENT_BACKGROUND_GRAY = '#23262e',
-    FILTER_INPUT_GRAY = '#252a31',
-    GRAY_TEXT = '#7d7e7f',
-    RED_TEXT = '#820000',
-    COMPLETION_LIGHT_BLUE = '#179efb',
-    BUTTON_GRAY = '#777777',
-  };
-
   export enum fonts {
     HEADER_FONT = 'Impact, Haettenschweiler, Arial Narrow Bold, sans-serif',
     TEXT_FONT = 'Impact, Haettenschweiler, Arial Narrow Bold, sans-serif',
