@@ -142,6 +142,13 @@ export namespace webview {
         COPY_NINJA: ['icons', 'achievements', 'shortcut', 'copy_ninja.png'],
         CODE_SNIPPETS: ['icons', 'achievements', 'shortcut', 'snippet.png'],
       } as const;
+
+      export const extension: { [key: string]: string[] } = {
+        PIMP_MY_RIDE: ['icons', 'achievements', 'extension', 'theme.jpg'],
+        CHAMELEON: ['icons', 'achievements', 'extension', 'chameleon.png'],
+        EXTENSION_MASTER: ['icons', 'achievements', 'extension', 'extension.png'],
+        EXTENSION_OUTDATED: ['icons', 'achievements', 'extension', 'deprecated.png'],
+      } as const;
     }
   }
 }
