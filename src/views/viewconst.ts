@@ -62,7 +62,7 @@ export namespace webview {
         PERL: ['icons', 'achievements', 'speaker', 'perl.png'],
         LUA: ['icons', 'achievements', 'speaker', 'lua.png'],
         MATLAB: ['icons', 'achievements', 'speaker', 'matlab.png'],
-        'OBJECTIVE-C': ['icons', 'achievements', 'speaker', 'objectivec.png'],
+        'OBJECTIVE-C': ['icons', 'achievements', 'speaker', 'objective-c.png'],
         SCALA: ['icons', 'achievements', 'speaker', 'scala.png'],
         HASKELL: ['icons', 'achievements', 'speaker', 'haskell.png'],
         R: ['icons', 'achievements', 'speaker', 'r.png'],
@@ -102,7 +102,7 @@ export namespace webview {
         PERL: ['icons', 'achievements', 'creator', 'perl.png'],
         LUA: ['icons', 'achievements', 'creator', 'lua.png'],
         MATLAB: ['icons', 'achievements', 'creator', 'matlab.png'],
-        'OBJECTIVE-C': ['icons', 'achievements', 'creator', 'objectivec.png'],
+        'OBJECTIVE-C': ['icons', 'achievements', 'creator', 'objective-c.png'],
         SCALA: ['icons', 'achievements', 'creator', 'scala.png'],
         HASKELL: ['icons', 'achievements', 'creator', 'haskell.png'],
         R: ['icons', 'achievements', 'creator', 'r.png'],
@@ -118,6 +118,12 @@ export namespace webview {
         GIT_COMMIT: ['icons', 'achievements', 'git', 'commit.png'],
         GIT_MERGE: ['icons', 'achievements', 'git', 'merge.png'],
         GIT_PUSH: ['icons', 'achievements', 'git', 'push.png'],
+      } as const;
+
+      export const terminal: { [key: string]: string[] } = {
+        TERMINAL_TASK: ['icons', 'achievements', 'terminal', 'task.jpg'],
+        TERMINAL_TASK_SUCCESS: ['icons', 'achievements', 'terminal', 'success.jpg'],
+        TERMINAL_TASK_FAIL: ['icons', 'achievements', 'terminal', 'fail.jpg'],
       } as const;
     }
   }

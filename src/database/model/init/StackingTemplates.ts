@@ -416,7 +416,7 @@ export namespace StackingTemplates {
 
     export const terminalCommandsTemplate = (): StackingAchievementTemplate => ({
       title: 'Commander %d',
-      icon: 'TERMINAL_COMMANDS',
+      icon: 'TERMINAL_TASK',
       category: constants.category.VSCODE,
       group: 'tasks',
       labels: [constants.category.VSCODE, constants.labels.TERMINAL],
@@ -432,7 +432,7 @@ export namespace StackingTemplates {
 
     export const failedTerminalCommandsTemplate = (): StackingAchievementTemplate => ({
       title: 'Failure achiever %d',
-      icon: 'FAILED_TERMINAL_TASKS',
+      icon: 'TERMINAL_TASK_FAIL',
       category: constants.category.VSCODE,
       group: 'tasks',
       labels: [constants.category.VSCODE, constants.labels.TERMINAL],
@@ -448,7 +448,7 @@ export namespace StackingTemplates {
 
     export const successfulTerminalCommandsTemplate = (): StackingAchievementTemplate => ({
       title: 'Works on my Machine %d',
-      icon: 'SUCCESSFUL_TERMINAL_TASKS',
+      icon: 'TERMINAL_TASK_SUCCESS',
       category: constants.category.VSCODE,
       group: 'tasks',
       labels: [constants.category.VSCODE, constants.labels.TERMINAL],
