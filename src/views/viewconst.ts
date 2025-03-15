@@ -137,6 +137,11 @@ export namespace webview {
         DEBUGGER_SESSION: ['icons', 'achievements', 'debug', 'session.png'],
         DEBUGGER_BREAKPOINT: ['icons', 'achievements', 'debug', 'breakpoint.png'],
       } as const;
+
+      export const shortcut: { [key: string]: string[] } = {
+        COPY_NINJA: ['icons', 'achievements', 'shortcut', 'copy_ninja.png'],
+        CODE_SNIPPETS: ['icons', 'achievements', 'shortcut', 'snippet.png'],
+      } as const;
     }
   }
 }
