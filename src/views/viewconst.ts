@@ -149,6 +149,14 @@ export namespace webview {
         EXTENSION_MASTER: ['icons', 'achievements', 'extension', 'extension.png'],
         EXTENSION_OUTDATED: ['icons', 'achievements', 'extension', 'deprecated.png'],
       } as const;
+
+      export const productivity: { [key: string]: string[] } = {
+        CODE_MONKEY: ['icons', 'achievements', 'productivity', 'code_monkey.png'],
+        CODE_COMMENTATOR: ['icons', 'achievements', 'productivity', 'comment.png'],
+        TAB_HOARDER: ['icons', 'achievements', 'productivity', 'tab.png'],
+        ERROR_FIXER: ['icons', 'achievements', 'productivity', 'fix.png'],
+        SHOWER_AVOIDER: ['icons', 'achievements', 'productivity', 'shower.png'],
+      } as const;
     }
   }
 }
