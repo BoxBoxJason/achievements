@@ -26,6 +26,7 @@ export function getPackagedImages(context: vscode.ExtensionContext, view: vscode
     ...webview.icons.achievements.file,
     ...webview.icons.achievements.speaker,
     ...webview.icons.achievements.creator,
+    ...webview.icons.achievements.debug,
   };
 
   for (const key in iconsMap) {

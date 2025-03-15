@@ -132,6 +132,11 @@ export namespace webview {
         DIRECTORY_CREATOR: ['icons', 'achievements', 'file', 'directory.png'],
         RESOURCE_DELETED: ['icons', 'achievements', 'file', 'deleted.png'],
       } as const;
+
+      export const debug: { [key: string]: string[] } = {
+        DEBUGGER_SESSION: ['icons', 'achievements', 'debug', 'session.png'],
+        DEBUGGER_BREAKPOINT: ['icons', 'achievements', 'debug', 'breakpoint.png'],
+      } as const;
     }
   }
 }
