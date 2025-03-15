@@ -112,6 +112,13 @@ export namespace webview {
         ASSEMBLY: ['icons', 'achievements', 'creator', 'assembly.png'],
       } as const;
 
+      export const git: { [key: string]: string[] } = {
+        GIT_AMEND: ['icons', 'achievements', 'git', 'amend.png'],
+        GIT_BRANCH: ['icons', 'achievements', 'git', 'branch.png'],
+        GIT_COMMIT: ['icons', 'achievements', 'git', 'commit.png'],
+        GIT_MERGE: ['icons', 'achievements', 'git', 'merge.png'],
+        GIT_PUSH: ['icons', 'achievements', 'git', 'push.png'],
+      } as const;
     }
   }
 }
@@ -127,3 +134,4 @@ export namespace queries {
     TOTAL_TIME_SPENT = 'totalTimeSpentCount',
   }
 }
+
