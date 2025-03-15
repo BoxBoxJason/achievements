@@ -23,20 +23,14 @@ export function getPackagedImages(context: vscode.ExtensionContext, view: vscode
     ...webview.icons.pusheen,
     ...webview.icons.achievements.git,
     ...webview.icons.achievements.terminal,
+    ...webview.icons.achievements.file,
+    ...webview.icons.achievements.speaker,
+    ...webview.icons.achievements.creator,
   };
 
   for (const key in iconsMap) {
     images[key] = getWebviewImageUri(context, view, path.join('dist', ...iconsMap[key])).toString();
   }
 
-  // Add language speaker achievements icons
-  for (const key in webview.icons.achievements.speaker) {
-    images[key + "_SPEAKER"] = getWebviewImageUri(context, view, path.join('dist', ...webview.icons.achievements.speaker[key])).toString();
-  }
-
-  // Add language creator achievements icons
-  for (const key in webview.icons.achievements.creator) {
-    images[key + "_CREATOR"] = getWebviewImageUri(context, view, path.join('dist', ...webview.icons.achievements.creator[key])).toString();
-  }
   return images;
 }
