@@ -384,7 +384,7 @@ export namespace StackingTemplates {
 
     export const debuggerSessionsTemplate = (): StackingAchievementTemplate => ({
       title: 'Am I better than everyone ? %d',
-      icon: 'DEBUGGER_SESSIONS',
+      icon: 'DEBUGGER_SESSION',
       category: constants.category.VSCODE,
       group: 'Debugger Sessions',
       labels: [constants.category.VSCODE, constants.labels.DEBUGGER],
@@ -400,7 +400,7 @@ export namespace StackingTemplates {
 
     export const breakpointsTemplate = (): StackingAchievementTemplate => ({
       title: 'Breaking Bad %d',
-      icon: 'BREAKPOINTS',
+      icon: 'DEBUGGER_BREAKPOINT',
       category: constants.category.VSCODE,
       group: 'Breakpoints',
       labels: [constants.category.VSCODE, constants.labels.DEBUGGER],
