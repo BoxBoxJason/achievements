@@ -33,7 +33,7 @@ export function getPackagedImages(context: vscode.ExtensionContext, view: vscode
   };
 
   for (const key in iconsMap) {
-    images[key] = getWebviewImageUri(context, view, path.join('dist', ...iconsMap[key])).toString();
+    images[key] = getWebviewImageUri(context, view, path.join('assets', ...iconsMap[key])).toString();
   }
 
   return images;
