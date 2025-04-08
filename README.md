@@ -2,6 +2,8 @@
 
 Achievements is a Visual Studio Code extension that allows you to track your progress in coding, and earn achievements for completing tasks.
 
+![Extension Webview Illustration](./screenshot.jpg)
+
 ## Features
 
 - Track your progress in coding
@@ -9,60 +11,38 @@ Achievements is a Visual Studio Code extension that allows you to track your pro
 - View your achievements in the **Achievements** panel
 - View each achievement's description and requirements
 - View your progress towards each achievement
+- Track your time spent coding
+- Filter achievements by category, progress, and name
+- View your profile and completion percentage
+- Enable or disable notifications
+- Enable or disable any type of listeners for **privacy**
 
 ## Extension Commands
 
-### Configuration commands
-- `achievements.enable`: Enables the Achievements extension.
-- `achievements.disable`: Disables the Achievements extension.
-- `achievements.configuration`: Opens the Achievements configuration page.
-- `achievements.notifications`: Enables or disables notifications for achievements.
+Several commands are available to interact with the Achievements extension. You can access these commands through the Command Palette (Ctrl+Shift+P) or by using keybindings.
 
-### Achievement commands
-- `achievements.show`: Opens the Achievements panel.
+|Command|Description|
+|---|---|
+|`achievements.enable`|Enable or Disable the Achievements extension event tracking (requires a restart)|
+|`achievements.settings`|Open the Achievements configuration page|
+|`achievements.show`|Show the Achievements panel|
 
-## Release Notes
+## Configuration
 
-### [0.0.1] | 2024-11-?? - Initial release
+The Achievements extension can be configured through the settings. You can access the settings by going to **File > Preferences > Settings** and searching for "Achievements".
+You can also access the settings by using the command `achievements.settings`.
 
-Initial release of Achievements
-
-#### Added
-- Over 1200 achievements
-    - Git related
-    - Code related
-    - Debugging related
-    - Testing related
-    - Refactoring related
-    - Commenting related
-    - File related
-    - More...
-- Profile
-    - View your profile and completion percentage
-    - View your time spent coding
-    - Check your progressions towards achievements
-- Achievements panel
-    - View achievements
-    - View progress towards achievements
-    - View achievement descriptions
-    - Filter achievements by category
-    - Filter achievements by progress
-    - Filter achievements by name
-- Configuration
-    - Enable / disable extension
-    - Enable / disable notifications
-    - Enable / disable any type of listeners (for privacy)
-    - Define your username
-    - Select log level
-    - Select log directory
-
-- Database
-    - Database model for achievements
-    - Database model for progressions
-    - Database model for requirements
-    - Database model for database schema
-    - Migration manager for database schema
-    - Initial achievements populated in database
-
-## Known Issues
-
+|Setting|Description|
+|---|---|
+|`achievements.enabled`|Enable or disable the Achievements extension event tracking|
+|`achievements.notifications`|Enable or disable notifications for achievements|
+|`achievements.logDirectory`|Select the directory where the log files will be stored|
+|`achievements.logLevel`|Select the log level (info, debug, error)|
+|`achievements.username`|Define your username for the Achievements score display|
+|`achievements.listeners.debug`|Enable or disable debug listeners|
+|`achievements.listeners.git`|Enable or disable git listeners|
+|`achievements.listeners.extensions`|Enable or disable extension listeners|
+|`achievements.listeners.files`|Enable or disable file listeners|
+|`achievements.listeners.tabs`|Enable or disable tab listeners|
+|`achievements.listeners.tasks`|Enable or disable task listeners|
+|`achievements.listeners.time`|Enable or disable time tracking listeners|
