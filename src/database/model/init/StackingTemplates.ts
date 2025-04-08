@@ -319,7 +319,7 @@ export namespace StackingTemplates {
   export namespace vscode {
     //////////////////////// VSCODE STACKING TEMPLATES ////////////////////////
     export const extensionsInstalledTemplate = (): StackingAchievementTemplate => ({
-      title: 'Got to catch them all ! %d',
+      title: 'Buying Frenzy %d',
       icon: 'EXTENSION_MASTER',
       category: constants.category.VSCODE,
       group: 'Extensions Installed',
