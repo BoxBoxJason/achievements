@@ -68,18 +68,17 @@ class Progression {
   /**
    * Creates an instance of Progression from a database row.
    *
-   * @memberof Progression
-   * @method fromRow
    * @static
    *
    * @param {any} row - The database row to create an instance from.
+   *
    * @returns {Progression} - An instance of Progression.
    */
   static fromRow(row: any): Progression {
     let value = row.value as string | number | Date | boolean;
     switch (row.type) {
       case 'string': case 'text':
-       value = row.value.toString();
+        value = row.value.toString();
         break;
       case 'number': case 'integer': case 'float':
         value = Number(row.value);
@@ -102,17 +101,18 @@ class Progression {
 
   /**
    * Retrieves all progressions from the database.
-   *
-   * @memberof Progression
-   * @method fromDB
+   * 
+   * @async
    * @static
    *
-   * @returns {Progression[]} - An array of all progressions.
+   * @returns {Promise<Progression[]>} - A promise that resolves to an array of Progression instances.
+   * @throws {Error} - If the database query fails.
    */
-  static fromDB(): Progression[] {
-    const db = db_model.openDB();
-    const query = 'SELECT * FROM progressions';
-    const rows = db.prepare(query).all();
+  static async fromDB(): Promise<Progression[]> {
+    const result = await db_model.withLock((db) => {
+      return db.exec('SELECT * FROM progressions');
+    });
+    const rows = db_model.parseRows(result) as ProgressionRow[];
     return rows.map((row) => Progression.fromRow(row));
   }
 
@@ -121,42 +121,42 @@ class Progression {
   /**
    * Inserts an instance of Progression into the database.
    *
-   * @memberof Progression
-   * @method toRow
+   * @async
    *
-   * @returns {void}
+   * @returns {Promise<void>} - A promise that resolves when the insertion is complete.
    */
-  toRow(): void {
-    const db = db_model.openDB();
+  async toRow(): Promise<void> {
+    const result = await db_model.withLock((db) => {
+      db.run(Progression.INSERT_QUERY, [this.name, db_model.toSqlValue(this.value), this.type]);
+      // Retrieve the last inserted row id
+      return db.exec('SELECT last_insert_rowid() AS id');
+    });
 
-    const statement = db.prepare(Progression.INSERT_QUERY);
-    const info = statement.run([this.name, this.value, this.type]);
-
-    // Change the id of the instance to the id of the row if it was inserted
-    if (info.changes && info.lastInsertRowid) {
-      this.id = Number(info.lastInsertRowid);
+    // Update the instance with the new id
+    const rows = db_model.parseRows(result) as { id: number }[];
+    if (rows.length > 0) {
+      this.id = rows[0].id;
     }
   }
 
   /**
    * Inserts multiple instances of Progression into the database.
    *
-   * @memberof Progression
-   * @method toDB
+   * @async
    * @static
    *
    * @param {Progression[]} progressions - An array of Progression instances to insert.
-   * @returns {void}
+   * 
+   * @returns {Promise<void>} - A promise that resolves when the insertion is complete.
    */
-  static toDB(progressions: Progression[]): void {
-    const db = db_model.openDB();
-    const statement = db.prepare(Progression.INSERT_QUERY);
-    db.transaction((progressions) => {
+  static async toDB(progressions: Progression[]): Promise<void> {
+    await db_model.transactionLock((db) => {
+      const statement = db.prepare(Progression.INSERT_QUERY);
       for (const progression of progressions) {
-        statement.run([progression.name, progression.value, progression.type]);
+        statement.run([progression.name, db_model.toSqlValue(progression.value), progression.type]);
       }
-    })(progressions);
-
+      statement.free();
+    });
   }
 
   // ==================== UPDATE ====================
@@ -165,14 +165,15 @@ class Progression {
    * Achieves achievements related to specific progressions if their criteria are met.
    * Returns an array of newly achieved achievements.
    *
-   * @memberof Progression
-   * @method achieveCompletedAchievements
+   * @async
    * @static
    *
    * @param {number[]} progressionIds - The IDs of the progressions to process.
-   * @returns {{ id: number; title: string; achievedAt: string }[]} - An array of newly achieved achievements.
+   * 
+   * @returns {Promise<{ id: number; title: string; achievedAt: string }[]>} - A promise that resolves to an array of newly achieved achievements.
+   * @throws {Error} - If the database query fails.
    */
-  static achieveCompletedAchievements(progressionIds: number[]): { id: number; title: string; achievedAt: string, exp: number }[] {
+  static async achieveCompletedAchievements(progressionIds: number[]): Promise<{ id: number; title: string; achievedAt: string, exp: number }[]> {
     if (progressionIds.length === 0) {
       return []; // No progressions to process
     }
@@ -208,23 +209,25 @@ class Progression {
       RETURNING id, title, achievedAt, exp;
     `;
 
-    const db = db_model.openDB();
-
-    // Pass the progressionIds as parameters to the query
-    return db.prepare(updateAchievementsQuery).all(progressionIds) as { id: number; title: string; achievedAt: string; exp: number}[];
+    const result = await db_model.withLock((db) => {
+      return db.exec(updateAchievementsQuery);
+    });
+    return db_model.parseRows(result) as { id: number; title: string; achievedAt: string; exp: number }[];
   }
 
 
   /**
    * Adds a value to the progression.
    *
-   * @memberof Progression
-   * @method increaseValue
+   * @async
+   * @static
    *
    * @param {number} value - The value to add to the progression.
-   * @returns {{[key: string]: any}[]} - An array of updated progressions
+   * 
+   * @returns {Promise<{ id: number }[]>} - An array of updated progressions
+   * @throws {Error} - If the database query fails.
    */
-  static addValue(filters: ProgressionSelectRequestFilters, value: number | string = 1): { id: number }[] {
+  static async addValue(filters: ProgressionSelectRequestFilters, value: number | string = 1): Promise<{ id: number }[]> {
     const ADD_VALUE_QUERY = `
       UPDATE progressions
       SET value =
@@ -241,24 +244,27 @@ class Progression {
       RETURNING id;
       `;
 
-    const db = db_model.openDB();
     const [selectorColumn, selectorValue] = parseUpdateFilters(filters);
-
-    return db.prepare(ADD_VALUE_QUERY.replace('SELECTOR_PLACEHOLDER', selectorColumn)).all([value, value, value, value, value, value, selectorValue]) as { id: number }[];
+    const query = ADD_VALUE_QUERY.replace('SELECTOR_PLACEHOLDER', selectorColumn);
+    const result = await db_model.withLock((db) => {
+      return db.exec(query, [value, value, value, value, value, value, selectorValue]);
+    });
+    return db_model.parseRows(result) as { id: number }[];
   }
 
   /**
    * Updates the value of progressions that match the given filter
    *
-   * @memberof Progression
-   * @method updateValue
+   * @async
    * @static
    *
    * @param {ProgressionSelectRequestFilters} filters - The filters to apply to the query.
    * @param {string} value - The new value of the progression.
-   * @returns {AchievementRow[]} - An array of newly achieved achievements.
+   * 
+   * @returns {Promise<{ id: number }[]>} - An array of updated progressions
+   * @throws {Error} - If the database query fails.
    */
-  static updateValue(filters: ProgressionSelectRequestFilters, value: string, maximize : boolean = false): { id: number }[] {
+  static async updateValue(filters: ProgressionSelectRequestFilters, value: string, maximize: boolean = false): Promise<{ id: number }[]> {
     const UPDATE_VALUE_QUERY = maximize ? `
       UPDATE progressions
       SET value = ?
@@ -273,8 +279,10 @@ class Progression {
     let [selectorColumn, selectorValue] = parseUpdateFilters(filters);
     let query = UPDATE_VALUE_QUERY.replace('SELECTOR_PLACEHOLDER', selectorColumn);
 
-    const db = db_model.openDB();
-    return db.prepare(query).all(maximize ? [value, selectorValue, value] : [value, selectorValue]) as { id: number }[];
+    const result = await db_model.withLock((db) => {
+      return db.exec(query, maximize ? [value, selectorValue, value] : [value, selectorValue]);
+    });
+    return db_model.parseRows(result) as { id: number }[];
   }
 
   // ==================== GET ====================
@@ -282,15 +290,15 @@ class Progression {
   /**
    * Retrieves progressions from the database with the given filters.
    *
-   * @memberof Progression
-   * @method getProgressionsRawFormat
+   * @async
    * @static
    *
    * @param {ProgressionSelectRequestFilters} filters - The filters to apply to the query.
-   * @returns {ProgressionRow[]} - An array of progressions in raw format.
+   * 
+   * @returns {Promise<ProgressionRow[]>} - A promise that resolves to an array of ProgressionRow instances.
+   * @throws {Error} - If the database query fails.
    */
-  static getProgressionsRawFormat(filters: ProgressionSelectRequestFilters): ProgressionRow[] {
-    const db = db_model.openDB();
+  static async getProgressionsRawFormat(filters: ProgressionSelectRequestFilters): Promise<ProgressionRow[]> {
     let query = 'SELECT * FROM progressions';
     let where = [];
     let values = [];
@@ -318,27 +326,38 @@ class Progression {
       query += ' OFFSET ?';
       values.push(filters.offset);
     }
-
-    return db.prepare(query).all(values) as ProgressionRow[];
+    const result = await db_model.withLock((db) => {
+      return db.exec(query, values);
+    });
+    return db_model.parseRows(result) as ProgressionRow[];
   }
 
   /**
    * Retrieves progressions from the database with the given filters.
    *
-   * @memberof Progression
-   * @method getProgressions
+   * @async
    * @static
    *
    * @param {ProgressionSelectRequestFilters} filters - The filters to apply to the query.
-   * @returns {Progression[]} - An array of progressions.
+   * 
+   * @returns {Promise<Progression[]>} - A promise that resolves to an array of Progression instances.
+   * @throws {Error} - If the database query fails.
    */
-  static getProgressions(filters: ProgressionSelectRequestFilters): Progression[] {
-    const rows = Progression.getProgressionsRawFormat(filters);
+  static async getProgressions(filters: ProgressionSelectRequestFilters): Promise<Progression[]> {
+    const rows = await Progression.getProgressionsRawFormat(filters);
     return rows.map((row) => Progression.fromRow(row));
   }
 
 }
 
+/**
+ * Parses the update filters and returns the selector column and value.
+ *
+ * @param {ProgressionSelectRequestFilters} filters - The filters to parse.
+ * 
+ * @returns {[string, string]} - The selector column and value.
+ * @throws {Error} - If no filters are provided.
+ */
 function parseUpdateFilters(filters: ProgressionSelectRequestFilters): [string, string] {
   let selectorValue: string;
   let selectorColumn: string;
