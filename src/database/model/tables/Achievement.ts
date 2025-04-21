@@ -278,14 +278,16 @@ class Achievement {
   /**
    * Creates a list of achievements from a stacking template
    *
+   * @async
    * @static
-   * @memberof Achievement
-   * @method fromStackingTemplateToDB
    *
    * @param {StackingAchievementTemplate} template - The template to create the achievements from
-   * @returns
+   * @param {number} [multiplier=1] - The multiplier to apply to the criteria values
+   * 
+   * @returns {Promise<void>} - A promise that resolves when the achievements are created
+   * @throws {Error} - If the database operation fails
    */
-  static fromStackingTemplateToDB(template: StackingAchievementTemplate, multiplier: number = 1): void {
+  static async fromStackingTemplateToDB(template: StackingAchievementTemplate, multiplier: number = 1): Promise<void> {
     const {
       title,
       icon,
@@ -347,13 +349,14 @@ class Achievement {
     }
 
     // Insert achievements into the database
-    const db = db_model.openDB();
-    db.transaction(() => {
+    await db_model.transactionLock((db) => {
       const achievementStmt = db.prepare(Achievement.ACHIEVEMENT_INSERT_QUERY);
       achievementData.forEach((params) => {
         achievementStmt.run(params);
       });
-    })();
+      achievementStmt.free();
+    });
+
 
     // Prepare requirements based on tier titles and insert labels
     for (let i = 0; i < tierTitles.length; i++) {
@@ -370,11 +373,10 @@ class Achievement {
         // Include previous tier as requirement
         requirementData.push([tierTitles[i - 1], tierTitles[i]]);
       }
-
     }
 
     // Insert requirements and criteria into the database
-    db.transaction(() => {
+    await db_model.transactionLock((db) => {
       // Insert labels
       const labelsStmt = db.prepare(`
         INSERT INTO achievement_labels (achievement_id, label)
@@ -383,6 +385,7 @@ class Achievement {
         WHERE a.title = ?
         ON CONFLICT(achievement_id, label) DO NOTHING`);
       labelsData.forEach((params) => labelsStmt.run(params));
+      labelsStmt.free();
 
       // Insert requirements  by titles
       const requirementStmt = db.prepare(`
@@ -393,6 +396,7 @@ class Achievement {
         WHERE a.title = ?
         ON CONFLICT(achievement_id, requirement_id) DO NOTHING`);
       requirementData.forEach((params) => requirementStmt.run(params));
+      requirementStmt.free();
 
       // Insert requirements by IDs
       const requirementByIdStmt = db.prepare(`
@@ -402,6 +406,7 @@ class Achievement {
         WHERE a.title = ?
         ON CONFLICT(achievement_id, requirement_id) DO NOTHING`);
       requirementByIdData.forEach((params) => requirementByIdStmt.run(params));
+      requirementByIdStmt.free();
 
       // Insert criteria
       const criteriaStmt = db.prepare(`
@@ -414,9 +419,9 @@ class Achievement {
           required_value = excluded.required_value,
           "type" = excluded."type",
           comparison_operator = excluded.comparison_operator`);
-
       criteriaData.forEach((params) => criteriaStmt.run(params));
-    })();
+      criteriaStmt.free();
+    });
   }
 
 
@@ -429,6 +434,7 @@ class Achievement {
    *
    * @param {AchievementRow} row - The row to create the achievement from
    * @returns {Achievement} - The created achievement
+   * @throws {Error} - If the row is invalid
    */
   static fromRow(row: AchievementRow): Achievement {
     return new Achievement({
@@ -458,40 +464,41 @@ class Achievement {
   /**
    * Updates the achieved status of the achievement
    *
-   * @memberof Achievement
-   * @method updateAchieved
+   * @async
    *
    * @param {boolean} achieved - The achieved status of the achievement
-   * @returns {void}
+   * 
+   * @returns {Promise<void>} - A promise that resolves when the achievement is updated
+   * @throws {Error} - If the database operation fails
    */
-  updateAchieved(achieved: boolean = true): void {
+  async updateAchieved(achieved: boolean = true): Promise<void> {
     this.achieved = achieved;
     this.achievedAt = achieved ? new Date() : undefined;
     const query = `UPDATE achievements SET achieved = ?, achievedAt = ? WHERE id = ?`;
 
-    const db = db_model.openDB();
-    const statement = db.prepare(query);
-    statement.run(achieved ? 1 : 0, achieved ? new Date().toISOString() : null, this.id);
+    await db_model.withLock((db) => {
+      db.run(query, [achieved ? 1 : 0, achieved ? 1 : 0, achieved ? new Date().toISOString() : null, this.id as number]);
+    });
   }
-
 
   /**
    * Updates the achieved status of an achievement by ID
    *
+   * @async
    * @static
-   * @memberof Achievement
-   * @method updateAchievedFromId
    *
    * @param {number} id - The ID of the achievement to update
    * @param {boolean} achieved - The achieved status of the achievement
-   * @returns {void}
+   * 
+   * @returns {Promise<void>} - A promise that resolves when the achievement is updated
+   * @throws {Error} - If the database operation fails
    */
-  static updateAchievedFromId(id: number, achieved: boolean = true): void {
+  static async updateAchievedFromId(id: number, achieved: boolean = true): Promise<void> {
     const query = `UPDATE achievements SET achieved = ?, achievedAt = ? WHERE id = ?`;
 
-    const db = db_model.openDB();
-    const statement = db.prepare(query);
-    statement.run(achieved ? 1 : 0, achieved ? new Date().toISOString() : null, id);
+    await db_model.withLock((db) => {
+      db.run(query, [achieved ? 1 : 0, achieved ? new Date().toISOString() : null, id]);
+    });
   }
 
   // ==================== GET ====================
@@ -499,14 +506,15 @@ class Achievement {
   /**
    * Retrieves achievements based off (optional) filters
    *
+   * @async
    * @static
-   * @memberof Achievement
-   * @method getAchievementsRawFormat
    *
-   * @param {string[]} criterias - The list of criterias to filter by
-   * @returns {Achievement[]} - The list of achievements
+   * @param {AchievementSelectRequestFilters} filters - The filters to apply to the query
+   * 
+   * @returns {Promise<{ count: number | null, achievements: Achievement[] }>} - A promise that resolves to an object containing the count of achievements and the list of achievements
+   * @throws {Error} - If the database operation fails
    */
-  static getAchievementsRawFormat(filters: AchievementSelectRequestFilters): { count: number | null, achievements: AchievementRow[] } {
+  static async getAchievementsRawFormat(filters: AchievementSelectRequestFilters): Promise<{ count: number | null, achievements: AchievementRow[] }> {
     const db = db_model.openDB();
 
     // Base query for achievements
@@ -578,7 +586,10 @@ class Achievement {
         ${baseQuery}
         ${whereClause}
       `;
-      const countRow = db.prepare(countQuery).get(values) as { total: number };
+      const result = await db_model.withLock((db) => {
+        return db.exec(countQuery, values);
+      });
+      const countRow = db_model.parseRows(result)[0] as { total: number };
       count = countRow.total;
     }
 
@@ -619,7 +630,10 @@ class Achievement {
       values.push(filters.offset);
     }
 
-    const rows = db.prepare(achievementsQuery).all(values) as RawAchievementRow[];
+    const result = await db_model.withLock((db) => {
+      return db.exec(achievementsQuery, values);
+    });
+    const rows = db_model.parseRows(result) as RawAchievementRow[];
 
     // Parse JSON fields
     const achievements = rows.map((row) => ({
@@ -635,15 +649,16 @@ class Achievement {
   /**
    * Retrieves achievements based on a list of criterias
    *
+   * @async
    * @static
-   * @memberof Achievement
-   * @method getAchievements
    *
    * @param {AchievementSelectRequestFilters} filters - The filters to apply
-   * @returns {Achievement[]} - The list of achievements
+   * 
+   * @returns {Promise<{ count: number | null, achievements: Achievement[] }>} - A promise that resolves to an object containing the count of achievements and the list of achievements
+   * @throws {Error} - If the database operation fails
    */
-  static getAchievements(filters: AchievementSelectRequestFilters): { count: number | null, achievements: Achievement[] } {
-    const { count, achievements } = Achievement.getAchievementsRawFormat(filters);
+  static async getAchievements(filters: AchievementSelectRequestFilters): Promise<{ count: number | null, achievements: Achievement[] }> {
+    const { count, achievements } = await Achievement.getAchievementsRawFormat(filters);
     return {
       count,
       achievements: achievements.map(Achievement.fromRow),
@@ -654,68 +669,73 @@ class Achievement {
   /**
  * Retrieves the total number of achievements and the total number of achieved achievements.
  *
+ * @async
  * @static
- * @memberof Achievement
- * @method getAchievementStats
  *
- * @returns {{ totalAchievements: number, achievedCount: number }} - The total achievements and achieved achievements.
+ * @returns {Promise<{ totalAchievements: number, achievedCount: number }>} - A promise that resolves to an object containing the total number of achievements and the total number of achieved achievements
+ * @throws {Error} - If the database operation fails
  */
-  static getAchievementStats(): { totalAchievements: number, achievedCount: number } {
-    const db = db_model.openDB();
-
+  static async getAchievementStats(): Promise<{ totalAchievements: number, achievedCount: number }> {
     // Query to count total achievements and total achieved achievements
-    const query = `
-    SELECT
+    const query = `SELECT
       (SELECT COUNT(*) FROM achievements) AS totalAchievements,
       (SELECT COUNT(*) FROM achievements WHERE achieved = 1) AS achievedCount
   `;
 
-    return db.prepare(query).get() as { totalAchievements: number, achievedCount: number };
+    const result = await db_model.withLock((db) => {
+      return db.exec(query);
+    });
+    return db_model.parseRows(result)[0] as { totalAchievements: number, achievedCount: number };
   }
 
   // ==================== DATABASE ====================
   /**
    * Retrieves the available groups from the database
    *
+   * @async
    * @static
-   * @memberof Achievement
-   * @method getGroups
    *
-   * @returns {string[]} - The list of groups
+   * @returns {Promise<string[]>} - A promise that resolves to the list of groups
+   * @throws {Error} - If the database operation fails
    */
-  static getGroups(): string[] {
-    const db = db_model.openDB();
-    const rows = db.prepare('SELECT DISTINCT "group" FROM achievements').all();
+  static async getGroups(): Promise<string[]> {
+    const result = await db_model.withLock((db) => {
+      return db.exec('SELECT DISTINCT "group" FROM achievements');
+    });
+    const rows = db_model.parseRows(result);
     return rows.map((row) => (row as any).group);
   }
 
   /**
    * Retrieves the available categories from the database
    *
+   * @async
    * @static
-   * @memberof Achievement
-   * @method getCategories
    *
-   * @returns {string[]} - The list of categories
+   * @returns {Promise<string[]>} - A promise that resolves to the list of categories
    */
-  static getCategories(): string[] {
-    const db = db_model.openDB();
-    const rows = db.prepare('SELECT DISTINCT category FROM achievements').all();
+  static async getCategories(): Promise<string[]> {
+    const result = await db_model.withLock((db) => {
+      return db.exec('SELECT DISTINCT category FROM achievements');
+    });
+    const rows = db_model.parseRows(result);
     return rows.map((row) => (row as any).category);
   }
 
   /**
    * Retrieves the available labels from the database
    *
+   * @async
    * @static
-   * @memberof Achievement
-   * @method getLabels
    *
-   * @returns {string[]} - The list of labels
+   * @returns {Promise<string[]>} - A promise that resolves to the list of labels
    */
-  static getLabels(): string[] {
-    const db = db_model.openDB();
-    const rows = db.prepare('SELECT DISTINCT label FROM achievement_labels').all();
+  static async getLabels(): Promise<string[]> {
+    const result = await db_model.withLock((db) => {
+      return db.exec('SELECT DISTINCT label FROM achievement_labels');
+    });
+
+    const rows = db_model.parseRows(result);
     return rows.map((row) => (row as any).label);
   }
 
