@@ -126,18 +126,18 @@
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.0.3",
-    "@types/better-sqlite3": "^7.6.11",
     "@types/fs-extra": "^11.0.4",
     "@types/mocha": "^10.0.9",
     "@types/node": "20.x",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "@types/sql.js": "^1.4.9",
     "@types/vscode": "^1.95.0",
     "@typescript-eslint/eslint-plugin": "^8.10.0",
     "@typescript-eslint/parser": "^8.7.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
-    "esbuild": "^0.24.0",
+    "esbuild": "^0.25.2",
     "eslint": "^9.13.0",
     "fs-extra": "^11.3.0",
     "npm-run-all": "^4.1.5",
@@ -145,8 +145,9 @@
     "typescript": "^5.6.3"
   },
   "dependencies": {
-    "better-sqlite3": "^11.5.0",
+    "async-mutex": "^0.5.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "sql.js": "^1.13.0"
   }
 }
