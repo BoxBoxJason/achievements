@@ -22,41 +22,44 @@ export namespace extensionsListeners {
   /**
    * Create extensions and themes related events listeners
    *
+   * @async
+   *
    * @param {vscode.ExtensionContext} context - Extension context
-   * @returns {void}
+   *
+   * @returns {Promise<void>} - A promise that resolves when the listeners are activated
    */
-  export function activate(context: vscode.ExtensionContext): void {
+  export async function activate(context: vscode.ExtensionContext): Promise<void> {
     if (config.isListenerEnabled(constants.listeners.EXTENSIONS)) {
       logger.info('Starting extensions events listeners');
 
-      vscode.extensions.onDidChange(() => {
+      vscode.extensions.onDidChange(async () => {
         // Check the total number of installed extensions
         const extensionCount = vscode.extensions.all.length;
-        ProgressionController.updateProgression(constants.criteria.EXTENSIONS_INSTALLED, extensionCount, true);
+        await ProgressionController.updateProgression(constants.criteria.EXTENSIONS_INSTALLED, extensionCount, true);
 
         const themesExtensionsCount = vscode.extensions.all.filter(extension => {
           const contributes = extension.packageJSON.contributes;
           return contributes && contributes.themes;
         }).length;
-        ProgressionController.updateProgression(constants.criteria.THEMES_INSTALLED, themesExtensionsCount, true);
+        await ProgressionController.updateProgression(constants.criteria.THEMES_INSTALLED, themesExtensionsCount, true);
       }, null, context.subscriptions);
 
-      vscode.window.onDidChangeActiveColorTheme((event: vscode.ColorTheme) => {
-        ProgressionController.increaseProgression(constants.criteria.THEME_CHANGED);
+      vscode.window.onDidChangeActiveColorTheme(async (event: vscode.ColorTheme) => {
+        await ProgressionController.increaseProgression(constants.criteria.THEME_CHANGED);
       });
 
       logger.debug('Extensions listeners activated');
 
       // Check the total number of installed extensions at the boot
       const extensionCount = vscode.extensions.all.length;
-      ProgressionController.updateProgression(constants.criteria.EXTENSIONS_INSTALLED, extensionCount, true);
+      await ProgressionController.updateProgression(constants.criteria.EXTENSIONS_INSTALLED, extensionCount, true);
 
       const themesExtensionsCount = vscode.extensions.all.filter(extension => {
         const contributes = extension.packageJSON.contributes;
         return contributes && contributes.themes;
       }
       ).length;
-      ProgressionController.updateProgression(constants.criteria.THEMES_INSTALLED, themesExtensionsCount, true);
+      await ProgressionController.updateProgression(constants.criteria.THEMES_INSTALLED, themesExtensionsCount, true);
 
     } else {
       logger.info('Extensions events listeners are disabled');

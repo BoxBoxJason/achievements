@@ -29,9 +29,9 @@ export namespace tabListeners {
     if (config.isListenerEnabled(constants.listeners.TABS)) {
     logger.info('Starting tabs events listeners');
 
-      vscode.window.tabGroups.onDidChangeTabs(() => {
+      vscode.window.tabGroups.onDidChangeTabs(async () => {
         const tabCount = vscode.window.tabGroups.all.reduce((count, group) => count + group.tabs.length, 0);
-        ProgressionController.updateProgression(constants.criteria.NUMBER_OF_SIMULTANEOUS_TABS, tabCount);
+        await ProgressionController.updateProgression(constants.criteria.NUMBER_OF_SIMULTANEOUS_TABS, tabCount, true);
       }, null, context.subscriptions);
 
       logger.debug('Tabs listeners activated');

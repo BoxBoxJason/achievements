@@ -28,39 +28,39 @@ export namespace timeListeners {
    * @param {vscode.ExtensionContext} context - Extension context
    * @returns {void}
    */
-  export function activate(context: vscode.ExtensionContext): void {
+  export async function activate(context: vscode.ExtensionContext): Promise<void> {
     if (config.isListenerEnabled(constants.listeners.TIME)) {
       logger.info('Starting time events listeners');
 
-      dailySession = getCurrentDailySession();
+      dailySession = await getCurrentDailySession();
       sessionStart = new Date();
 
       // Window focus change event
-      vscode.window.onDidChangeWindowState((windowState: vscode.WindowState) => {
+      vscode.window.onDidChangeWindowState(async (windowState: vscode.WindowState) => {
         if (windowState.focused) {
           sessionStart = new Date();
         } else {
           if (sessionStart) {
             // Retrieve current daily session
-            dailySession = getCurrentDailySession();
+            dailySession = await getCurrentDailySession();
             // Process session duration
             const sessionEnd = new Date();
             const sessionDuration = Math.floor((sessionEnd.getTime() - sessionStart.getTime()) / 1000);
             // Increase daily session duration in the database
-            dailySession.increase(sessionDuration);
+            await dailySession.increase(sessionDuration);
             sessionStart = undefined;
           }
         }
       }, null, context.subscriptions);
 
       // Periodic (1 minute) auto save to mitigate data loss
-      setInterval(() => {
+      setInterval(async () => {
         logger.debug('CRONJOB: time spent auto save');
         if (sessionStart) {
           const sessionEnd = new Date();
           const sessionDuration = Math.floor((sessionEnd.getTime() - sessionStart.getTime()) / 1000);
-          dailySession = getCurrentDailySession();
-          dailySession.increase(sessionDuration);
+          dailySession = await getCurrentDailySession();
+          await dailySession.increase(sessionDuration);
           sessionStart = sessionEnd;
         }
       }, 60000);
@@ -81,19 +81,23 @@ export namespace timeListeners {
 
   /**
    * Get the current daily session, create a new one if none is found
-   * 
-   * @returns {DailySession} - Current daily session
+   *
+   * @async
+   *
+   * @returns {Promise<DailySession>} - A promise that resolves to the current daily session
    * @throws {Error} - Multiple daily sessions found for the same day
    */
-  function getCurrentDailySession(): DailySession {
+  async function getCurrentDailySession(): Promise<DailySession> {
     const currentDay = new Date().toISOString().split('T')[0];
     if (dailySession && dailySession.date === currentDay) {
       return dailySession;
     }
 
-    const dailySessions = DailySession.getSessions(currentDay, currentDay);
+    const dailySessions = await DailySession.getSessions(currentDay, currentDay);
     if (dailySessions.length === 0) {
-      return new DailySession(currentDay, 0);
+      const newSession = new DailySession(currentDay, 0);
+      await newSession.sync();
+      return newSession;
     } else if (dailySessions.length > 1) {
       throw new Error('multiple daily sessions found for the same day');
     } else {
@@ -104,15 +108,15 @@ export namespace timeListeners {
   /**
    * Deactivate time related events listeners, triggered at extension deactivation
    *
-   * @returns {void}
+   * @returns {Promise<void>} - A promise that resolves when the listeners are deactivated
    */
-  export function deactivate() {
+  export async function deactivate() : Promise<void> {
     logger.debug('Deactivating time listeners');
     if (sessionStart) {
       const sessionEnd = new Date();
       const sessionDuration = Math.floor((sessionEnd.getTime() - sessionStart.getTime()) / 1000);
-      dailySession = getCurrentDailySession();
-      dailySession.increase(sessionDuration);
+      dailySession = await getCurrentDailySession();
+      await dailySession.increase(sessionDuration);
     }
     logger.debug('Time listeners deactivated');
   }

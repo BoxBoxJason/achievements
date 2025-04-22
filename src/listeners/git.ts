@@ -39,21 +39,21 @@ export namespace gitListeners {
 
       // Handle current workspace repositories commits
       gitAPI.repositories.forEach((repository: any) => {
-        repository.onDidCommit(() => {
-          ProgressionController.increaseProgression(constants.criteria.COMMITS);
+        repository.onDidCommit(async () => {
+          await ProgressionController.increaseProgression(constants.criteria.COMMITS);
         }, null, context.subscriptions);
       });
 
       // Handle new repositories commits
       gitAPI.onDidOpenRepository((repository: any) => {
-        repository.onDidCommit(() => {
-          ProgressionController.increaseProgression(constants.criteria.COMMITS);
+        repository.onDidCommit(async () => {
+          await ProgressionController.increaseProgression(constants.criteria.COMMITS);
         }, null, context.subscriptions);
       }, null, context.subscriptions);
 
       // Handle push event
-      gitAPI.onDidPublish(() => {
-        ProgressionController.increaseProgression(constants.criteria.PUSHES);
+      gitAPI.onDidPublish(async () => {
+        await ProgressionController.increaseProgression(constants.criteria.PUSHES);
       }, null, context.subscriptions);
 
       logger.debug('Git listeners activated');

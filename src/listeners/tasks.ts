@@ -29,13 +29,16 @@ export namespace taskListeners {
     if (config.isListenerEnabled(constants.listeners.TASKS)) {
       logger.info('Starting tasks events listeners');
 
-      vscode.window.onDidEndTerminalShellExecution((event: vscode.TerminalShellExecutionEndEvent) => {
-        ProgressionController.increaseProgression(constants.criteria.TERMINAL_TASKS);
+      vscode.window.onDidEndTerminalShellExecution(async (event: vscode.TerminalShellExecutionEndEvent) => {
+        // Common pool to collect promises
+        const promises: Promise<void>[] = [];
+        promises.push(ProgressionController.increaseProgression(constants.criteria.TERMINAL_TASKS));
         if (event.exitCode === 0) {
-          ProgressionController.increaseProgression(constants.criteria.SUCCESSFUL_TERMINAL_TASKS);
+          promises.push(ProgressionController.increaseProgression(constants.criteria.SUCCESSFUL_TERMINAL_TASKS));
         } else {
-          ProgressionController.increaseProgression(constants.criteria.FAILED_TERMINAL_TASKS);
+          promises.push(ProgressionController.increaseProgression(constants.criteria.FAILED_TERMINAL_TASKS));
         }
+        await Promise.all(promises);
       }, null, context.subscriptions);
 
       logger.debug('Tasks listeners activated');
