@@ -128,7 +128,7 @@ const MIGRATIONS: { [key: number]: Migration } = {
  * If the version is greater than the current version, it will apply the migration up.
  * If the version is less than the current version, it will apply the migration down.
  * If the version is equal to the current version, it will do nothing.
- * 
+ *
  * @async
  *
  * @param {number} wantedVersion - The version to migrate to

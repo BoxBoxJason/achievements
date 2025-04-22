@@ -25,9 +25,9 @@ const dbMutex = new Mutex();
 export namespace db_model {
   /**
    * Open or reuse the database connection.
-   * 
+   *
    * @async
-   * 
+   *
    * @returns {Promise<Database>} - A promise that resolves to the database connection.
    */
   export async function openDB(): Promise<Database> {
@@ -44,9 +44,9 @@ export namespace db_model {
 
   /**
    * Create a new database connection, loading from file if exists.
-   * 
+   *
    * @async
-   * 
+   *
    * @returns {Promise<Database>} - A promise that resolves to the database connection.
    */
   async function createDBConnection(): Promise<Database> {
@@ -69,9 +69,9 @@ export namespace db_model {
 
   /**
    * Initialize database and apply migrations
-   * 
+   *
    * @async
-   * 
+   *
    * @returns {Promise<void>} - A promise that resolves when the database is activated.
    */
   export async function activate(context: vscode.ExtensionContext) {
@@ -85,9 +85,9 @@ export namespace db_model {
 
   /**
    * Close the database connection and save changes to file.
-   * 
+   *
    * @async
-   * 
+   *
    * @returns {Promise<void>} - A promise that resolves when the database is closed.
    */
   export async function deactivate() {
@@ -107,11 +107,11 @@ export namespace db_model {
 
   /**
    * Execute a function with a mutex lock to prevent concurrent database access.
-   * 
+   *
    * @async
    *
    * @param {() => T} operation - The operation to execute with the lock.
-   * 
+   *
    * @returns {Promise<T>} - The result of the operation.
    */
   export async function withLock<T>(operation: (db: Database) => T): Promise<T> {
@@ -123,11 +123,11 @@ export namespace db_model {
   /**
    * Execute a transaction with a mutex lock to prevent concurrent database access.
    * Automatically begins and commits/rolls back the transaction.
-   * 
+   *
    * @async
-   * 
+   *
    * @param {() => T} operation - The operation to execute within the transaction.
-   * 
+   *
    * @returns {Promise<T>} - The result of the operation.
    */
   export async function transactionLock<T>(operation: (db: Database) => T): Promise<T> {
@@ -153,9 +153,9 @@ export namespace db_model {
    *
    * @param {QueryExecResult[]} queryResults - The results of the executed query.
    * @param {number[]} indexes - The indexes of the query results to parse.
-   * 
+   *
    * @returns {Object[]} - An array of objects representing the rows of the query results.
-   * 
+   *
    * @throws {Error} - If the query results are empty or if the indexes are invalid.
    */
   export function parseRows(queryResults: QueryExecResult[], indexes = [-1]): Object[] {

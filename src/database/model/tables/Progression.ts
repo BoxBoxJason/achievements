@@ -101,7 +101,7 @@ class Progression {
 
   /**
    * Retrieves all progressions from the database.
-   * 
+   *
    * @async
    * @static
    *
@@ -146,7 +146,7 @@ class Progression {
    * @static
    *
    * @param {Progression[]} progressions - An array of Progression instances to insert.
-   * 
+   *
    * @returns {Promise<void>} - A promise that resolves when the insertion is complete.
    */
   static async toDB(progressions: Progression[]): Promise<void> {
@@ -169,7 +169,7 @@ class Progression {
    * @static
    *
    * @param {number[]} progressionIds - The IDs of the progressions to process.
-   * 
+   *
    * @returns {Promise<{ id: number; title: string; achievedAt: string }[]>} - A promise that resolves to an array of newly achieved achievements.
    * @throws {Error} - If the database query fails.
    */
@@ -223,7 +223,7 @@ class Progression {
    * @static
    *
    * @param {number} value - The value to add to the progression.
-   * 
+   *
    * @returns {Promise<{ id: number }[]>} - An array of updated progressions
    * @throws {Error} - If the database query fails.
    */
@@ -260,7 +260,7 @@ class Progression {
    *
    * @param {ProgressionSelectRequestFilters} filters - The filters to apply to the query.
    * @param {string} value - The new value of the progression.
-   * 
+   *
    * @returns {Promise<{ id: number }[]>} - An array of updated progressions
    * @throws {Error} - If the database query fails.
    */
@@ -294,7 +294,7 @@ class Progression {
    * @static
    *
    * @param {ProgressionSelectRequestFilters} filters - The filters to apply to the query.
-   * 
+   *
    * @returns {Promise<ProgressionRow[]>} - A promise that resolves to an array of ProgressionRow instances.
    * @throws {Error} - If the database query fails.
    */
@@ -339,7 +339,7 @@ class Progression {
    * @static
    *
    * @param {ProgressionSelectRequestFilters} filters - The filters to apply to the query.
-   * 
+   *
    * @returns {Promise<Progression[]>} - A promise that resolves to an array of Progression instances.
    * @throws {Error} - If the database query fails.
    */
@@ -354,7 +354,7 @@ class Progression {
  * Parses the update filters and returns the selector column and value.
  *
  * @param {ProgressionSelectRequestFilters} filters - The filters to parse.
- * 
+ *
  * @returns {[string, string]} - The selector column and value.
  * @throws {Error} - If no filters are provided.
  */

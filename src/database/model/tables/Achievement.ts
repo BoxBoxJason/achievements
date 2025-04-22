@@ -283,7 +283,7 @@ class Achievement {
    *
    * @param {StackingAchievementTemplate} template - The template to create the achievements from
    * @param {number} [multiplier=1] - The multiplier to apply to the criteria values
-   * 
+   *
    * @returns {Promise<void>} - A promise that resolves when the achievements are created
    * @throws {Error} - If the database operation fails
    */
@@ -467,7 +467,7 @@ class Achievement {
    * @async
    *
    * @param {boolean} achieved - The achieved status of the achievement
-   * 
+   *
    * @returns {Promise<void>} - A promise that resolves when the achievement is updated
    * @throws {Error} - If the database operation fails
    */
@@ -489,7 +489,7 @@ class Achievement {
    *
    * @param {number} id - The ID of the achievement to update
    * @param {boolean} achieved - The achieved status of the achievement
-   * 
+   *
    * @returns {Promise<void>} - A promise that resolves when the achievement is updated
    * @throws {Error} - If the database operation fails
    */
@@ -510,7 +510,7 @@ class Achievement {
    * @static
    *
    * @param {AchievementSelectRequestFilters} filters - The filters to apply to the query
-   * 
+   *
    * @returns {Promise<{ count: number | null, achievements: Achievement[] }>} - A promise that resolves to an object containing the count of achievements and the list of achievements
    * @throws {Error} - If the database operation fails
    */
@@ -653,7 +653,7 @@ class Achievement {
    * @static
    *
    * @param {AchievementSelectRequestFilters} filters - The filters to apply
-   * 
+   *
    * @returns {Promise<{ count: number | null, achievements: Achievement[] }>} - A promise that resolves to an object containing the count of achievements and the list of achievements
    * @throws {Error} - If the database operation fails
    */
