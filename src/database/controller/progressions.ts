@@ -5,7 +5,6 @@
  * @author BoxBoxJason
  */
 
-import { constants } from "../../constants";
 import { awardAchievement } from "../../listeners/awarder";
 import logger from "../../utils/logger";
 import Progression from "../model/tables/Progression";
@@ -26,17 +25,15 @@ export interface ProgressionDict {
 export namespace ProgressionController {
 
   /**
-   * Convert a list of progressions to a dictionary
+   * Returns an Object containing all progressions and their values
    *
-   * @memberof achievements
-   * @function progressionsToObject
+   * @async
    *
-   * @param {Progression[]} progressions - The list of progressions to convert
-   * @returns {ProgressionDict} - The progressions as a dictionary
+   * @returns {Promise<ProgressionDict>} - A promise that resolves to an object containing all progressions and their values
+   * @throws {Error} - If there is an error retrieving the progressions
    */
-  export function getProgressions(): ProgressionDict {
-
-    const progressions = Progression.getProgressions({});
+  export async function getProgressions(): Promise<ProgressionDict> {
+    const progressions = await Progression.getProgressions({});
     let progressionDict: ProgressionDict = Object();
     for (let progression of progressions) {
       progressionDict[progression.name] = progression.value;
@@ -48,19 +45,18 @@ export namespace ProgressionController {
   /**
  * Increase the progression value of a criteria and check if any achievements have been unlocked
  *
- * @memberof achievements
- * @function increaseProgression
+ * @async
  *
  * @param {string} criteriaName - The name of the criteria to increase
- * @param {number} increase - The amount to increase the criteria by
- * @returns {void}
+ * @param {number | string} [increase=1] - The amount to increase the criteria by (default is 1)
+ *
+ * @returns {Promise<void>} - A promise that resolves when the progression has been increased
  */
-  export function increaseProgression(criteriaName: string, increase: number | string = 1): void {
+  export async function increaseProgression(criteriaName: string, increase: number | string = 1): Promise<void> {
     // Update the progression value and retrieve all progressions
     try {
-      const updatedProgressionsIds = Progression.addValue({ name: criteriaName }, increase);
-      const updatedAchievements = Progression.achieveCompletedAchievements(updatedProgressionsIds.map((progression) => progression.id));
-      let awardedPoints = 0;
+      const updatedProgressionsIds = await Progression.addValue({ name: criteriaName }, increase);
+      const updatedAchievements = await Progression.achieveCompletedAchievements(updatedProgressionsIds.map((progression) => progression.id));
       for (let achievement of updatedAchievements) {
         // Notify the user of the unlocked achievement
         awardAchievement(achievement);
@@ -73,17 +69,18 @@ export namespace ProgressionController {
   /**
    * Update the progression value of a criteria and check if any achievements have been unlocked
    *
-   * @memberof achievements
-   * @function updateProgression
+   * @async
    *
    * @param {string} criteriaName - The name of the criteria to update
-   * @param {string} value - The new value of the criteria
-   * @returns {void}
+   * @param {string | number | Date | boolean} value - The new value to set for the criteria
+   * @param {boolean} [maximize=false] - Whether to maximize the value (default is false)
+   *
+   * @returns {Promise<void>} - A promise that resolves when the progression has been updated
    */
-  export function updateProgression(criteriaName: string, value: string | number | Date | boolean, maximize : boolean = false): void {
+  export async function updateProgression(criteriaName: string, value: string | number | Date | boolean, maximize : boolean = false): Promise<void> {
     try {
-      const updatedProgressionsIds = Progression.updateValue({ name: criteriaName }, value.toString(), maximize);
-      const updatedAchievements = Progression.achieveCompletedAchievements(updatedProgressionsIds.map((progression) => progression.id));
+      const updatedProgressionsIds = await Progression.updateValue({ name: criteriaName }, value.toString(), maximize);
+      const updatedAchievements = await Progression.achieveCompletedAchievements(updatedProgressionsIds.map((progression) => progression.id));
       for (let achievement of updatedAchievements) {
         // Notify the user of the unlocked achievement
         awardAchievement(achievement);
