@@ -30,7 +30,7 @@ export namespace db_model {
    *
    * @returns {Promise<Database>} - A promise that resolves to the database connection.
    */
-  export async function openDB(): Promise<Database> {
+  async function openDB(): Promise<Database> {
     if (!SQL) {
       SQL = await initSqlJs({
         locateFile: (file: string) => {

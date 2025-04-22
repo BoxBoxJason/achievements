@@ -25,72 +25,71 @@ export namespace AchievementController {
   /**
    * Retrieve all achievements that are achievable by the given criterias
    *
-   * @memberof achievements
-   * @function getAchievableAchievementsByCriterias
+   * @async
    *
    * @param {string[]} criterias - The criterias to check against
-   * @returns {Achievement[]} - The list of achievable achievements
+   *
+   * @returns {Promise<{ count: number | null, achievements: Achievement[]}>} - The list of achievable achievements
    */
-  function getAchievableAchievementsByCriterias(criterias: string[]): { count : number | null, achievements: Achievement[]} {
-    return Achievement.getAchievements({ achievable: true, criterias: criterias });
+  async function getAchievableAchievementsByCriterias(criterias: string[]): Promise<{ count : number | null, achievements: Achievement[]}> {
+    return await Achievement.getAchievements({ achievable: true, criterias: criterias });
   }
 
   /**
-   * Retrieve achievements in a raw format given a set of filters
+   * Retrieve achievements given a set of filters
    *
-   * @memberof achievements
-   * @function getRawAchievements
+   * @async
    *
    * @param {AchievementSelectRequestFilters} filters - The filters to apply
-   * @returns {Achievement[]} - The list of achievements
+   *
+   * @returns {Promise<{ count: number | null, achievements: Achievement[]}>} - The list of achievements
    * @throws {Error} - If the filters are invalid
    * @throws {Error} - If the sort criteria is invalid
    * @throws {Error} - If the sort direction is invalid
    * @throws {Error} - If the limit is negative
    */
-  export function getAchievements(filters: AchievementSelectRequestFilters): { count : number | null, achievements: Achievement[]} {
+  export async function getAchievements(filters: AchievementSelectRequestFilters): Promise<{ count : number | null, achievements: Achievement[]}> {
     filters = parseFilters(filters);
-    return Achievement.getAchievements(filters);
+    return await Achievement.getAchievements(filters);
   }
 
   /**
    * Retrieve achievements in a raw format given a set of filters
    *
-   * @memberof achievements
-   * @function getJsonAchievements
+   * @async
    *
    * @param {AchievementSelectRequestFilters} filters - The filters to apply
-   * @returns {AchievementRow[]} - The list of achievements
+   *
+   * @returns {Promise<{ count: number | null, achievements: AchievementRow[]}>} - The list of achievements
    * @throws {Error} - If the filters are invalid
    * @throws {Error} - If the sort criteria is invalid
    * @throws {Error} - If the sort direction is invalid
    * @throws {Error} - If the limit is negative
    * @throws {Error} - If the offset is negative
    */
-  export function getJsonAchievements(filters: AchievementSelectRequestFilters): { count : number | null, achievements: AchievementRow[]} {
+  export async function getJsonAchievements(filters: AchievementSelectRequestFilters): Promise<{ count : number | null, achievements: AchievementRow[]}> {
     filters = parseFilters(filters);
-    return Achievement.getAchievementsRawFormat(filters);
+    return await Achievement.getAchievementsRawFormat(filters);
   }
 
-  /**
-   * Retrieve the categories, groups, and labels of all achievements
-   *
-   * @memberof achievements
-   * @function getJsonFilters
-   *
-   * @returns {{categories: string[], groups: string[], labels: string[]}} - The categories, groups, and labels
-   */
-  export function getJsonFilters() : { categories: string[], groups: string[], labels: string[] } {
-    return { categories: Achievement.getCategories(), groups: Achievement.getGroups(), labels: Achievement.getLabels()};
-  }
+export async function getJsonFilters(): Promise<{ categories: string[], groups: string[], labels: string[] }> {
+  // Wait for all three promises to resolve concurrently
+  const [categories, groups, labels] = await Promise.all([
+    Achievement.getCategories(),
+    Achievement.getGroups(),
+    Achievement.getLabels()
+  ]);
+
+  return { categories, groups, labels };
+}
 
   /**
    * Parse the filters and set default values if necessary
    *
-   * @memberof achievements
-   * @function parseFilters
+   * @async
    *
    * @param {AchievementSelectRequestFilters} filters - The filters to parse
+   *
    * @returns {AchievementSelectRequestFilters} - The parsed filters
    * @throws {Error} - If the sort criteria is invalid
    * @throws {Error} - If the sort direction is invalid
