@@ -31,13 +31,16 @@ export namespace db_init {
   /**
    * Creates default achievements from the stacking templates
    *
-   * @memberof db_init
+   * @async
    *
-   * @returns {void}
+   * @returns {Promise<void>} - A promise that resolves when the achievements have been created
    */
-  function createAchievementsFromStackingTemplates() {
+  async function createAchievementsFromStackingTemplates(): Promise<void> {
     // Create the achievements from the stacking templates
     logger.debug('Creating achievements from stacking templates');
+
+    // Common pool to collect promises
+    const promises: Promise<void>[] = [];
 
     //////////////////////// PRODUCTIVITY ////////////////////////
     Object.entries(StackingTemplates.productivity).forEach(([name, func]) => {
@@ -46,13 +49,13 @@ export namespace db_init {
 
         const achievements = func();
         if (Array.isArray(achievements)) {
-          for (const achievement of achievements) {
-            Achievement.fromStackingTemplateToDB(achievement);
-          }
-        } else if (achievements.group === 'time spent'){
-          Achievement.fromStackingTemplateToDB(achievements, 3600);
+          achievements.forEach((achievement) => {
+            promises.push(Achievement.fromStackingTemplateToDB(achievement));
+          });
+        } else if (achievements.group === 'time spent') {
+          promises.push(Achievement.fromStackingTemplateToDB(achievements, 3600));
         } else {
-          Achievement.fromStackingTemplateToDB(achievements);
+          promises.push(Achievement.fromStackingTemplateToDB(achievements));
         }
       }
     });
@@ -61,7 +64,7 @@ export namespace db_init {
     Object.entries(StackingTemplates.git).forEach(([name, func]) => {
       if (typeof func === 'function') {
         logger.debug(`Creating ${name} achievements`);
-        Achievement.fromStackingTemplateToDB(func());
+        promises.push(Achievement.fromStackingTemplateToDB(func()));
       }
     });
 
@@ -69,7 +72,7 @@ export namespace db_init {
     Object.entries(StackingTemplates.vscode).forEach(([name, func]) => {
       if (typeof func === 'function') {
         logger.debug(`Creating ${name} achievements`);
-        Achievement.fromStackingTemplateToDB(func());
+        promises.push(Achievement.fromStackingTemplateToDB(func()));
       }
     });
 
@@ -79,24 +82,30 @@ export namespace db_init {
         logger.debug(`Creating ${name} achievements`);
         const achievements = func();
         if (Array.isArray(achievements)) {
-          for (const achievement of achievements) {
-            Achievement.fromStackingTemplateToDB(achievement);
-          }
+          achievements.forEach((achievement) => {
+            promises.push(Achievement.fromStackingTemplateToDB(achievement));
+          });
         } else {
-          Achievement.fromStackingTemplateToDB(achievements);
+          promises.push(Achievement.fromStackingTemplateToDB(achievements));
         }
       }
     });
+
+    // Wait for all promises to resolve
+    await Promise.all(promises);
+
+    logger.debug('Achievements from stacking templates have been created');
   }
+
 
   /**
    * Creates default integer progressions in the database
    *
-   * @memberof db_init
+   * @async
    *
-   * @returns {void}
+   * @returns {Promise<void>} - A promise that resolves when the progressions have been created
    */
-  function createIntegerProgressions() {
+  async function createIntegerProgressions() : Promise<void> {
     logger.debug('Creating integer progressions');
     let progressions: Progression[] = [];
 
@@ -128,20 +137,20 @@ export namespace db_init {
         }
       }
     }
-    Progression.toDB(progressions);
+    await Progression.toDB(progressions);
   }
 
   /**
    * Initializes the database with default achievements and progressions
    *
-   * @memberof db_init
+   * @async
    *
-   * @returns {void}
+   * @returns {Promise<void>} - A promise that resolves when the database has been activated
    */
-  export function activate() {
+  export async function activate() : Promise<void> {
     logger.info('Populating database with default achievements and progressions');
-    createIntegerProgressions();
-    createAchievementsFromStackingTemplates();
+    await createIntegerProgressions();
+    await createAchievementsFromStackingTemplates();
     logger.info('Database populated successfully');
   }
 
