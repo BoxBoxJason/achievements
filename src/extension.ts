@@ -5,7 +5,6 @@
  */
 import * as vscode from 'vscode';
 import { db_model } from './database/model/model';
-import logger from './utils/logger';
 import { config } from './config/config';
 import { AchievementsWebview } from './views/management';
 import { fileListeners } from './listeners/files';

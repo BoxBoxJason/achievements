@@ -78,9 +78,8 @@ export namespace db_model {
     const databaseDir = context.globalStorageUri.fsPath;
     fs.mkdirSync(databaseDir, { recursive: true });
     DATABASE_PATH = path.join(databaseDir, DATABASE_FILENAME);
-    const db = await openDB();
-    applyMigration(-1);
-    db_init.activate();
+    await applyMigration(-1);
+    await db_init.activate();
   }
 
   /**

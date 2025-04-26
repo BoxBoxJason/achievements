@@ -146,9 +146,7 @@ export async function applyMigration(wantedVersion: number = -1): Promise<void> 
       version = result[0].values[0][0] as number;
     }
   } catch (error) {
-    logger.info(
-      `No schema_version table found, creating initial schema: ${(error as Error).message}`
-    );
+    logger.info(`No schema_version table found, creating initial schema: ${(error as Error).message}`);
   }
 
   // Set wantedVersion to the latest migration if it is set to -1
@@ -164,9 +162,7 @@ export async function applyMigration(wantedVersion: number = -1): Promise<void> 
     for (let i = version; i > wantedVersion; i--) {
       const migration = MIGRATIONS[i];
       if (migration) {
-        logger.info(
-          `Applying migration ${migration.version}: ${migration.description}`
-        );
+        logger.info(`Applying migration ${migration.version}: ${migration.description}`);
         await migration.down();
         await db_model.withLock((db) => {
           db.run("DELETE FROM schema_version WHERE version = ?", [i]);
@@ -178,9 +174,7 @@ export async function applyMigration(wantedVersion: number = -1): Promise<void> 
     for (let i = version + 1; i <= wantedVersion; i++) {
       const migration = MIGRATIONS[i];
       if (migration) {
-        logger.info(
-          `Applying migration ${migration.version}: ${migration.description}`
-        );
+        logger.info(`Applying migration ${migration.version}: ${migration.description}`);
         await migration.up();
         await db_model.withLock((db) => {
           db.run(`INSERT INTO schema_version (version) VALUES (?)
