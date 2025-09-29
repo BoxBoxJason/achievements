@@ -5,9 +5,8 @@
  * @author BoxBoxJason
  */
 
-import * as path from 'path';
-import { db_model } from '../model';
-import { parseValue } from '../../../utils/types';
+import { db_model } from "../model";
+import { parseValue } from "../../../utils/types";
 
 // ==================== TYPES ====================
 
@@ -227,30 +226,48 @@ class Achievement {
       exp,
       hidden,
       requires,
-      repeatable
+      repeatable,
     } = data;
 
     // Input validation
     title = title.trim();
-    if (!title) { throw new Error('title must not be empty'); }
+    if (!title) {
+      throw new Error("title must not be empty");
+    }
     icon = icon.trim();
-    if (!icon) { throw new Error('icon must not be empty'); }
+    if (!icon) {
+      throw new Error("icon must not be empty");
+    }
     category = category.trim();
-    if (!category) { throw new Error('category must not be empty'); }
+    if (!category) {
+      throw new Error("category must not be empty");
+    }
     group = group.trim();
-    if (!group) { throw new Error('group must not be empty'); }
-    if (!criteria) { throw new Error('criteria must not be empty'); }
+    if (!group) {
+      throw new Error("group must not be empty");
+    }
+    if (!criteria) {
+      throw new Error("criteria must not be empty");
+    }
     description = description.trim();
-    if (!description) { throw new Error('description must not be empty'); }
-    if (tier < 0) { throw new Error('tier must be a positive integer'); }
-    if (exp < 0) { throw new Error('exp must be a positive integer'); }
+    if (!description) {
+      throw new Error("description must not be empty");
+    }
+    if (tier < 0) {
+      throw new Error("tier must be a positive integer");
+    }
+    if (exp < 0) {
+      throw new Error("exp must be a positive integer");
+    }
     requires.forEach((requirement) => {
       if (requirement < 0) {
-        throw new Error('requirement must be an existing achievement id');
+        throw new Error("requirement must be an existing achievement id");
       }
     });
     labels.forEach((label) => {
-      if (!label) { throw new Error('label must not be empty'); }
+      if (!label) {
+        throw new Error("label must not be empty");
+      }
     });
 
     // Assigning properties
@@ -285,7 +302,10 @@ class Achievement {
    * @param {StackingAchievementTemplate} template - The template to create the achievements from
    * @returns
    */
-  static fromStackingTemplateToDB(template: StackingAchievementTemplate, multiplier: number = 1): void {
+  static fromStackingTemplateToDB(
+    template: StackingAchievementTemplate,
+    multiplier: number = 1
+  ): void {
     const {
       title,
       icon,
@@ -311,7 +331,7 @@ class Achievement {
 
     // Prepare achievement data
     for (let tier = minTier; tier <= maxTier; tier++) {
-      const currentTitle = title.replace('%d', (tier - minTier + 1).toString());
+      const currentTitle = title.replace("%d", (tier - minTier + 1).toString());
 
       // Calculate criteria values and update description
       const criteriaMap: { [key: string]: any } = {};
@@ -319,7 +339,10 @@ class Achievement {
       for (let i = 0; i < criterias.length; i++) {
         const value = criteriasFunctions[i](tier);
         criteriaMap[criterias[i]] = value * multiplier;
-        currentDescription = currentDescription.replace(criterias[i], String(value));
+        currentDescription = currentDescription.replace(
+          criterias[i],
+          String(value)
+        );
       }
 
       const currentPoints = expFunction(tier);
@@ -370,7 +393,6 @@ class Achievement {
         // Include previous tier as requirement
         requirementData.push([tierTitles[i - 1], tierTitles[i]]);
       }
-
     }
 
     // Insert requirements and criteria into the database
@@ -418,7 +440,6 @@ class Achievement {
       criteriaData.forEach((params) => criteriaStmt.run(params));
     })();
   }
-
 
   /**
    * Creates an achievement from a row
@@ -471,9 +492,12 @@ class Achievement {
 
     const db = db_model.openDB();
     const statement = db.prepare(query);
-    statement.run(achieved ? 1 : 0, achieved ? new Date().toISOString() : null, this.id);
+    statement.run(
+      achieved ? 1 : 0,
+      achieved ? new Date().toISOString() : null,
+      this.id
+    );
   }
-
 
   /**
    * Updates the achieved status of an achievement by ID
@@ -491,7 +515,11 @@ class Achievement {
 
     const db = db_model.openDB();
     const statement = db.prepare(query);
-    statement.run(achieved ? 1 : 0, achieved ? new Date().toISOString() : null, id);
+    statement.run(
+      achieved ? 1 : 0,
+      achieved ? new Date().toISOString() : null,
+      id
+    );
   }
 
   // ==================== GET ====================
@@ -506,7 +534,10 @@ class Achievement {
    * @param {string[]} criterias - The list of criterias to filter by
    * @returns {Achievement[]} - The list of achievements
    */
-  static getAchievementsRawFormat(filters: AchievementSelectRequestFilters): { count: number | null, achievements: AchievementRow[] } {
+  static getAchievementsRawFormat(filters: AchievementSelectRequestFilters): {
+    count: number | null;
+    achievements: AchievementRow[];
+  } {
     const db = db_model.openDB();
 
     // Base query for achievements
@@ -524,7 +555,7 @@ class Achievement {
 
     // Apply filters
     if (filters.category) {
-      conditions.push('a.category = ?');
+      conditions.push("a.category = ?");
       values.push(filters.category);
     }
     if (filters.group) {
@@ -533,20 +564,23 @@ class Achievement {
     }
     if (filters.labels && filters.labels.length > 0) {
       // Match achievements with all provided labels
-      const labelConditions = filters.labels.map(() => 'EXISTS (SELECT 1 FROM achievement_labels al WHERE al.achievement_id = a.id AND al.label = ?)');
-      conditions.push(`(${labelConditions.join(' AND ')})`);
+      const labelConditions = filters.labels.map(
+        () =>
+          "EXISTS (SELECT 1 FROM achievement_labels al WHERE al.achievement_id = a.id AND al.label = ?)"
+      );
+      conditions.push(`(${labelConditions.join(" AND ")})`);
       values.push(...filters.labels);
     }
     if (filters.title) {
-      conditions.push('a.title LIKE ?');
+      conditions.push("a.title LIKE ?");
       values.push(`%${filters.title}%`);
     }
     if (filters.achieved !== undefined) {
-      conditions.push('a.achieved = ?');
+      conditions.push("a.achieved = ?");
       values.push(filters.achieved ? 1 : 0);
     }
     if (filters.hidden !== undefined) {
-      conditions.push('a.hidden = ?');
+      conditions.push("a.hidden = ?");
       values.push(filters.hidden ? 1 : 0);
     }
     if (filters.achievable !== undefined) {
@@ -565,9 +599,9 @@ class Achievement {
       }
     }
 
-    let whereClause = '';
+    let whereClause = "";
     if (conditions.length > 0) {
-      whereClause = ` WHERE ${conditions.join(' AND ')}`;
+      whereClause = ` WHERE ${conditions.join(" AND ")}`;
     }
 
     let count: number | null = null;
@@ -611,15 +645,17 @@ class Achievement {
     }
 
     if (filters.limit) {
-      achievementsQuery += ' LIMIT ?';
+      achievementsQuery += " LIMIT ?";
       values.push(filters.limit);
     }
     if (filters.offset) {
-      achievementsQuery += ' OFFSET ?';
+      achievementsQuery += " OFFSET ?";
       values.push(filters.offset);
     }
 
-    const rows = db.prepare(achievementsQuery).all(values) as RawAchievementRow[];
+    const rows = db
+      .prepare(achievementsQuery)
+      .all(values) as RawAchievementRow[];
 
     // Parse JSON fields
     const achievements = rows.map((row) => ({
@@ -642,25 +678,31 @@ class Achievement {
    * @param {AchievementSelectRequestFilters} filters - The filters to apply
    * @returns {Achievement[]} - The list of achievements
    */
-  static getAchievements(filters: AchievementSelectRequestFilters): { count: number | null, achievements: Achievement[] } {
-    const { count, achievements } = Achievement.getAchievementsRawFormat(filters);
+  static getAchievements(filters: AchievementSelectRequestFilters): {
+    count: number | null;
+    achievements: Achievement[];
+  } {
+    const { count, achievements } =
+      Achievement.getAchievementsRawFormat(filters);
     return {
       count,
       achievements: achievements.map(Achievement.fromRow),
     };
   }
 
-
   /**
- * Retrieves the total number of achievements and the total number of achieved achievements.
- *
- * @static
- * @memberof Achievement
- * @method getAchievementStats
- *
- * @returns {{ totalAchievements: number, achievedCount: number }} - The total achievements and achieved achievements.
- */
-  static getAchievementStats(): { totalAchievements: number, achievedCount: number } {
+   * Retrieves the total number of achievements and the total number of achieved achievements.
+   *
+   * @static
+   * @memberof Achievement
+   * @method getAchievementStats
+   *
+   * @returns {{ totalAchievements: number, achievedCount: number }} - The total achievements and achieved achievements.
+   */
+  static getAchievementStats(): {
+    totalAchievements: number;
+    achievedCount: number;
+  } {
     const db = db_model.openDB();
 
     // Query to count total achievements and total achieved achievements
@@ -670,7 +712,10 @@ class Achievement {
       (SELECT COUNT(*) FROM achievements WHERE achieved = 1) AS achievedCount
   `;
 
-    return db.prepare(query).get() as { totalAchievements: number, achievedCount: number };
+    return db.prepare(query).get() as {
+      totalAchievements: number;
+      achievedCount: number;
+    };
   }
 
   // ==================== DATABASE ====================
@@ -700,7 +745,7 @@ class Achievement {
    */
   static getCategories(): string[] {
     const db = db_model.openDB();
-    const rows = db.prepare('SELECT DISTINCT category FROM achievements').all();
+    const rows = db.prepare("SELECT DISTINCT category FROM achievements").all();
     return rows.map((row) => (row as any).category);
   }
 
@@ -715,10 +760,11 @@ class Achievement {
    */
   static getLabels(): string[] {
     const db = db_model.openDB();
-    const rows = db.prepare('SELECT DISTINCT label FROM achievement_labels').all();
+    const rows = db
+      .prepare("SELECT DISTINCT label FROM achievement_labels")
+      .all();
     return rows.map((row) => (row as any).label);
   }
-
 }
 
 export default Achievement;

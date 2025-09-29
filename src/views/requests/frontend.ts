@@ -1,3 +1,1 @@
-export namespace frontendRequests {
-
-}
+export namespace frontendRequests {}

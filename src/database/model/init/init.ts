@@ -11,11 +11,11 @@
  * @author BoxBoxJason
  */
 
-import Achievement from '../tables/Achievement';
-import { StackingTemplates } from './StackingTemplates';
-import Progression from '../tables/Progression';
-import { constants } from '../../../constants';
-import logger from '../../../utils/logger';
+import Achievement from "../tables/Achievement";
+import { StackingTemplates } from "./StackingTemplates";
+import Progression from "../tables/Progression";
+import { constants } from "../../../constants";
+import logger from "../../../utils/logger";
 
 /**
  * Database init module functions
@@ -27,7 +27,6 @@ import logger from '../../../utils/logger';
  * @function createIntegerProgressions - Creates integer progressions
  */
 export namespace db_init {
-
   /**
    * Creates default achievements from the stacking templates
    *
@@ -37,11 +36,11 @@ export namespace db_init {
    */
   function createAchievementsFromStackingTemplates() {
     // Create the achievements from the stacking templates
-    logger.debug('Creating achievements from stacking templates');
+    logger.debug("Creating achievements from stacking templates");
 
     //////////////////////// PRODUCTIVITY ////////////////////////
     Object.entries(StackingTemplates.productivity).forEach(([name, func]) => {
-      if (typeof func === 'function') {
+      if (typeof func === "function") {
         logger.debug(`Creating ${name} achievements`);
 
         const achievements = func();
@@ -49,7 +48,7 @@ export namespace db_init {
           for (const achievement of achievements) {
             Achievement.fromStackingTemplateToDB(achievement);
           }
-        } else if (achievements.group === 'time spent'){
+        } else if (achievements.group === "time spent") {
           Achievement.fromStackingTemplateToDB(achievements, 3600);
         } else {
           Achievement.fromStackingTemplateToDB(achievements);
@@ -59,7 +58,7 @@ export namespace db_init {
 
     //////////////////////// GIT ////////////////////////
     Object.entries(StackingTemplates.git).forEach(([name, func]) => {
-      if (typeof func === 'function') {
+      if (typeof func === "function") {
         logger.debug(`Creating ${name} achievements`);
         Achievement.fromStackingTemplateToDB(func());
       }
@@ -67,7 +66,7 @@ export namespace db_init {
 
     //////////////////////// VS CODE //////////////////
     Object.entries(StackingTemplates.vscode).forEach(([name, func]) => {
-      if (typeof func === 'function') {
+      if (typeof func === "function") {
         logger.debug(`Creating ${name} achievements`);
         Achievement.fromStackingTemplateToDB(func());
       }
@@ -75,7 +74,7 @@ export namespace db_init {
 
     //////////////////////// FILES ////////////////////////
     Object.entries(StackingTemplates.files).forEach(([name, func]) => {
-      if (typeof func === 'function') {
+      if (typeof func === "function") {
         logger.debug(`Creating ${name} achievements`);
         const achievements = func();
         if (Array.isArray(achievements)) {
@@ -97,22 +96,25 @@ export namespace db_init {
    * @returns {void}
    */
   function createIntegerProgressions() {
-    logger.debug('Creating integer progressions');
+    logger.debug("Creating integer progressions");
     let progressions: Progression[] = [];
 
     for (const criteria of Object.values(constants.criteria)) {
-      if (criteria !== constants.criteria.LINES_OF_CODE_LANGUAGE && criteria !== constants.criteria.FILES_CREATED_LANGUAGE) {
+      if (
+        criteria !== constants.criteria.LINES_OF_CODE_LANGUAGE &&
+        criteria !== constants.criteria.FILES_CREATED_LANGUAGE
+      ) {
         const progression = new Progression({
           name: criteria,
-          type: 'integer',
+          type: "integer",
           value: 0,
         });
         progressions.push(progression);
       } else if (criteria === constants.criteria.LINES_OF_CODE_LANGUAGE) {
         for (const language of Object.values(constants.labels.LANGUAGES)) {
           const progression = new Progression({
-            name: criteria.replace('%s', language),
-            type: 'integer',
+            name: criteria.replace("%s", language),
+            type: "integer",
             value: 0,
           });
           progressions.push(progression);
@@ -120,8 +122,8 @@ export namespace db_init {
       } else if (criteria === constants.criteria.FILES_CREATED_LANGUAGE) {
         for (const language of Object.values(constants.labels.LANGUAGES)) {
           const progression = new Progression({
-            name: criteria.replace('%s', language),
-            type: 'integer',
+            name: criteria.replace("%s", language),
+            type: "integer",
             value: 0,
           });
           progressions.push(progression);
@@ -139,10 +141,11 @@ export namespace db_init {
    * @returns {void}
    */
   export function activate() {
-    logger.info('Populating database with default achievements and progressions');
+    logger.info(
+      "Populating database with default achievements and progressions"
+    );
     createIntegerProgressions();
     createAchievementsFromStackingTemplates();
-    logger.info('Database populated successfully');
+    logger.info("Database populated successfully");
   }
-
 }

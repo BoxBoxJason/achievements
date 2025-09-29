@@ -5,11 +5,11 @@
  * @author BoxBoxJason
  */
 
-import * as vscode from 'vscode';
-import logger from '../utils/logger';
-import { ProgressionController } from '../database/controller/progressions';
-import { constants } from '../constants';
-import { config } from '../config/config';
+import * as vscode from "vscode";
+import logger from "../utils/logger";
+import { ProgressionController } from "../database/controller/progressions";
+import { constants } from "../constants";
+import { config } from "../config/config";
 
 /**
  * Git related events listeners functions and handlers
@@ -18,7 +18,6 @@ import { config } from '../config/config';
  * @function activate - Create git related events listeners
  */
 export namespace gitListeners {
-
   /**
    * Create git related events listeners
    *
@@ -27,11 +26,14 @@ export namespace gitListeners {
    */
   export function activate(context: vscode.ExtensionContext): void {
     if (config.isListenerEnabled(constants.listeners.GIT)) {
-      logger.info('Starting git events listeners');
+      logger.info("Starting git events listeners");
 
-      const gitExtension = vscode.extensions.getExtension('vscode.git')?.exports as any;
+      const gitExtension = vscode.extensions.getExtension("vscode.git")
+        ?.exports as any;
       if (!gitExtension) {
-        logger.error('Git extension not found, git listeners will not be created');
+        logger.error(
+          "Git extension not found, git listeners will not be created"
+        );
         return;
       }
 
@@ -39,28 +41,46 @@ export namespace gitListeners {
 
       // Handle current workspace repositories commits
       gitAPI.repositories.forEach((repository: any) => {
-        repository.onDidCommit(() => {
-          ProgressionController.increaseProgression(constants.criteria.COMMITS);
-        }, null, context.subscriptions);
+        repository.onDidCommit(
+          () => {
+            ProgressionController.increaseProgression(
+              constants.criteria.COMMITS
+            );
+          },
+          null,
+          context.subscriptions
+        );
       });
 
       // Handle new repositories commits
-      gitAPI.onDidOpenRepository((repository: any) => {
-        repository.onDidCommit(() => {
-          ProgressionController.increaseProgression(constants.criteria.COMMITS);
-        }, null, context.subscriptions);
-      }, null, context.subscriptions);
+      gitAPI.onDidOpenRepository(
+        (repository: any) => {
+          repository.onDidCommit(
+            () => {
+              ProgressionController.increaseProgression(
+                constants.criteria.COMMITS
+              );
+            },
+            null,
+            context.subscriptions
+          );
+        },
+        null,
+        context.subscriptions
+      );
 
       // Handle push event
-      gitAPI.onDidPublish(() => {
-        ProgressionController.increaseProgression(constants.criteria.PUSHES);
-      }, null, context.subscriptions);
+      gitAPI.onDidPublish(
+        () => {
+          ProgressionController.increaseProgression(constants.criteria.PUSHES);
+        },
+        null,
+        context.subscriptions
+      );
 
-      logger.debug('Git listeners activated');
-
+      logger.debug("Git listeners activated");
     } else {
-      logger.info('Git listeners are disabled');
+      logger.info("Git listeners are disabled");
     }
   }
-
 }

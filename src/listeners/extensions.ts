@@ -5,11 +5,11 @@
  * @author BoxBoxJason
  */
 
-import * as vscode from 'vscode';
-import { ProgressionController } from '../database/controller/progressions';
-import { constants } from '../constants';
-import logger from '../utils/logger';
-import { config } from '../config/config';
+import * as vscode from "vscode";
+import { ProgressionController } from "../database/controller/progressions";
+import { constants } from "../constants";
+import logger from "../utils/logger";
+import { config } from "../config/config";
 
 /**
  * Extensions and Themes related events listeners functions and handlers
@@ -18,7 +18,6 @@ import { config } from '../config/config';
  * @function activate - Create extensions and themes related events listeners
  */
 export namespace extensionsListeners {
-
   /**
    * Create extensions and themes related events listeners
    *
@@ -27,40 +26,63 @@ export namespace extensionsListeners {
    */
   export function activate(context: vscode.ExtensionContext): void {
     if (config.isListenerEnabled(constants.listeners.EXTENSIONS)) {
-      logger.info('Starting extensions events listeners');
+      logger.info("Starting extensions events listeners");
 
-      vscode.extensions.onDidChange(() => {
-        // Check the total number of installed extensions
-        const extensionCount = vscode.extensions.all.length;
-        ProgressionController.updateProgression(constants.criteria.EXTENSIONS_INSTALLED, extensionCount, true);
+      vscode.extensions.onDidChange(
+        () => {
+          // Check the total number of installed extensions
+          const extensionCount = vscode.extensions.all.length;
+          ProgressionController.updateProgression(
+            constants.criteria.EXTENSIONS_INSTALLED,
+            extensionCount,
+            true
+          );
 
-        const themesExtensionsCount = vscode.extensions.all.filter(extension => {
-          const contributes = extension.packageJSON.contributes;
-          return contributes && contributes.themes;
-        }).length;
-        ProgressionController.updateProgression(constants.criteria.THEMES_INSTALLED, themesExtensionsCount, true);
-      }, null, context.subscriptions);
+          const themesExtensionsCount = vscode.extensions.all.filter(
+            (extension) => {
+              const contributes = extension.packageJSON.contributes;
+              return contributes && contributes.themes;
+            }
+          ).length;
+          ProgressionController.updateProgression(
+            constants.criteria.THEMES_INSTALLED,
+            themesExtensionsCount,
+            true
+          );
+        },
+        null,
+        context.subscriptions
+      );
 
       vscode.window.onDidChangeActiveColorTheme((event: vscode.ColorTheme) => {
-        ProgressionController.increaseProgression(constants.criteria.THEME_CHANGED);
+        ProgressionController.increaseProgression(
+          constants.criteria.THEME_CHANGED
+        );
       });
 
-      logger.debug('Extensions listeners activated');
+      logger.debug("Extensions listeners activated");
 
       // Check the total number of installed extensions at the boot
       const extensionCount = vscode.extensions.all.length;
-      ProgressionController.updateProgression(constants.criteria.EXTENSIONS_INSTALLED, extensionCount, true);
+      ProgressionController.updateProgression(
+        constants.criteria.EXTENSIONS_INSTALLED,
+        extensionCount,
+        true
+      );
 
-      const themesExtensionsCount = vscode.extensions.all.filter(extension => {
-        const contributes = extension.packageJSON.contributes;
-        return contributes && contributes.themes;
-      }
+      const themesExtensionsCount = vscode.extensions.all.filter(
+        (extension) => {
+          const contributes = extension.packageJSON.contributes;
+          return contributes && contributes.themes;
+        }
       ).length;
-      ProgressionController.updateProgression(constants.criteria.THEMES_INSTALLED, themesExtensionsCount, true);
-
+      ProgressionController.updateProgression(
+        constants.criteria.THEMES_INSTALLED,
+        themesExtensionsCount,
+        true
+      );
     } else {
-      logger.info('Extensions events listeners are disabled');
+      logger.info("Extensions events listeners are disabled");
     }
-
   }
 }

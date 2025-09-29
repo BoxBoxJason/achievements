@@ -5,8 +5,11 @@
  * @author BoxBoxJason
  */
 
-import { queries } from '../../views/viewconst';
-import Achievement, { AchievementRow, AchievementSelectRequestFilters } from '../model/tables/Achievement';
+import { queries } from "../../views/viewconst";
+import Achievement, {
+  AchievementRow,
+  AchievementSelectRequestFilters,
+} from "../model/tables/Achievement";
 
 // ==================== MODULE FUNCTIONS ====================
 /**
@@ -31,8 +34,14 @@ export namespace AchievementController {
    * @param {string[]} criterias - The criterias to check against
    * @returns {Achievement[]} - The list of achievable achievements
    */
-  function getAchievableAchievementsByCriterias(criterias: string[]): { count : number | null, achievements: Achievement[]} {
-    return Achievement.getAchievements({ achievable: true, criterias: criterias });
+  function getAchievableAchievementsByCriterias(criterias: string[]): {
+    count: number | null;
+    achievements: Achievement[];
+  } {
+    return Achievement.getAchievements({
+      achievable: true,
+      criterias: criterias,
+    });
   }
 
   /**
@@ -48,7 +57,10 @@ export namespace AchievementController {
    * @throws {Error} - If the sort direction is invalid
    * @throws {Error} - If the limit is negative
    */
-  export function getAchievements(filters: AchievementSelectRequestFilters): { count : number | null, achievements: Achievement[]} {
+  export function getAchievements(filters: AchievementSelectRequestFilters): {
+    count: number | null;
+    achievements: Achievement[];
+  } {
     filters = parseFilters(filters);
     return Achievement.getAchievements(filters);
   }
@@ -67,7 +79,9 @@ export namespace AchievementController {
    * @throws {Error} - If the limit is negative
    * @throws {Error} - If the offset is negative
    */
-  export function getJsonAchievements(filters: AchievementSelectRequestFilters): { count : number | null, achievements: AchievementRow[]} {
+  export function getJsonAchievements(
+    filters: AchievementSelectRequestFilters
+  ): { count: number | null; achievements: AchievementRow[] } {
     filters = parseFilters(filters);
     return Achievement.getAchievementsRawFormat(filters);
   }
@@ -80,8 +94,16 @@ export namespace AchievementController {
    *
    * @returns {{categories: string[], groups: string[], labels: string[]}} - The categories, groups, and labels
    */
-  export function getJsonFilters() : { categories: string[], groups: string[], labels: string[] } {
-    return { categories: Achievement.getCategories(), groups: Achievement.getGroups(), labels: Achievement.getLabels()};
+  export function getJsonFilters(): {
+    categories: string[];
+    groups: string[];
+    labels: string[];
+  } {
+    return {
+      categories: Achievement.getCategories(),
+      groups: Achievement.getGroups(),
+      labels: Achievement.getLabels(),
+    };
   }
 
   /**
@@ -97,7 +119,9 @@ export namespace AchievementController {
    * @throws {Error} - If the limit is negative
    * @throws {Error} - If the offset is negative
    */
-  function parseFilters(filters: AchievementSelectRequestFilters): AchievementSelectRequestFilters {
+  function parseFilters(
+    filters: AchievementSelectRequestFilters
+  ): AchievementSelectRequestFilters {
     // Set default values for filters
     // If the hidden filter is not provided, set it to false
     if (filters.hidden === undefined) {
@@ -108,19 +132,19 @@ export namespace AchievementController {
     if (filters.limit === undefined) {
       filters.limit = 50;
     } else if (filters.limit < 0) {
-      throw new Error('Limit cannot be negative');
+      throw new Error("Limit cannot be negative");
     }
 
     // Set the default offset to 0
     if (filters.offset === undefined) {
       filters.offset = 0;
     } else if (filters.offset < 0) {
-      throw new Error('Offset cannot be negative');
+      throw new Error("Offset cannot be negative");
     }
 
     // Set the default sort criteria to achieved
     if (filters.sortCriteria === undefined) {
-      filters.sortCriteria = 'achieved';
+      filters.sortCriteria = "achieved";
     } else {
       filters.sortCriteria = filters.sortCriteria.trim();
       if (!queries.VALID_SORT_CRITERIA.includes(filters.sortCriteria)) {
@@ -128,18 +152,18 @@ export namespace AchievementController {
       }
     }
     if (filters.sortDirection === undefined) {
-      filters.sortDirection = 'DESC';
+      filters.sortDirection = "DESC";
     } else {
       filters.sortDirection = filters.sortDirection.trim().toUpperCase();
-      if (filters.sortDirection !== 'ASC' && filters.sortDirection !== 'DESC') {
-        throw new Error('Invalid sort direction');
+      if (filters.sortDirection !== "ASC" && filters.sortDirection !== "DESC") {
+        throw new Error("Invalid sort direction");
       }
     }
 
     // Trim the title and check if it is empty
     if (filters.title !== undefined) {
       filters.title = filters.title.trim();
-      if (filters.title === '') {
+      if (filters.title === "") {
         delete filters.title;
       }
     }
@@ -147,7 +171,7 @@ export namespace AchievementController {
     // Trim the category and check if it is empty
     if (filters.category !== undefined) {
       filters.category = filters.category.trim();
-      if (filters.category === '') {
+      if (filters.category === "") {
         delete filters.category;
       }
     }
@@ -155,7 +179,7 @@ export namespace AchievementController {
     // Trim the group and check if it is empty
     if (filters.group !== undefined) {
       filters.group = filters.group.trim();
-      if (filters.group === '') {
+      if (filters.group === "") {
         delete filters.group;
       }
     }
@@ -165,7 +189,7 @@ export namespace AchievementController {
       let trimmedCriterias: string[] = [];
       for (let criteria of filters.criterias) {
         criteria = criteria.trim();
-        if (criteria !== '') {
+        if (criteria !== "") {
           trimmedCriterias.push(criteria);
         }
       }
@@ -181,7 +205,7 @@ export namespace AchievementController {
       let trimmedLabels: string[] = [];
       for (let label of filters.labels) {
         label = label.trim();
-        if (label !== '') {
+        if (label !== "") {
           trimmedLabels.push(label);
         }
       }

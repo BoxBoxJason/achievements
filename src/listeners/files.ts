@@ -5,12 +5,12 @@
  * @author BoxBoxJason
  */
 
-import * as vscode from 'vscode';
-import { ProgressionController } from '../database/controller/progressions';
-import { constants } from '../constants';
-import path from 'path';
-import logger from '../utils/logger';
-import { config } from '../config/config';
+import * as vscode from "vscode";
+import { ProgressionController } from "../database/controller/progressions";
+import { constants } from "../constants";
+import path from "path";
+import logger from "../utils/logger";
+import { config } from "../config/config";
 
 /**
  * File related events listeners functions and handlers
@@ -21,7 +21,6 @@ import { config } from '../config/config';
  * @function handleDeleteEvent - Handler for file deletion event
  */
 export namespace fileListeners {
-
   /**
    * Create file related events listeners
    *
@@ -30,24 +29,48 @@ export namespace fileListeners {
    */
   export function activate(context: vscode.ExtensionContext): void {
     if (config.isListenerEnabled(constants.listeners.FILES)) {
-      logger.info('Starting file events listeners');
-  
-      // Watcher for resources
-      const resourcesWatcher = vscode.workspace.createFileSystemWatcher('**/*', false, false, false);
+      logger.info("Starting file events listeners");
 
-      resourcesWatcher.onDidCreate(handleCreateEvent, null, context.subscriptions);
-      resourcesWatcher.onDidDelete(handleDeleteEvent, null, context.subscriptions);
-      vscode.workspace.onDidRenameFiles(handleRenameEvent, null, context.subscriptions);
+      // Watcher for resources
+      const resourcesWatcher = vscode.workspace.createFileSystemWatcher(
+        "**/*",
+        false,
+        false,
+        false
+      );
+
+      resourcesWatcher.onDidCreate(
+        handleCreateEvent,
+        null,
+        context.subscriptions
+      );
+      resourcesWatcher.onDidDelete(
+        handleDeleteEvent,
+        null,
+        context.subscriptions
+      );
+      vscode.workspace.onDidRenameFiles(
+        handleRenameEvent,
+        null,
+        context.subscriptions
+      );
 
       // Text document changes
-      vscode.workspace.onDidChangeTextDocument(handleTextChangedEvent, null, context.subscriptions);
+      vscode.workspace.onDidChangeTextDocument(
+        handleTextChangedEvent,
+        null,
+        context.subscriptions
+      );
       // Diagnostics changes
-      vscode.languages.onDidChangeDiagnostics(handleDiagnosticChangedEvent, null, context.subscriptions);
+      vscode.languages.onDidChangeDiagnostics(
+        handleDiagnosticChangedEvent,
+        null,
+        context.subscriptions
+      );
 
-      logger.debug('File listeners activated');
-
+      logger.debug("File listeners activated");
     } else {
-      logger.info('File listeners are disabled');
+      logger.info("File listeners are disabled");
     }
   }
 
@@ -64,19 +87,25 @@ export namespace fileListeners {
     stats.then((stat) => {
       if (stat.type === vscode.FileType.File) {
         // Increase file created count
-        ProgressionController.increaseProgression(constants.criteria.FILES_CREATED);
+        ProgressionController.increaseProgression(
+          constants.criteria.FILES_CREATED
+        );
 
         // Retrieve file extension
         const extension = path.extname(uri.fsPath);
-        const language: string = constants.labels.LANGUAGES_EXTENSIONS[extension];
+        const language: string =
+          constants.labels.LANGUAGES_EXTENSIONS[extension];
         if (language) {
           // Increase file created language count
-          const languageCriteria = constants.criteria.FILES_CREATED_LANGUAGE.replace('%s', language);
+          const languageCriteria =
+            constants.criteria.FILES_CREATED_LANGUAGE.replace("%s", language);
           ProgressionController.increaseProgression(languageCriteria);
         }
       } else if (stat.type === vscode.FileType.Directory) {
         // Increase directory created count
-        ProgressionController.increaseProgression(constants.criteria.DIRECTORY_CREATED);
+        ProgressionController.increaseProgression(
+          constants.criteria.DIRECTORY_CREATED
+        );
       }
     });
   }
@@ -90,7 +119,9 @@ export namespace fileListeners {
    * @returns {void}
    */
   function handleDeleteEvent(uri: vscode.Uri): void {
-    ProgressionController.increaseProgression(constants.criteria.RESOURCE_DELETED);
+    ProgressionController.increaseProgression(
+      constants.criteria.RESOURCE_DELETED
+    );
   }
 
   /**
@@ -102,7 +133,10 @@ export namespace fileListeners {
    * @returns {void}
    */
   function handleRenameEvent(event: vscode.FileRenameEvent): void {
-    ProgressionController.increaseProgression(constants.criteria.FILES_RENAMED, event.files.length);
+    ProgressionController.increaseProgression(
+      constants.criteria.FILES_RENAMED,
+      event.files.length
+    );
   }
 
   /**
@@ -114,21 +148,34 @@ export namespace fileListeners {
    * @returns {void}
    */
   function handleTextChangedEvent(event: vscode.TextDocumentChangeEvent): void {
-    const language = constants.labels.LANGUAGES_EXTENSIONS[path.extname(event.document.fileName)];
+    const language =
+      constants.labels.LANGUAGES_EXTENSIONS[
+        path.extname(event.document.fileName)
+      ];
     if (language) {
       event.contentChanges.forEach((change) => {
         // Check if the change involves adding new lines
-        if (change.text.includes('\n')) {
+        if (change.text.includes("\n")) {
           if (change.range.isSingleLine) {
             // Increment progression for the added line
-            ProgressionController.increaseProgression(constants.criteria.LINES_OF_CODE_LANGUAGE.replace('%s', language));
+            ProgressionController.increaseProgression(
+              constants.criteria.LINES_OF_CODE_LANGUAGE.replace("%s", language)
+            );
           } else {
             // Count non-empty lines added in the change
-            const nonEmptyLinesCount = change.text.split(/\r?\n/).filter((line) => line.trim().length > 0).length;
+            const nonEmptyLinesCount = change.text
+              .split(/\r?\n/)
+              .filter((line) => line.trim().length > 0).length;
 
             // Increment progression for the added lines
             if (nonEmptyLinesCount > 0) {
-              ProgressionController.increaseProgression(constants.criteria.LINES_OF_CODE_LANGUAGE.replace('%s', language), nonEmptyLinesCount);
+              ProgressionController.increaseProgression(
+                constants.criteria.LINES_OF_CODE_LANGUAGE.replace(
+                  "%s",
+                  language
+                ),
+                nonEmptyLinesCount
+              );
             }
           }
         }
@@ -139,16 +186,26 @@ export namespace fileListeners {
   let fileErrorCounts = new Map<string, number>();
   let errorCounterFree = true;
 
-  function handleDiagnosticChangedEvent(event: vscode.DiagnosticChangeEvent): void {
+  function handleDiagnosticChangedEvent(
+    event: vscode.DiagnosticChangeEvent
+  ): void {
     if (errorCounterFree) {
       errorCounterFree = false;
       event.uris.forEach((uri) => {
-        const errorCount = vscode.languages.getDiagnostics(uri).filter((diagnostic) => diagnostic.severity === vscode.DiagnosticSeverity.Error).length;
+        const errorCount = vscode.languages
+          .getDiagnostics(uri)
+          .filter(
+            (diagnostic) =>
+              diagnostic.severity === vscode.DiagnosticSeverity.Error
+          ).length;
         const filePath = uri.fsPath;
         const previousErrorCount = fileErrorCounts.get(filePath);
         if (previousErrorCount !== undefined) {
           if (errorCount < previousErrorCount) {
-            ProgressionController.increaseProgression(constants.criteria.ERRORS_FIXED, previousErrorCount - errorCount);
+            ProgressionController.increaseProgression(
+              constants.criteria.ERRORS_FIXED,
+              previousErrorCount - errorCount
+            );
           }
         }
         fileErrorCounts.set(filePath, errorCount);
@@ -156,5 +213,4 @@ export namespace fileListeners {
       errorCounterFree = true;
     }
   }
-
 }

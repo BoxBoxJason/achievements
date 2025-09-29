@@ -3,14 +3,18 @@ import { constants } from "../../constants";
 import { AchievementController } from "../../database/controller/achievements";
 import { ProgressionController } from "../../database/controller/progressions";
 import { TimeSpentController } from "../../database/controller/timespent";
-import Achievement, { AchievementSelectRequestFilters } from "../../database/model/tables/Achievement";
+import Achievement, {
+  AchievementSelectRequestFilters,
+} from "../../database/model/tables/Achievement";
 import { PostMessage } from "../icons";
 import { webview } from "../viewconst";
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
 export namespace backendRequests {
-
-  export function handleMessage(message: PostMessage, panel: vscode.WebviewPanel): void {
+  export function handleMessage(
+    message: PostMessage,
+    panel: vscode.WebviewPanel
+  ): void {
     switch (message.command) {
       case webview.commands.RETRIEVE_ACHIEVEMENTS:
         handleAchievementsSelect(message.data, panel);
@@ -25,38 +29,55 @@ export namespace backendRequests {
         handleProfileSelect(panel);
         break;
       default:
-        console.error('Unknown command: ' + message.command);
+        console.error("Unknown command: " + message.command);
     }
   }
 
-  export function handleAchievementsSelect(filters: AchievementSelectRequestFilters | null, panel: vscode.WebviewPanel): void {
+  export function handleAchievementsSelect(
+    filters: AchievementSelectRequestFilters | null,
+    panel: vscode.WebviewPanel
+  ): void {
     if (filters) {
       const achievements = AchievementController.getAchievements(filters);
-      panel.webview.postMessage({ command: webview.commands.DISPLAY_ACHIEVEMENTS, data: achievements });
+      panel.webview.postMessage({
+        command: webview.commands.DISPLAY_ACHIEVEMENTS,
+        data: achievements,
+      });
     } else {
       return;
     }
   }
 
-  export function handleAchievementsSelectFilters(panel: vscode.WebviewPanel): void {
+  export function handleAchievementsSelectFilters(
+    panel: vscode.WebviewPanel
+  ): void {
     const filters = AchievementController.getJsonFilters();
-    panel.webview.postMessage({ command: webview.commands.DISPLAY_ACHIEVEMENTS_FILTERS, data: filters });
+    panel.webview.postMessage({
+      command: webview.commands.DISPLAY_ACHIEVEMENTS_FILTERS,
+      data: filters,
+    });
   }
 
   export function handleProgressionsSelect(panel: vscode.WebviewPanel): void {
     const progressions = ProgressionController.getProgressions();
-    panel.webview.postMessage({ command: webview.commands.SET_PROGRESSIONS, data: progressions });
+    panel.webview.postMessage({
+      command: webview.commands.SET_PROGRESSIONS,
+      data: progressions,
+    });
   }
 
   export function handleProfileSelect(panel: vscode.WebviewPanel): void {
-    const progressions = ProgressionController.getProgressions() as { [key: string]: any };
+    const progressions = ProgressionController.getProgressions() as {
+      [key: string]: any;
+    };
     panel.webview.postMessage({
-      command: webview.commands.SET_PROFILE, data: {
+      command: webview.commands.SET_PROFILE,
+      data: {
         username: config.getUsername(),
         timeSpent: TimeSpentController.getTimeSpent(progressions),
         ...Achievement.getAchievementStats(),
         totalExp: progressions[constants.criteria.EXP],
-      }
+      },
     });
   }
 }

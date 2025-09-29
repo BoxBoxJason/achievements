@@ -1,26 +1,27 @@
-import { constants } from './src/constants';
-import * as esbuild from 'esbuild';
-import * as fs from 'fs-extra';
+import { constants } from "./src/constants";
+import * as esbuild from "esbuild";
 
-const production = process.argv.includes('--production');
+const production = process.argv.includes("--production");
 /**
  * An esbuild plugin to match and log problems during the build.
  * @type {esbuild.Plugin}
  */
 const esbuildProblemMatcherPlugin: esbuild.Plugin = {
-  name: 'esbuild-problem-matcher',
+  name: "esbuild-problem-matcher",
   setup(build: esbuild.PluginBuild) {
     build.onStart(() => {
-      console.log('build started');
+      console.log("build started");
     });
     build.onEnd((result) => {
       result.errors.forEach(({ text, location }) => {
         console.error(`✘ [ERROR] ${text}`);
         if (location) {
-          console.error(`    ${location.file}:${location.line}:${location.column}:`);
+          console.error(
+            `    ${location.file}:${location.line}:${location.column}:`
+          );
         }
       });
-      console.log('build finished');
+      console.log("build finished");
     });
   },
 };
@@ -30,32 +31,28 @@ async function main() {
   const ctxWebview = await esbuild.context({
     entryPoints: [...constants.build.WEBVIEW_ENTRYPOINTS],
     bundle: true,
-    format: 'iife', // Output format suitable for webviews
+    format: "iife", // Output format suitable for webviews
     minify: production,
     sourcemap: !production,
-    platform: 'browser',
+    platform: "browser",
     outfile: constants.build.WEBVIEW_OUT_FILE,
-    logLevel: 'silent',
-    plugins: [
-      esbuildProblemMatcherPlugin,
-    ],
+    logLevel: "silent",
+    plugins: [esbuildProblemMatcherPlugin],
   });
 
   // Build for main extension
   const ctxExtension = await esbuild.context({
     entryPoints: [...constants.build.EXTENSION_ENTRYPOINTS],
     bundle: true,
-    format: 'cjs',
+    format: "cjs",
     minify: production,
     sourcemap: !production,
     sourcesContent: false,
-    platform: 'node',
+    platform: "node",
     outfile: constants.build.EXTENSION_OUT_FILE,
-    external: ['vscode', 'better-sqlite3'],
-    logLevel: 'silent',
-    plugins: [
-      esbuildProblemMatcherPlugin,
-    ],
+    external: ["vscode", "better-sqlite3"],
+    logLevel: "silent",
+    plugins: [esbuildProblemMatcherPlugin],
   });
 
   // Single builds
@@ -65,8 +62,7 @@ async function main() {
   await ctxExtension.dispose();
 }
 
-
-main().catch(e => {
+main().catch((e) => {
   console.error(e);
   process.exit(1);
 });

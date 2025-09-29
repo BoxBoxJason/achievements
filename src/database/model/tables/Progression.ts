@@ -5,7 +5,7 @@
  * @author: BoxBoxJason
  */
 
-import { db_model } from '../model';
+import { db_model } from "../model";
 
 // ==================== TYPES ====================
 
@@ -60,7 +60,7 @@ class Progression {
   constructor(data: ProgressionDict) {
     this.name = data.name;
     this.value = data.value || 0;
-    this.type = data.type || 'number';
+    this.type = data.type || "number";
   }
 
   // ==================== FROM methods ====================
@@ -78,16 +78,20 @@ class Progression {
   static fromRow(row: any): Progression {
     let value = row.value as string | number | Date | boolean;
     switch (row.type) {
-      case 'string': case 'text':
-       value = row.value.toString();
+      case "string":
+      case "text":
+        value = row.value.toString();
         break;
-      case 'number': case 'integer': case 'float':
+      case "number":
+      case "integer":
+      case "float":
         value = Number(row.value);
         break;
-      case 'date': case 'datetime':
+      case "date":
+      case "datetime":
         value = new Date(row.value);
         break;
-      case 'boolean':
+      case "boolean":
         value = Boolean(row.value);
         break;
     }
@@ -98,7 +102,6 @@ class Progression {
       type: row.type,
     });
   }
-
 
   /**
    * Retrieves all progressions from the database.
@@ -111,7 +114,7 @@ class Progression {
    */
   static fromDB(): Progression[] {
     const db = db_model.openDB();
-    const query = 'SELECT * FROM progressions';
+    const query = "SELECT * FROM progressions";
     const rows = db.prepare(query).all();
     return rows.map((row) => Progression.fromRow(row));
   }
@@ -156,7 +159,6 @@ class Progression {
         statement.run([progression.name, progression.value, progression.type]);
       }
     })(progressions);
-
   }
 
   // ==================== UPDATE ====================
@@ -172,7 +174,9 @@ class Progression {
    * @param {number[]} progressionIds - The IDs of the progressions to process.
    * @returns {{ id: number; title: string; achievedAt: string }[]} - An array of newly achieved achievements.
    */
-  static achieveCompletedAchievements(progressionIds: number[]): { id: number; title: string; achievedAt: string, exp: number }[] {
+  static achieveCompletedAchievements(
+    progressionIds: number[]
+  ): { id: number; title: string; achievedAt: string; exp: number }[] {
     if (progressionIds.length === 0) {
       return []; // No progressions to process
     }
@@ -184,7 +188,9 @@ class Progression {
         FROM achievements ia
         JOIN achievement_criterias ac ON ia.id = ac.achievement_id
         JOIN progressions p ON ac.progression_id = p.id
-        WHERE p.id IN (${progressionIds.map(() => '?').join(', ')}) -- Only consider updated progressions
+        WHERE p.id IN (${progressionIds
+          .map(() => "?")
+          .join(", ")}) -- Only consider updated progressions
           AND ia.achieved = FALSE
           AND
           CASE ac.comparison_operator
@@ -211,9 +217,13 @@ class Progression {
     const db = db_model.openDB();
 
     // Pass the progressionIds as parameters to the query
-    return db.prepare(updateAchievementsQuery).all(progressionIds) as { id: number; title: string; achievedAt: string; exp: number}[];
+    return db.prepare(updateAchievementsQuery).all(progressionIds) as {
+      id: number;
+      title: string;
+      achievedAt: string;
+      exp: number;
+    }[];
   }
-
 
   /**
    * Adds a value to the progression.
@@ -224,7 +234,10 @@ class Progression {
    * @param {number} value - The value to add to the progression.
    * @returns {{[key: string]: any}[]} - An array of updated progressions
    */
-  static addValue(filters: ProgressionSelectRequestFilters, value: number | string = 1): { id: number }[] {
+  static addValue(
+    filters: ProgressionSelectRequestFilters,
+    value: number | string = 1
+  ): { id: number }[] {
     const ADD_VALUE_QUERY = `
       UPDATE progressions
       SET value =
@@ -244,7 +257,11 @@ class Progression {
     const db = db_model.openDB();
     const [selectorColumn, selectorValue] = parseUpdateFilters(filters);
 
-    return db.prepare(ADD_VALUE_QUERY.replace('SELECTOR_PLACEHOLDER', selectorColumn)).all([value, value, value, value, value, value, selectorValue]) as { id: number }[];
+    return db
+      .prepare(ADD_VALUE_QUERY.replace("SELECTOR_PLACEHOLDER", selectorColumn))
+      .all([value, value, value, value, value, value, selectorValue]) as {
+      id: number;
+    }[];
   }
 
   /**
@@ -258,23 +275,36 @@ class Progression {
    * @param {string} value - The new value of the progression.
    * @returns {AchievementRow[]} - An array of newly achieved achievements.
    */
-  static updateValue(filters: ProgressionSelectRequestFilters, value: string, maximize : boolean = false): { id: number }[] {
-    const UPDATE_VALUE_QUERY = maximize ? `
+  static updateValue(
+    filters: ProgressionSelectRequestFilters,
+    value: string,
+    maximize: boolean = false
+  ): { id: number }[] {
+    const UPDATE_VALUE_QUERY = maximize
+      ? `
       UPDATE progressions
       SET value = ?
       WHERE SELECTOR_PLACEHOLDER AND value < ?
       RETURNING id;
-      ` : `
+      `
+      : `
       UPDATE progressions
       SET value = ?
       WHERE SELECTOR_PLACEHOLDER
       RETURNING id;
       `;
     let [selectorColumn, selectorValue] = parseUpdateFilters(filters);
-    let query = UPDATE_VALUE_QUERY.replace('SELECTOR_PLACEHOLDER', selectorColumn);
+    let query = UPDATE_VALUE_QUERY.replace(
+      "SELECTOR_PLACEHOLDER",
+      selectorColumn
+    );
 
     const db = db_model.openDB();
-    return db.prepare(query).all(maximize ? [value, selectorValue, value] : [value, selectorValue]) as { id: number }[];
+    return db
+      .prepare(query)
+      .all(
+        maximize ? [value, selectorValue, value] : [value, selectorValue]
+      ) as { id: number }[];
   }
 
   // ==================== GET ====================
@@ -289,33 +319,35 @@ class Progression {
    * @param {ProgressionSelectRequestFilters} filters - The filters to apply to the query.
    * @returns {ProgressionRow[]} - An array of progressions in raw format.
    */
-  static getProgressionsRawFormat(filters: ProgressionSelectRequestFilters): ProgressionRow[] {
+  static getProgressionsRawFormat(
+    filters: ProgressionSelectRequestFilters
+  ): ProgressionRow[] {
     const db = db_model.openDB();
-    let query = 'SELECT * FROM progressions';
+    let query = "SELECT * FROM progressions";
     let where = [];
     let values = [];
 
     if (filters.name) {
-      where.push('name = ?');
+      where.push("name = ?");
       values.push(filters.name);
     }
 
     if (filters.type) {
-      where.push('type = ?');
+      where.push("type = ?");
       values.push(filters.type);
     }
 
     if (where.length > 0) {
-      query += ` WHERE ${where.join(' AND ')}`;
+      query += ` WHERE ${where.join(" AND ")}`;
     }
 
     if (filters.limit) {
-      query += ' LIMIT ?';
+      query += " LIMIT ?";
       values.push(filters.limit);
     }
 
     if (filters.offset) {
-      query += ' OFFSET ?';
+      query += " OFFSET ?";
       values.push(filters.offset);
     }
 
@@ -332,24 +364,27 @@ class Progression {
    * @param {ProgressionSelectRequestFilters} filters - The filters to apply to the query.
    * @returns {Progression[]} - An array of progressions.
    */
-  static getProgressions(filters: ProgressionSelectRequestFilters): Progression[] {
+  static getProgressions(
+    filters: ProgressionSelectRequestFilters
+  ): Progression[] {
     const rows = Progression.getProgressionsRawFormat(filters);
     return rows.map((row) => Progression.fromRow(row));
   }
-
 }
 
-function parseUpdateFilters(filters: ProgressionSelectRequestFilters): [string, string] {
+function parseUpdateFilters(
+  filters: ProgressionSelectRequestFilters
+): [string, string] {
   let selectorValue: string;
   let selectorColumn: string;
   if (filters.name) {
-    selectorColumn = ' name = ?';
+    selectorColumn = " name = ?";
     selectorValue = filters.name;
   } else if (filters.type) {
-    selectorColumn = ' type = ?';
+    selectorColumn = " type = ?";
     selectorValue = filters.type;
   } else {
-    throw new Error('No filters provided');
+    throw new Error("No filters provided");
   }
   return [selectorColumn, selectorValue];
 }

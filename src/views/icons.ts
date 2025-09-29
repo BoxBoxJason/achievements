@@ -7,7 +7,11 @@ export interface PostMessage {
   data: any;
 }
 
-export function getWebviewImageUri(context: vscode.ExtensionContext, webview: vscode.Webview, relativePath: string): vscode.Uri {
+export function getWebviewImageUri(
+  context: vscode.ExtensionContext,
+  webview: vscode.Webview,
+  relativePath: string
+): vscode.Uri {
   const imagePath = vscode.Uri.file(
     path.join(context.extensionPath, relativePath)
   );
@@ -15,7 +19,10 @@ export function getWebviewImageUri(context: vscode.ExtensionContext, webview: vs
   return webview.asWebviewUri(imagePath);
 }
 
-export function getPackagedImages(context: vscode.ExtensionContext, view: vscode.Webview): { [key: string]: string } {
+export function getPackagedImages(
+  context: vscode.ExtensionContext,
+  view: vscode.Webview
+): { [key: string]: string } {
   const images: { [key: string]: string } = {};
 
   // Merge all flat icons maps
@@ -33,7 +40,11 @@ export function getPackagedImages(context: vscode.ExtensionContext, view: vscode
   };
 
   for (const key in iconsMap) {
-    images[key] = getWebviewImageUri(context, view, path.join('assets', ...iconsMap[key])).toString();
+    images[key] = getWebviewImageUri(
+      context,
+      view,
+      path.join("assets", ...iconsMap[key])
+    ).toString();
   }
 
   return images;
