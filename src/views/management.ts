@@ -20,6 +20,11 @@ export namespace AchievementsWebview {
         {
           enableScripts: true,
           retainContextWhenHidden: true,
+          localResourceRoots: [
+            vscode.Uri.file(path.join(context.extensionPath, "assets")),
+            vscode.Uri.file(path.join(context.extensionPath, "dist", "style")),
+            vscode.Uri.file(path.join(context.extensionPath, "dist")),
+          ],
         }
       );
     panel.webview.html = getDefaultWebviewContentReact(context, panel);

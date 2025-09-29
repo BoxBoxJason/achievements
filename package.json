@@ -6,7 +6,7 @@
   "author": {
     "name": "BoxBoxJason"
   },
-  "version": "0.0.1",
+  "version": "0.1.0",
   "engines": {
     "vscode": "^1.104.0"
   },
@@ -117,7 +117,8 @@
   "scripts": {
     "electron-rebuild": "npx electron-rebuild --version 37.3.1",
     "compile": "npm run clean && npm run tailwind && ts-node esbuild.ts",
-    "package": "npm run clean && npm run tailwind && npm run check-types && npm run lint && ts-node esbuild.ts --production",
+    "build": "npm run clean && npm run tailwind && npm run check-types && npm run lint && ts-node esbuild.ts --production",
+    "package": "npm run build && vsce package",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
     "test": "vscode-test",
@@ -153,5 +154,19 @@
     "react": "19.1.1",
     "react-dom": "19.1.1"
   },
+  "files": [
+    "dist",
+    "assets",
+    "README.md",
+    "CHANGELOG.md",
+    "node_modules/better-sqlite3/**",
+    "node_modules/react/**",
+    "node_modules/react-dom/**",
+    "node_modules/bindings/**",
+    "node_modules/file-uri-to-path/**"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BoxBoxJason/achievements.git"
   }
 }
