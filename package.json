@@ -8,7 +8,7 @@
   },
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.98.2"
+    "vscode": "^1.104.0"
   },
   "categories": [
     "Other"
@@ -115,7 +115,7 @@
     ]
   },
   "scripts": {
-    "electron-rebuild": "npx electron-rebuild --version 34.3.3",
+    "electron-rebuild": "npx electron-rebuild --version 37.3.1",
     "compile": "npm run clean && npm run tailwind && ts-node esbuild.ts",
     "package": "npm run clean && npm run tailwind && npm run check-types && npm run lint && ts-node esbuild.ts --production",
     "check-types": "tsc --noEmit",
@@ -125,28 +125,33 @@
     "tailwind": "npx tailwindcss -i ./src/views/style/main.css -o ./dist/style/main.css --minify"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.0.3",
-    "@types/better-sqlite3": "^7.6.11",
-    "@types/fs-extra": "^11.0.4",
-    "@types/mocha": "^10.0.9",
-    "@types/node": "20.x",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
-    "@types/vscode": "^1.95.0",
-    "@typescript-eslint/eslint-plugin": "^8.10.0",
-    "@typescript-eslint/parser": "^8.7.0",
-    "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1",
-    "esbuild": "^0.24.0",
-    "eslint": "^9.13.0",
-    "fs-extra": "^11.3.0",
-    "npm-run-all": "^4.1.5",
-    "tailwindcss": "^4.0.3",
-    "typescript": "^5.6.3"
+    "@electron/rebuild": "4.0.1",
+    "@tailwindcss/cli": "4.1.13",
+    "@types/better-sqlite3": "7.6.13",
+    "@types/fs-extra": "11.0.4",
+    "@types/mocha": "10.0.10",
+    "@types/node": "24.6.0",
+    "@types/react": "19.1.15",
+    "@types/react-dom": "19.1.9",
+    "@types/vscode": "1.104.0",
+    "@typescript-eslint/eslint-plugin": "8.45.0",
+    "@typescript-eslint/parser": "8.45.0",
+    "@vscode/test-cli": "0.0.11",
+    "@vscode/test-electron": "2.5.2",
+    "esbuild": "0.25.10",
+    "eslint": "9.36.0",
+    "fs-extra": "11.3.2",
+    "node-abi": "4.14.0",
+    "npm-run-all": "4.1.5",
+    "tailwindcss": "4.1.13",
+    "ts-node": "10.9.2",
+    "typescript": "5.9.2",
+    "@vscode/vsce": "3.6.2"
   },
   "dependencies": {
-    "better-sqlite3": "^11.5.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "better-sqlite3": "12.4.1",
+    "react": "19.1.1",
+    "react-dom": "19.1.1"
+  },
   }
 }
