@@ -125,7 +125,7 @@
     "tailwind": "npx tailwindcss -i ./src/views/style/main.css -o ./dist/style/main.css --minify"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.0.3",
+    "@tailwindcss/cli": "^4.1.13",
     "@types/better-sqlite3": "^7.6.11",
     "@types/fs-extra": "^11.0.4",
     "@types/mocha": "^10.0.9",
