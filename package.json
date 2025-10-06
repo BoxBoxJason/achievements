@@ -127,7 +127,7 @@
   },
   "devDependencies": {
     "@electron/rebuild": "4.0.1",
-    "@tailwindcss/cli": "4.1.13",
+    "@tailwindcss/cli": "4.1.14",
     "@types/better-sqlite3": "7.6.13",
     "@types/fs-extra": "11.0.4",
     "@types/mocha": "10.0.10",
