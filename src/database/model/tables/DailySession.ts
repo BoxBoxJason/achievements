@@ -11,31 +11,58 @@ export class DailySession {
   public date: string;
   public duration: number;
 
-  constructor(date?: string, duration?: number) {
-    this.date = date || new Date().toISOString().split("T")[0];
-    if (!this.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+  private constructor(date: string, duration: number, id?: number) {
+    this.date = date;
+    this.duration = duration;
+    this.id = id;
+  }
+
+  static async getOrCreate(
+    date?: string,
+    duration: number = 0
+  ): Promise<DailySession> {
+    const dateStr = date || new Date().toISOString().split("T")[0];
+    if (!dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
       throw new Error("date must be in the format YYYY-MM-DD");
     }
-    this.duration = duration || 0;
-    if (!Number.isInteger(this.duration) || this.duration < 0) {
+    if (!Number.isInteger(duration) || duration < 0) {
       throw new Error("duration must be a positive integer");
     }
 
-    const db = db_model.openDB();
-    const existingSession = db
-      .prepare(`SELECT * FROM daily_sessions WHERE date = ?`)
-      .get(this.date) as DailySessionDict;
+    const db = await db_model.getDB();
+    const existingSession = db_model.get(
+      db,
+      `SELECT * FROM daily_sessions WHERE date = ?`,
+      [dateStr]
+    ) as DailySessionDict;
 
-    if (!existingSession) {
-      const statement = db.prepare(DailySession.INSERT_QUERY);
-      const info = statement.run(this.date, this.duration);
-      if (info.lastInsertRowid) {
-        this.id = Number(info.lastInsertRowid);
-      }
+    if (existingSession) {
+      return new DailySession(
+        existingSession.date,
+        existingSession.duration,
+        existingSession.id
+      );
     } else {
-      // Populate this instance with existing data
-      this.id = existingSession.id;
-      this.duration = existingSession.duration;
+      const statement = db.prepare(DailySession.INSERT_QUERY);
+      statement.run([dateStr, duration]);
+      statement.free();
+      await db_model.saveDB();
+
+      // Get the inserted ID. Note: In a concurrent environment this might be risky,
+      // but sql.js is single threaded and we are in a controlled environment.
+      // Better would be to use RETURNING clause if supported or a separate select.
+      // SQLite supports RETURNING since 3.35.0. sql.js is based on recent SQLite.
+      // Let's try to fetch it back by date which is unique.
+      const newSession = db_model.get(
+        db,
+        `SELECT * FROM daily_sessions WHERE date = ?`,
+        [dateStr]
+      ) as DailySessionDict;
+      return new DailySession(
+        newSession.date,
+        newSession.duration,
+        newSession.id
+      );
     }
   }
 
@@ -44,43 +71,59 @@ export class DailySession {
   ON CONFLICT(date) DO UPDATE SET duration = duration + excluded.duration`;
 
   static fromRow(row: DailySessionDict): DailySession {
-    return new DailySession(row.date, row.duration);
+    return new DailySession(row.date, row.duration, row.id);
   }
 
-  increase(duration: number): void {
+  async increase(duration: number): Promise<void> {
     const INCREASE_QUERY = `
     UPDATE daily_sessions
     SET duration = duration + ?
     WHERE date = ?`;
 
-    const db = db_model.openDB();
+    const db = await db_model.getDB();
     const statement = db.prepare(INCREASE_QUERY);
-    statement.run(duration, this.date);
+    statement.run([duration, this.date]);
+    statement.free();
+    await db_model.saveDB();
     this.duration += duration;
   }
 
-  static getRawSessions(
+  static async getRawSessions(
     firstDate: string,
     lastDate: string
-  ): DailySessionDict[] {
-    const db = db_model.openDB();
-    const statement = db.prepare(`
+  ): Promise<DailySessionDict[]> {
+    const db = await db_model.getDB();
+    return db_model.getAll(
+      db,
+      `
     SELECT * FROM daily_sessions
     WHERE date BETWEEN ? AND ?
-    ORDER BY date`);
-    return statement.all(firstDate, lastDate) as DailySessionDict[];
+    ORDER BY date`,
+      [firstDate, lastDate]
+    ) as DailySessionDict[];
   }
 
-  static getSessions(firstDate: string, lastDate: string): DailySession[] {
-    return this.getRawSessions(firstDate, lastDate).map(DailySession.fromRow);
+  static async getSessions(
+    firstDate: string,
+    lastDate: string
+  ): Promise<DailySession[]> {
+    const rawSessions = await this.getRawSessions(firstDate, lastDate);
+    return rawSessions.map(DailySession.fromRow);
   }
 
-  static calculateDuration(firstDate: string, lastDate: string): number {
-    const db = db_model.openDB();
-    const statement = db.prepare(`
+  static async calculateDuration(
+    firstDate: string,
+    lastDate: string
+  ): Promise<number> {
+    const db = await db_model.getDB();
+    const res = db_model.get(
+      db,
+      `
     SELECT SUM(duration) as total_duration
     FROM daily_sessions
-    WHERE date BETWEEN ? AND ?`);
-    return (statement.get(firstDate, lastDate) as any).total_duration as number;
+    WHERE date BETWEEN ? AND ?`,
+      [firstDate, lastDate]
+    );
+    return res.total_duration as number;
   }
 }

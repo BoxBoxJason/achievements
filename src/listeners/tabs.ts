@@ -29,12 +29,12 @@ export namespace tabListeners {
       logger.info("Starting tabs events listeners");
 
       vscode.window.tabGroups.onDidChangeTabs(
-        () => {
+        async () => {
           const tabCount = vscode.window.tabGroups.all.reduce(
             (count, group) => count + group.tabs.length,
             0
           );
-          ProgressionController.updateProgression(
+          await ProgressionController.updateProgression(
             constants.criteria.NUMBER_OF_SIMULTANEOUS_TABS,
             tabCount
           );

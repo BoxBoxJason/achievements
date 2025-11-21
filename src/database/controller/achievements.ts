@@ -32,12 +32,14 @@ export namespace AchievementController {
    * @function getAchievableAchievementsByCriterias
    *
    * @param {string[]} criterias - The criterias to check against
-   * @returns {Achievement[]} - The list of achievable achievements
+   * @returns {Promise<{ count: number | null; achievements: Achievement[] }>} - The list of achievable achievements
    */
-  function getAchievableAchievementsByCriterias(criterias: string[]): {
+  async function getAchievableAchievementsByCriterias(
+    criterias: string[]
+  ): Promise<{
     count: number | null;
     achievements: Achievement[];
-  } {
+  }> {
     return Achievement.getAchievements({
       achievable: true,
       criterias: criterias,
@@ -51,16 +53,18 @@ export namespace AchievementController {
    * @function getRawAchievements
    *
    * @param {AchievementSelectRequestFilters} filters - The filters to apply
-   * @returns {Achievement[]} - The list of achievements
+   * @returns {Promise<{ count: number | null; achievements: Achievement[] }>} - The list of achievements
    * @throws {Error} - If the filters are invalid
    * @throws {Error} - If the sort criteria is invalid
    * @throws {Error} - If the sort direction is invalid
    * @throws {Error} - If the limit is negative
    */
-  export function getAchievements(filters: AchievementSelectRequestFilters): {
+  export async function getAchievements(
+    filters: AchievementSelectRequestFilters
+  ): Promise<{
     count: number | null;
     achievements: Achievement[];
-  } {
+  }> {
     filters = parseFilters(filters);
     return Achievement.getAchievements(filters);
   }
@@ -72,16 +76,16 @@ export namespace AchievementController {
    * @function getJsonAchievements
    *
    * @param {AchievementSelectRequestFilters} filters - The filters to apply
-   * @returns {AchievementRow[]} - The list of achievements
+   * @returns {Promise<{ count: number | null; achievements: AchievementRow[] }>} - The list of achievements
    * @throws {Error} - If the filters are invalid
    * @throws {Error} - If the sort criteria is invalid
    * @throws {Error} - If the sort direction is invalid
    * @throws {Error} - If the limit is negative
    * @throws {Error} - If the offset is negative
    */
-  export function getJsonAchievements(
+  export async function getJsonAchievements(
     filters: AchievementSelectRequestFilters
-  ): { count: number | null; achievements: AchievementRow[] } {
+  ): Promise<{ count: number | null; achievements: AchievementRow[] }> {
     filters = parseFilters(filters);
     return Achievement.getAchievementsRawFormat(filters);
   }
@@ -92,17 +96,17 @@ export namespace AchievementController {
    * @memberof achievements
    * @function getJsonFilters
    *
-   * @returns {{categories: string[], groups: string[], labels: string[]}} - The categories, groups, and labels
+   * @returns {Promise<{categories: string[], groups: string[], labels: string[]}>} - The categories, groups, and labels
    */
-  export function getJsonFilters(): {
+  export async function getJsonFilters(): Promise<{
     categories: string[];
     groups: string[];
     labels: string[];
-  } {
+  }> {
     return {
-      categories: Achievement.getCategories(),
-      groups: Achievement.getGroups(),
-      labels: Achievement.getLabels(),
+      categories: await Achievement.getCategories(),
+      groups: await Achievement.getGroups(),
+      labels: await Achievement.getLabels(),
     };
   }
 
@@ -124,9 +128,7 @@ export namespace AchievementController {
   ): AchievementSelectRequestFilters {
     // Set default values for filters
     // If the hidden filter is not provided, set it to false
-    if (filters.hidden === undefined) {
-      filters.hidden = false;
-    }
+    filters.hidden ??= false;
 
     // Set the default limit to 50
     if (filters.limit === undefined) {

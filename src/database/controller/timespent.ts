@@ -11,18 +11,18 @@ export namespace TimeSpentController {
    * Update the time spent counters from the sessions
    * This function will update the daily, bi-monthly, monthly, yearly and total time spent counters
    *
-   * @returns void
+   * @returns {Promise<void>}
    */
-  export function updateTimeSpentFromSessions(): void {
+  export async function updateTimeSpentFromSessions(): Promise<void> {
     const currentDate = new Date();
     const currentDateString = currentDate.toISOString().split("T")[0];
     // Update the daily counter
     logger.debug("JOB: Updating daily time spent");
-    const dailyTimeSpent = DailySession.calculateDuration(
+    const dailyTimeSpent = await DailySession.calculateDuration(
       currentDateString,
       currentDateString
     );
-    ProgressionController.updateProgression(
+    await ProgressionController.updateProgression(
       constants.criteria.DAILY_TIME_SPENT,
       dailyTimeSpent.toString()
     );
@@ -33,11 +33,11 @@ export namespace TimeSpentController {
       currentDate.getTime() - 14 * 24 * 60 * 60 * 1000
     );
     const fourteenDaysAgoString = fourteenDaysAgo.toISOString().split("T")[0];
-    const biMonthlyTimeSpent = DailySession.calculateDuration(
+    const biMonthlyTimeSpent = await DailySession.calculateDuration(
       fourteenDaysAgoString,
       currentDateString
     );
-    ProgressionController.updateProgression(
+    await ProgressionController.updateProgression(
       constants.criteria.TWO_WEEKS_TIME_SPENT,
       biMonthlyTimeSpent.toString()
     );
@@ -50,11 +50,11 @@ export namespace TimeSpentController {
       1
     );
     const firstDayOfMonthString = firstDayOfMonth.toISOString().split("T")[0];
-    const monthlyTimeSpent = DailySession.calculateDuration(
+    const monthlyTimeSpent = await DailySession.calculateDuration(
       firstDayOfMonthString,
       currentDateString
     );
-    ProgressionController.updateProgression(
+    await ProgressionController.updateProgression(
       constants.criteria.MONTHLY_TIME_SPENT,
       monthlyTimeSpent.toString()
     );
@@ -63,22 +63,22 @@ export namespace TimeSpentController {
     logger.debug("JOB: Updating yearly time spent");
     const firstDayOfYear = new Date(currentDate.getFullYear(), 0, 1);
     const firstDayOfYearString = firstDayOfYear.toISOString().split("T")[0];
-    const yearlyTimeSpent = DailySession.calculateDuration(
+    const yearlyTimeSpent = await DailySession.calculateDuration(
       firstDayOfYearString,
       currentDateString
     );
-    ProgressionController.updateProgression(
+    await ProgressionController.updateProgression(
       constants.criteria.YEARLY_TIME_SPENT,
       yearlyTimeSpent.toString()
     );
 
     // Update the total counter
     logger.debug("JOB: Updating total time spent");
-    const totalDuration = DailySession.calculateDuration(
+    const totalDuration = await DailySession.calculateDuration(
       "1970-01-01",
       currentDateString
     );
-    ProgressionController.updateProgression(
+    await ProgressionController.updateProgression(
       constants.criteria.TOTAL_TIME_SPENT,
       totalDuration.toString()
     );

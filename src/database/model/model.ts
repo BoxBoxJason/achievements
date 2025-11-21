@@ -5,11 +5,11 @@
  * @author: BoxBoxJason
  */
 
-import * as path from "path";
-import * as fs from "fs";
+import * as path from "node:path";
+import * as fs from "node:fs";
 import logger from "../../utils/logger";
 import * as vscode from "vscode";
-import BetterSqlite3 from "better-sqlite3";
+import initSqlJs, { Database, SqlJsStatic } from "sql.js";
 import { applyMigration } from "./migrations";
 import { db_init } from "./init/init";
 
@@ -19,7 +19,8 @@ let DATABASE_PATH: string;
 // Database file name
 const DATABASE_FILENAME = "achievements.sqlite";
 // Database connection object
-let DB: BetterSqlite3.Database | null = null;
+let DB: Database | null = null;
+let SQL: SqlJsStatic | null = null;
 
 // ================== MODULE FUNCTIONS ==================
 
@@ -27,58 +28,81 @@ let DB: BetterSqlite3.Database | null = null;
  * Database control module for achievements extension
  *
  * @namespace db_model
- * @function openDB
- * @function createDBConnection
+ * @function getDB
+ * @function init
+ * @function saveDB
  * @function activate
  * @function deactivate
  */
 export namespace db_model {
   /**
-   * Open a connection to the database. If a connection is already open, it will be reused.
+   * Get the database connection object.
    *
-   * @returns {BetterSqlite3.Database} The database connection object
+   * @returns {Promise<Database>} The database connection object
    */
-  export function openDB(): BetterSqlite3.Database {
-    if (DB) {
-      try {
-        // Check if the database connection is alive by performing a simple query
-        DB.prepare("SELECT 1").get(); // This will throw an error if the connection is not valid
-      } catch (error) {
-        logger.error(
-          `Database connection check failed, reopening: ${
-            (error as Error).message
-          }`
-        );
-        DB = createDBConnection(); // Reopen connection if it fails
-      }
-    } else {
-      DB = createDBConnection(); // Open connection if it does not exist
+  export async function getDB(): Promise<Database> {
+    if (!DB) {
+      throw new Error("Database not initialized. Call activate() first.");
     }
-
     return DB;
   }
 
   /**
-   * Create a new connection to the database.
-   * This function should only be called if a connection does not already exist.
-   * If a connection already exists, use `openDB` instead.
-   * This function should not be called directly from outside this module.
+   * Initialize the database.
    *
-   * @memberof db_model
-   * @private
-   * @function createDBConnection
-   *
-   * @returns {BetterSqlite3.Database} The database connection object
+   * @param {vscode.ExtensionContext} context The extension context object
+   * @returns {Promise<void>}
    */
-  function createDBConnection(): BetterSqlite3.Database {
+  async function init(context: vscode.ExtensionContext): Promise<void> {
     try {
-      logger.debug(`Opening new database connection at: ${DATABASE_PATH}`);
-      DB = new BetterSqlite3(DATABASE_PATH);
-      logger.debug("Database connection opened successfully");
+      const wasmPath = path.join(
+        context.extensionPath,
+        "node_modules",
+        "sql.js",
+        "dist",
+        "sql-wasm.wasm"
+      );
+
+      SQL = await initSqlJs({
+        locateFile: () => wasmPath,
+      });
+
+      let buffer: Buffer | null = null;
+      if (fs.existsSync(DATABASE_PATH)) {
+        logger.debug(`Loading database from: ${DATABASE_PATH}`);
+        buffer = await fs.promises.readFile(DATABASE_PATH);
+      }
+
+      if (buffer) {
+        DB = new SQL.Database(buffer);
+      } else {
+        logger.debug("Creating new database");
+        DB = new SQL.Database();
+        await saveDB();
+      }
+
+      logger.debug("Database initialized successfully");
     } catch (err) {
-      logger.error(`Failed to open database: ${(err as Error).message}`);
+      logger.error(`Failed to initialize database: ${(err as Error).message}`);
+      throw err;
     }
-    return DB!;
+  }
+
+  /**
+   * Save the database to disk.
+   *
+   * @returns {Promise<void>}
+   */
+  export async function saveDB(): Promise<void> {
+    if (DB) {
+      try {
+        const data = DB.export();
+        const buffer = Buffer.from(data);
+        await fs.promises.writeFile(DATABASE_PATH, buffer);
+      } catch (err) {
+        logger.error(`Failed to save database: ${(err as Error).message}`);
+      }
+    }
   }
 
   /**
@@ -90,15 +114,23 @@ export namespace db_model {
    * @function activate
    *
    * @param {vscode.ExtensionContext} context The extension context object
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  export function activate(context: vscode.ExtensionContext) {
+  export async function activate(
+    context: vscode.ExtensionContext
+  ): Promise<void> {
     let databaseDir = context.globalStorageUri.fsPath;
-    fs.mkdirSync(databaseDir, { recursive: true });
+    await fs.promises.mkdir(databaseDir, { recursive: true });
     DATABASE_PATH = path.join(databaseDir, DATABASE_FILENAME);
-    const db = openDB();
-    applyMigration(db, -1);
-    db_init.activate();
+
+    await init(context);
+
+    if (DB) {
+      // @ts-ignore
+      await applyMigration(DB, -1);
+      await db_init.activate();
+      await saveDB();
+    }
   }
 
   /**
@@ -115,10 +147,49 @@ export namespace db_model {
     if (DB) {
       try {
         DB.close();
+        DB = null;
         logger.info("Database connection closed successfully.");
       } catch (err) {
         logger.error(`Failed to close database: ${(err as Error).message}`);
       }
     }
+  }
+
+  /**
+   * Execute a query and return all rows as objects.
+   *
+   * @param {Database} db The database connection object
+   * @param {string} query The query to execute
+   * @param {any[]} params The parameters to bind to the query
+   * @returns {any[]} The result rows
+   */
+  export function getAll(db: Database, query: string, params?: any[]): any[] {
+    const stmt = db.prepare(query);
+    stmt.bind(params);
+    const result = [];
+    while (stmt.step()) {
+      result.push(stmt.getAsObject());
+    }
+    stmt.free();
+    return result;
+  }
+
+  /**
+   * Execute a query and return the first row as an object.
+   *
+   * @param {Database} db The database connection object
+   * @param {string} query The query to execute
+   * @param {any[]} params The parameters to bind to the query
+   * @returns {any} The result row
+   */
+  export function get(db: Database, query: string, params?: any[]): any {
+    const stmt = db.prepare(query);
+    stmt.bind(params);
+    let result = null;
+    if (stmt.step()) {
+      result = stmt.getAsObject();
+    }
+    stmt.free();
+    return result;
   }
 }

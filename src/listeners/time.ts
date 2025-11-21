@@ -28,56 +28,54 @@ export namespace timeListeners {
    * @param {vscode.ExtensionContext} context - Extension context
    * @returns {void}
    */
-  export function activate(context: vscode.ExtensionContext): void {
+  export async function activate(context: vscode.ExtensionContext): Promise<void> {
     if (config.isListenerEnabled(constants.listeners.TIME)) {
       logger.info("Starting time events listeners");
 
-      dailySession = getCurrentDailySession();
+      dailySession = await getCurrentDailySession();
       sessionStart = new Date();
 
       // Window focus change event
       vscode.window.onDidChangeWindowState(
-        (windowState: vscode.WindowState) => {
+        async (windowState: vscode.WindowState) => {
           if (windowState.focused) {
             sessionStart = new Date();
-          } else {
-            if (sessionStart) {
+          } else if (sessionStart) {
               // Retrieve current daily session
-              dailySession = getCurrentDailySession();
+              dailySession = await getCurrentDailySession();
               // Process session duration
               const sessionEnd = new Date();
               const sessionDuration = Math.floor(
                 (sessionEnd.getTime() - sessionStart.getTime()) / 1000
               );
               // Increase daily session duration in the database
-              dailySession.increase(sessionDuration);
+              await dailySession.increase(sessionDuration);
               sessionStart = undefined;
             }
-          }
         },
         null,
         context.subscriptions
       );
 
       // Periodic (1 minute) auto save to mitigate data loss
-      setInterval(() => {
+      setInterval(async () => {
         logger.debug("CRONJOB: time spent auto save");
         if (sessionStart) {
           const sessionEnd = new Date();
           const sessionDuration = Math.floor(
             (sessionEnd.getTime() - sessionStart.getTime()) / 1000
           );
-          dailySession = getCurrentDailySession();
-          dailySession.increase(sessionDuration);
+          dailySession = await getCurrentDailySession();
+          await dailySession.increase(sessionDuration);
           sessionStart = sessionEnd;
         }
       }, 60000);
 
-      TimeSpentController.updateTimeSpentFromSessions();
+      await TimeSpentController.updateTimeSpentFromSessions();
       // Periodic (15 minutes) recompute of the total time spent
-      setInterval(() => {
+      setInterval(async () => {
         logger.debug("CRONJOB: time spent update");
-        TimeSpentController.updateTimeSpentFromSessions();
+        await TimeSpentController.updateTimeSpentFromSessions();
       }, 900000);
 
       logger.debug("Time listeners activated");
@@ -92,15 +90,15 @@ export namespace timeListeners {
    * @returns {DailySession} - Current daily session
    * @throws {Error} - Multiple daily sessions found for the same day
    */
-  function getCurrentDailySession(): DailySession {
+  async function getCurrentDailySession(): Promise<DailySession> {
     const currentDay = new Date().toISOString().split("T")[0];
-    if (dailySession && dailySession.date === currentDay) {
+    if (dailySession?.date === currentDay) {
       return dailySession;
     }
 
-    const dailySessions = DailySession.getSessions(currentDay, currentDay);
+    const dailySessions = await DailySession.getSessions(currentDay, currentDay);
     if (dailySessions.length === 0) {
-      return new DailySession(currentDay, 0);
+      return await DailySession.getOrCreate(currentDay, 0);
     } else if (dailySessions.length > 1) {
       throw new Error("multiple daily sessions found for the same day");
     } else {
@@ -113,15 +111,15 @@ export namespace timeListeners {
    *
    * @returns {void}
    */
-  export function deactivate() {
+  export async function deactivate() {
     logger.debug("Deactivating time listeners");
     if (sessionStart) {
       const sessionEnd = new Date();
       const sessionDuration = Math.floor(
         (sessionEnd.getTime() - sessionStart.getTime()) / 1000
       );
-      dailySession = getCurrentDailySession();
-      dailySession.increase(sessionDuration);
+      dailySession = await getCurrentDailySession();
+      await dailySession.increase(sessionDuration);
     }
     logger.debug("Time listeners deactivated");
   }

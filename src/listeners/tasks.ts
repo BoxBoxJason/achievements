@@ -29,16 +29,16 @@ export namespace taskListeners {
       logger.info("Starting tasks events listeners");
 
       vscode.window.onDidEndTerminalShellExecution(
-        (event: vscode.TerminalShellExecutionEndEvent) => {
-          ProgressionController.increaseProgression(
+        async (event: vscode.TerminalShellExecutionEndEvent) => {
+          await ProgressionController.increaseProgression(
             constants.criteria.TERMINAL_TASKS
           );
           if (event.exitCode === 0) {
-            ProgressionController.increaseProgression(
+            await ProgressionController.increaseProgression(
               constants.criteria.SUCCESSFUL_TERMINAL_TASKS
             );
           } else {
-            ProgressionController.increaseProgression(
+            await ProgressionController.increaseProgression(
               constants.criteria.FAILED_TERMINAL_TASKS
             );
           }

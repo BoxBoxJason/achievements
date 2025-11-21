@@ -29,8 +29,8 @@ export namespace debugListeners {
       logger.info("Starting debug events listeners");
 
       vscode.debug.onDidStartDebugSession(
-        (event: vscode.DebugSession) => {
-          ProgressionController.increaseProgression(
+        async (event: vscode.DebugSession) => {
+          await ProgressionController.increaseProgression(
             constants.criteria.DEBUGGER_SESSIONS
           );
         },
@@ -39,12 +39,12 @@ export namespace debugListeners {
       );
 
       vscode.debug.onDidChangeBreakpoints(
-        (event: vscode.BreakpointsChangeEvent) => {
-          event.added.forEach((breakpoint) => {
-            ProgressionController.increaseProgression(
+        async (event: vscode.BreakpointsChangeEvent) => {
+          for (const _ of event.added) {
+            await ProgressionController.increaseProgression(
               constants.criteria.BREAKPOINTS
             );
-          });
+          }
         }
       );
 
