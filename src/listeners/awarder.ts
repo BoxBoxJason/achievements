@@ -15,14 +15,14 @@ import { constants } from "../constants";
  * Award an achievement to the user, logs and displays a notification
  *
  * @param {Object} achievement - The achievement to award
- * @returns {void}
+ * @returns {Promise<void>}
  */
-export function awardAchievement(achievement: {
+export async function awardAchievement(achievement: {
   id: number;
   title: string;
   exp: number;
   achievedAt: string;
-}): void {
+}): Promise<void> {
   const message = `Achievement unlocked: ${achievement.title} (${achievement.exp} exp)`;
   if (config.notificationsEnabled()) {
     vscode.window
@@ -33,6 +33,6 @@ export function awardAchievement(achievement: {
         }
       });
   }
-  Progression.addValue({ name: constants.criteria.EXP }, achievement.exp);
+  await Progression.addValue({ name: constants.criteria.EXP }, achievement.exp);
   logger.info(message);
 }

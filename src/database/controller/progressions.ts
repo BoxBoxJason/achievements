@@ -30,10 +30,10 @@ export namespace ProgressionController {
    * @function progressionsToObject
    *
    * @param {Progression[]} progressions - The list of progressions to convert
-   * @returns {ProgressionDict} - The progressions as a dictionary
+   * @returns {Promise<ProgressionDict>} - The progressions as a dictionary
    */
-  export function getProgressions(): ProgressionDict {
-    const progressions = Progression.getProgressions({});
+  export async function getProgressions(): Promise<ProgressionDict> {
+    const progressions = await Progression.getProgressions({});
     let progressionDict: ProgressionDict = Object();
     for (let progression of progressions) {
       progressionDict[progression.name] = progression.value;
@@ -50,19 +50,19 @@ export namespace ProgressionController {
    *
    * @param {string} criteriaName - The name of the criteria to increase
    * @param {number} increase - The amount to increase the criteria by
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  export function increaseProgression(
+  export async function increaseProgression(
     criteriaName: string,
     increase: number | string = 1
-  ): void {
+  ): Promise<void> {
     // Update the progression value and retrieve all progressions
     try {
-      const updatedProgressionsIds = Progression.addValue(
+      const updatedProgressionsIds = await Progression.addValue(
         { name: criteriaName },
         increase
       );
-      const updatedAchievements = Progression.achieveCompletedAchievements(
+      const updatedAchievements = await Progression.achieveCompletedAchievements(
         updatedProgressionsIds.map((progression) => progression.id)
       );
       let awardedPoints = 0;
@@ -85,20 +85,20 @@ export namespace ProgressionController {
    *
    * @param {string} criteriaName - The name of the criteria to update
    * @param {string} value - The new value of the criteria
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  export function updateProgression(
+  export async function updateProgression(
     criteriaName: string,
     value: string | number | Date | boolean,
     maximize: boolean = false
-  ): void {
+  ): Promise<void> {
     try {
-      const updatedProgressionsIds = Progression.updateValue(
+      const updatedProgressionsIds = await Progression.updateValue(
         { name: criteriaName },
         value.toString(),
         maximize
       );
-      const updatedAchievements = Progression.achieveCompletedAchievements(
+      const updatedAchievements = await Progression.achieveCompletedAchievements(
         updatedProgressionsIds.map((progression) => progression.id)
       );
       for (let achievement of updatedAchievements) {

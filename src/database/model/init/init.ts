@@ -32,60 +32,60 @@ export namespace db_init {
    *
    * @memberof db_init
    *
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  function createAchievementsFromStackingTemplates() {
+  async function createAchievementsFromStackingTemplates(): Promise<void> {
     // Create the achievements from the stacking templates
     logger.debug("Creating achievements from stacking templates");
 
     //////////////////////// PRODUCTIVITY ////////////////////////
-    Object.entries(StackingTemplates.productivity).forEach(([name, func]) => {
+    for (const [name, func] of Object.entries(StackingTemplates.productivity)) {
       if (typeof func === "function") {
         logger.debug(`Creating ${name} achievements`);
 
         const achievements = func();
         if (Array.isArray(achievements)) {
           for (const achievement of achievements) {
-            Achievement.fromStackingTemplateToDB(achievement);
+            await Achievement.fromStackingTemplateToDB(achievement);
           }
         } else if (achievements.group === "time spent") {
-          Achievement.fromStackingTemplateToDB(achievements, 3600);
+          await Achievement.fromStackingTemplateToDB(achievements, 3600);
         } else {
-          Achievement.fromStackingTemplateToDB(achievements);
+          await Achievement.fromStackingTemplateToDB(achievements);
         }
       }
-    });
+    }
 
     //////////////////////// GIT ////////////////////////
-    Object.entries(StackingTemplates.git).forEach(([name, func]) => {
+    for (const [name, func] of Object.entries(StackingTemplates.git)) {
       if (typeof func === "function") {
         logger.debug(`Creating ${name} achievements`);
-        Achievement.fromStackingTemplateToDB(func());
+        await Achievement.fromStackingTemplateToDB(func());
       }
-    });
+    }
 
     //////////////////////// VS CODE //////////////////
-    Object.entries(StackingTemplates.vscode).forEach(([name, func]) => {
+    for (const [name, func] of Object.entries(StackingTemplates.vscode)) {
       if (typeof func === "function") {
         logger.debug(`Creating ${name} achievements`);
-        Achievement.fromStackingTemplateToDB(func());
+        await Achievement.fromStackingTemplateToDB(func());
       }
-    });
+    }
 
     //////////////////////// FILES ////////////////////////
-    Object.entries(StackingTemplates.files).forEach(([name, func]) => {
+    for (const [name, func] of Object.entries(StackingTemplates.files)) {
       if (typeof func === "function") {
         logger.debug(`Creating ${name} achievements`);
         const achievements = func();
         if (Array.isArray(achievements)) {
           for (const achievement of achievements) {
-            Achievement.fromStackingTemplateToDB(achievement);
+            await Achievement.fromStackingTemplateToDB(achievement);
           }
         } else {
-          Achievement.fromStackingTemplateToDB(achievements);
+          await Achievement.fromStackingTemplateToDB(achievements);
         }
       }
-    });
+    }
   }
 
   /**
@@ -93,9 +93,9 @@ export namespace db_init {
    *
    * @memberof db_init
    *
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  function createIntegerProgressions() {
+  async function createIntegerProgressions(): Promise<void> {
     logger.debug("Creating integer progressions");
     let progressions: Progression[] = [];
 
@@ -130,7 +130,7 @@ export namespace db_init {
         }
       }
     }
-    Progression.toDB(progressions);
+    await Progression.toDB(progressions);
   }
 
   /**
@@ -138,14 +138,14 @@ export namespace db_init {
    *
    * @memberof db_init
    *
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  export function activate() {
+  export async function activate(): Promise<void> {
     logger.info(
       "Populating database with default achievements and progressions"
     );
-    createIntegerProgressions();
-    createAchievementsFromStackingTemplates();
+    await createIntegerProgressions();
+    await createAchievementsFromStackingTemplates();
     logger.info("Database populated successfully");
   }
 }

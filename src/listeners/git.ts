@@ -29,7 +29,7 @@ export namespace gitListeners {
       logger.info("Starting git events listeners");
 
       const gitExtension = vscode.extensions.getExtension("vscode.git")
-        ?.exports as any;
+        ?.exports;
       if (!gitExtension) {
         logger.error(
           "Git extension not found, git listeners will not be created"
@@ -40,24 +40,24 @@ export namespace gitListeners {
       const gitAPI = gitExtension.getAPI(1);
 
       // Handle current workspace repositories commits
-      gitAPI.repositories.forEach((repository: any) => {
+      for (const repository of gitAPI.repositories) {
         repository.onDidCommit(
-          () => {
-            ProgressionController.increaseProgression(
+          async () => {
+            await ProgressionController.increaseProgression(
               constants.criteria.COMMITS
             );
           },
           null,
           context.subscriptions
         );
-      });
+      }
 
       // Handle new repositories commits
       gitAPI.onDidOpenRepository(
         (repository: any) => {
           repository.onDidCommit(
-            () => {
-              ProgressionController.increaseProgression(
+            async () => {
+              await ProgressionController.increaseProgression(
                 constants.criteria.COMMITS
               );
             },
@@ -71,8 +71,10 @@ export namespace gitListeners {
 
       // Handle push event
       gitAPI.onDidPublish(
-        () => {
-          ProgressionController.increaseProgression(constants.criteria.PUSHES);
+        async () => {
+          await ProgressionController.increaseProgression(
+            constants.criteria.PUSHES
+          );
         },
         null,
         context.subscriptions

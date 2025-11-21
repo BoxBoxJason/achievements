@@ -110,12 +110,12 @@ class Progression {
    * @method fromDB
    * @static
    *
-   * @returns {Progression[]} - An array of all progressions.
+   * @returns {Promise<Progression[]>} - An array of all progressions.
    */
-  static fromDB(): Progression[] {
-    const db = db_model.openDB();
+  static async fromDB(): Promise<Progression[]> {
+    const db = await db_model.getDB();
     const query = "SELECT * FROM progressions";
-    const rows = db.prepare(query).all();
+    const rows = db_model.getAll(db, query);
     return rows.map((row) => Progression.fromRow(row));
   }
 
@@ -127,17 +127,28 @@ class Progression {
    * @memberof Progression
    * @method toRow
    *
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  toRow(): void {
-    const db = db_model.openDB();
+  async toRow(): Promise<void> {
+    const db = await db_model.getDB();
 
     const statement = db.prepare(Progression.INSERT_QUERY);
-    const info = statement.run([this.name, this.value, this.type]);
+    let value: number | string | null;
+    if (this.value instanceof Date) {
+      value = this.value.toISOString();
+    } else if (typeof this.value === "boolean") {
+      value = this.value ? 1 : 0;
+    } else {
+      value = this.value;
+    }
+    statement.run([this.name, value, this.type]);
+    statement.free();
+    await db_model.saveDB();
 
     // Change the id of the instance to the id of the row if it was inserted
-    if (info.changes && info.lastInsertRowid) {
-      this.id = Number(info.lastInsertRowid);
+    const idRow = db_model.get(db, "SELECT last_insert_rowid() as id");
+    if (idRow?.id) {
+      this.id = Number(idRow.id);
     }
   }
 
@@ -149,16 +160,31 @@ class Progression {
    * @static
    *
    * @param {Progression[]} progressions - An array of Progression instances to insert.
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  static toDB(progressions: Progression[]): void {
-    const db = db_model.openDB();
+  static async toDB(progressions: Progression[]): Promise<void> {
+    const db = await db_model.getDB();
     const statement = db.prepare(Progression.INSERT_QUERY);
-    db.transaction((progressions) => {
+    db.run("BEGIN TRANSACTION");
+    try {
       for (const progression of progressions) {
-        statement.run([progression.name, progression.value, progression.type]);
+        let value: number | string | null;
+        if (progression.value instanceof Date) {
+          value = progression.value.toISOString();
+        } else if (typeof progression.value === "boolean") {
+          value = progression.value ? 1 : 0;
+        } else {
+          value = progression.value;
+        }
+        statement.run([progression.name, value, progression.type]);
       }
-    })(progressions);
+      statement.free();
+      db.run("COMMIT");
+      await db_model.saveDB();
+    } catch (error) {
+      db.run("ROLLBACK");
+      throw error;
+    }
   }
 
   // ==================== UPDATE ====================
@@ -172,11 +198,11 @@ class Progression {
    * @static
    *
    * @param {number[]} progressionIds - The IDs of the progressions to process.
-   * @returns {{ id: number; title: string; achievedAt: string }[]} - An array of newly achieved achievements.
+   * @returns {Promise<{ id: number; title: string; achievedAt: string }[]>} - An array of newly achieved achievements.
    */
-  static achieveCompletedAchievements(
+  static async achieveCompletedAchievements(
     progressionIds: number[]
-  ): { id: number; title: string; achievedAt: string; exp: number }[] {
+  ): Promise<{ id: number; title: string; achievedAt: string; exp: number }[]> {
     if (progressionIds.length === 0) {
       return []; // No progressions to process
     }
@@ -214,15 +240,21 @@ class Progression {
       RETURNING id, title, achievedAt, exp;
     `;
 
-    const db = db_model.openDB();
+    const db = await db_model.getDB();
 
     // Pass the progressionIds as parameters to the query
-    return db.prepare(updateAchievementsQuery).all(progressionIds) as {
+    const rows = db_model.getAll(
+      db,
+      updateAchievementsQuery,
+      progressionIds
+    ) as {
       id: number;
       title: string;
       achievedAt: string;
       exp: number;
     }[];
+    await db_model.saveDB();
+    return rows;
   }
 
   /**
@@ -232,12 +264,12 @@ class Progression {
    * @method increaseValue
    *
    * @param {number} value - The value to add to the progression.
-   * @returns {{[key: string]: any}[]} - An array of updated progressions
+   * @returns {Promise<{[key: string]: any}[]>} - An array of updated progressions
    */
-  static addValue(
+  static async addValue(
     filters: ProgressionSelectRequestFilters,
     value: number | string = 1
-  ): { id: number }[] {
+  ): Promise<{ id: number }[]> {
     const ADD_VALUE_QUERY = `
       UPDATE progressions
       SET value =
@@ -254,14 +286,18 @@ class Progression {
       RETURNING id;
       `;
 
-    const db = db_model.openDB();
+    const db = await db_model.getDB();
     const [selectorColumn, selectorValue] = parseUpdateFilters(filters);
 
-    return db
-      .prepare(ADD_VALUE_QUERY.replace("SELECTOR_PLACEHOLDER", selectorColumn))
-      .all([value, value, value, value, value, value, selectorValue]) as {
+    const rows = db_model.getAll(
+      db,
+      ADD_VALUE_QUERY.replace("SELECTOR_PLACEHOLDER", selectorColumn),
+      [value, value, value, value, value, value, selectorValue]
+    ) as {
       id: number;
     }[];
+    await db_model.saveDB();
+    return rows;
   }
 
   /**
@@ -273,13 +309,13 @@ class Progression {
    *
    * @param {ProgressionSelectRequestFilters} filters - The filters to apply to the query.
    * @param {string} value - The new value of the progression.
-   * @returns {AchievementRow[]} - An array of newly achieved achievements.
+   * @returns {Promise<AchievementRow[]>} - An array of newly achieved achievements.
    */
-  static updateValue(
+  static async updateValue(
     filters: ProgressionSelectRequestFilters,
     value: string,
     maximize: boolean = false
-  ): { id: number }[] {
+  ): Promise<{ id: number }[]> {
     const UPDATE_VALUE_QUERY = maximize
       ? `
       UPDATE progressions
@@ -299,12 +335,14 @@ class Progression {
       selectorColumn
     );
 
-    const db = db_model.openDB();
-    return db
-      .prepare(query)
-      .all(
-        maximize ? [value, selectorValue, value] : [value, selectorValue]
-      ) as { id: number }[];
+    const db = await db_model.getDB();
+    const rows = db_model.getAll(
+      db,
+      query,
+      maximize ? [value, selectorValue, value] : [value, selectorValue]
+    ) as { id: number }[];
+    await db_model.saveDB();
+    return rows;
   }
 
   // ==================== GET ====================
@@ -317,12 +355,12 @@ class Progression {
    * @static
    *
    * @param {ProgressionSelectRequestFilters} filters - The filters to apply to the query.
-   * @returns {ProgressionRow[]} - An array of progressions in raw format.
+   * @returns {Promise<ProgressionRow[]>} - An array of progressions in raw format.
    */
-  static getProgressionsRawFormat(
+  static async getProgressionsRawFormat(
     filters: ProgressionSelectRequestFilters
-  ): ProgressionRow[] {
-    const db = db_model.openDB();
+  ): Promise<ProgressionRow[]> {
+    const db = await db_model.getDB();
     let query = "SELECT * FROM progressions";
     let where = [];
     let values = [];
@@ -351,7 +389,7 @@ class Progression {
       values.push(filters.offset);
     }
 
-    return db.prepare(query).all(values) as ProgressionRow[];
+    return db_model.getAll(db, query, values) as ProgressionRow[];
   }
 
   /**
@@ -362,12 +400,12 @@ class Progression {
    * @static
    *
    * @param {ProgressionSelectRequestFilters} filters - The filters to apply to the query.
-   * @returns {Progression[]} - An array of progressions.
+   * @returns {Promise<Progression[]>} - An array of progressions.
    */
-  static getProgressions(
+  static async getProgressions(
     filters: ProgressionSelectRequestFilters
-  ): Progression[] {
-    const rows = Progression.getProgressionsRawFormat(filters);
+  ): Promise<Progression[]> {
+    const rows = await Progression.getProgressionsRawFormat(filters);
     return rows.map((row) => Progression.fromRow(row));
   }
 }

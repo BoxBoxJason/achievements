@@ -13,14 +13,14 @@ const esbuildProblemMatcherPlugin: esbuild.Plugin = {
       console.log("build started");
     });
     build.onEnd((result) => {
-      result.errors.forEach(({ text, location }) => {
+      for (const { text, location } of result.errors) {
         console.error(`✘ [ERROR] ${text}`);
         if (location) {
           console.error(
             `    ${location.file}:${location.line}:${location.column}:`
           );
         }
-      });
+      }
       console.log("build finished");
     });
   },
@@ -50,7 +50,7 @@ async function main() {
     sourcesContent: false,
     platform: "node",
     outfile: constants.build.EXTENSION_OUT_FILE,
-    external: ["vscode", "better-sqlite3"],
+    external: ["vscode"],
     logLevel: "silent",
     plugins: [esbuildProblemMatcherPlugin],
   });

@@ -4,3 +4,4 @@ node_modules/
 author.sh
 *.vsix
 .vscode-test/
+.copilot/

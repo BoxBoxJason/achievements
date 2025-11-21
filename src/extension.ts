@@ -17,14 +17,14 @@ import { debugListeners } from "./listeners/debug";
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   // ==================== CONFIG ====================
   config.activate(context);
   let configuration = config.getConfig();
 
   // ==================== DATABASE ====================
   if (configuration.enabled) {
-    db_model.activate(context);
+    await db_model.activate(context);
   }
 
   // ==================== COMMANDS ====================
@@ -82,7 +82,7 @@ export function activate(context: vscode.ExtensionContext) {
   // ==================== LISTENERS ====================
   fileListeners.activate(context);
   gitListeners.activate(context);
-  timeListeners.activate(context);
+  await timeListeners.activate(context);
   tabListeners.activate(context);
   taskListeners.activate(context);
   extensionsListeners.activate(context);
@@ -90,7 +90,7 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {
-  timeListeners.deactivate();
+export async function deactivate() {
+  await timeListeners.deactivate();
   db_model.deactivate();
 }
