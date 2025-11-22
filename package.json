@@ -6,7 +6,7 @@
   "author": {
     "name": "BoxBoxJason"
   },
-  "version": "0.1.1",
+  "version": "0.1.2",
   "engines": {
     "vscode": "^1.105.0"
   },
@@ -153,6 +153,7 @@
     "dist",
     "assets",
     "README.md",
+    "CHANGELOG.md",
     "node_modules/sql.js/dist/sql-wasm.wasm",
     "node_modules/react/**",
     "node_modules/react-dom/**"
