@@ -80,13 +80,15 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(showAchievementsCommand);
 
   // ==================== LISTENERS ====================
-  fileListeners.activate(context);
-  gitListeners.activate(context);
-  await timeListeners.activate(context);
-  tabListeners.activate(context);
-  taskListeners.activate(context);
-  extensionsListeners.activate(context);
-  debugListeners.activate(context);
+  if (context.extensionMode !== vscode.ExtensionMode.Test) {
+    fileListeners.activate(context);
+    gitListeners.activate(context);
+    await timeListeners.activate(context);
+    tabListeners.activate(context);
+    taskListeners.activate(context);
+    extensionsListeners.activate(context);
+    debugListeners.activate(context);
+  }
 }
 
 // This method is called when your extension is deactivated

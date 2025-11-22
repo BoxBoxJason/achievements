@@ -5,3 +5,8 @@ author.sh
 *.vsix
 .vscode-test/
 .copilot/
+
+# Coverage
+.nyc_output/
+coverage/
+dist-cov/

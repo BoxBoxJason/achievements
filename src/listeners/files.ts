@@ -82,7 +82,7 @@ export namespace fileListeners {
    * @param {vscode.Uri} uri - Uri of the created file
    * @returns {Promise<void>}
    */
-  async function handleCreateEvent(uri: vscode.Uri): Promise<void> {
+  export async function handleCreateEvent(uri: vscode.Uri): Promise<void> {
     const stats = await vscode.workspace.fs.stat(uri);
     if (stats.type === vscode.FileType.File) {
       // Increase file created count
@@ -116,7 +116,7 @@ export namespace fileListeners {
    * @param {vscode.Uri} uri - Uri of the deleted file
    * @returns {Promise<void>}
    */
-  async function handleDeleteEvent(uri: vscode.Uri): Promise<void> {
+  export async function handleDeleteEvent(uri: vscode.Uri): Promise<void> {
     await ProgressionController.increaseProgression(
       constants.criteria.RESOURCE_DELETED
     );
@@ -130,7 +130,7 @@ export namespace fileListeners {
    * @param {vscode.FileRenameEvent} event - File rename event
    * @returns {Promise<void>}
    */
-  async function handleRenameEvent(
+  export async function handleRenameEvent(
     event: vscode.FileRenameEvent
   ): Promise<void> {
     await ProgressionController.increaseProgression(
@@ -147,7 +147,7 @@ export namespace fileListeners {
    * @param {vscode.TextDocumentChangeEvent} event - Text document change event
    * @returns {Promise<void>}
    */
-  async function handleTextChangedEvent(
+  export async function handleTextChangedEvent(
     event: vscode.TextDocumentChangeEvent
   ): Promise<void> {
     const language =
@@ -192,7 +192,7 @@ export namespace fileListeners {
   let fileErrorCounts = new Map<string, number>();
   let errorCounterFree = true;
 
-  async function handleDiagnosticChangedEvent(
+  export async function handleDiagnosticChangedEvent(
     event: vscode.DiagnosticChangeEvent
   ): Promise<void> {
     if (errorCounterFree) {
