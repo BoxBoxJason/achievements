@@ -78,7 +78,7 @@ const UserStats: React.FC = () => {
 
 const ProfileBox: React.FC<{ value: string, label: string }> = ({ value, label }) => {
   return (
-    <div className="profile-box flex flex-col items-center justify-center w-fit max-w-25 py-1.5 px-2.5 rounded-md flex-1 bg-background-gray">
+    <div className="profile-box text-center flex flex-col items-center justify-center w-fit max-w-25 py-1.5 px-2.5 rounded-md flex-1 bg-background-gray">
       <span className="text-xl font-sans">{value}</span>
       <span className="text-sm font-sans">{label}</span>
     </div>
