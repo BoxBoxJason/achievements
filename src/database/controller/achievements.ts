@@ -34,7 +34,7 @@ export namespace AchievementController {
    * @param {string[]} criterias - The criterias to check against
    * @returns {Promise<{ count: number | null; achievements: Achievement[] }>} - The list of achievable achievements
    */
-  async function getAchievableAchievementsByCriterias(
+  export async function getAchievableAchievementsByCriterias(
     criterias: string[]
   ): Promise<{
     count: number | null;

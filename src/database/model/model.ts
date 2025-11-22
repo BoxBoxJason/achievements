@@ -117,11 +117,12 @@ export namespace db_model {
    * @returns {Promise<void>}
    */
   export async function activate(
-    context: vscode.ExtensionContext
+    context: vscode.ExtensionContext,
+    dbPath?: string
   ): Promise<void> {
     let databaseDir = context.globalStorageUri.fsPath;
     await fs.promises.mkdir(databaseDir, { recursive: true });
-    DATABASE_PATH = path.join(databaseDir, DATABASE_FILENAME);
+    DATABASE_PATH = dbPath || path.join(databaseDir, DATABASE_FILENAME);
 
     await init(context);
 

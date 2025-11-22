@@ -39,14 +39,10 @@ export namespace gitListeners {
 
       const gitAPI = gitExtension.getAPI(1);
 
-      // Handle current workspace repositories commits
+            // Handle current workspace repositories commits
       for (const repository of gitAPI.repositories) {
         repository.onDidCommit(
-          async () => {
-            await ProgressionController.increaseProgression(
-              constants.criteria.COMMITS
-            );
-          },
+          handleCommit,
           null,
           context.subscriptions
         );
@@ -56,11 +52,7 @@ export namespace gitListeners {
       gitAPI.onDidOpenRepository(
         (repository: any) => {
           repository.onDidCommit(
-            async () => {
-              await ProgressionController.increaseProgression(
-                constants.criteria.COMMITS
-              );
-            },
+            handleCommit,
             null,
             context.subscriptions
           );
@@ -71,11 +63,7 @@ export namespace gitListeners {
 
       // Handle push event
       gitAPI.onDidPublish(
-        async () => {
-          await ProgressionController.increaseProgression(
-            constants.criteria.PUSHES
-          );
-        },
+        handlePublish,
         null,
         context.subscriptions
       );
@@ -84,5 +72,17 @@ export namespace gitListeners {
     } else {
       logger.info("Git listeners are disabled");
     }
+  }
+
+  export async function handleCommit() {
+    await ProgressionController.increaseProgression(
+      constants.criteria.COMMITS
+    );
+  }
+
+  export async function handlePublish() {
+    await ProgressionController.increaseProgression(
+      constants.criteria.PUSHES
+    );
   }
 }

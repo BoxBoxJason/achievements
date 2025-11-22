@@ -37,22 +37,7 @@ export namespace timeListeners {
 
       // Window focus change event
       vscode.window.onDidChangeWindowState(
-        async (windowState: vscode.WindowState) => {
-          if (windowState.focused) {
-            sessionStart = new Date();
-          } else if (sessionStart) {
-              // Retrieve current daily session
-              dailySession = await getCurrentDailySession();
-              // Process session duration
-              const sessionEnd = new Date();
-              const sessionDuration = Math.floor(
-                (sessionEnd.getTime() - sessionStart.getTime()) / 1000
-              );
-              // Increase daily session duration in the database
-              await dailySession.increase(sessionDuration);
-              sessionStart = undefined;
-            }
-        },
+        handleWindowStateChange,
         null,
         context.subscriptions
       );
@@ -81,6 +66,23 @@ export namespace timeListeners {
       logger.debug("Time listeners activated");
     } else {
       logger.info("Time events listeners are disabled");
+    }
+  }
+
+  export async function handleWindowStateChange(windowState: vscode.WindowState) {
+    if (windowState.focused) {
+      sessionStart = new Date();
+    } else if (sessionStart) {
+      // Retrieve current daily session
+      dailySession = await getCurrentDailySession();
+      // Process session duration
+      const sessionEnd = new Date();
+      const sessionDuration = Math.floor(
+        (sessionEnd.getTime() - sessionStart.getTime()) / 1000
+      );
+      // Increase daily session duration in the database
+      await dailySession.increase(sessionDuration);
+      sessionStart = undefined;
     }
   }
 
