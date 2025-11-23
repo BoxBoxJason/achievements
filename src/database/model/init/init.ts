@@ -102,12 +102,20 @@ export namespace db_init {
     for (const criteria of Object.values(constants.criteria)) {
       if (
         criteria !== constants.criteria.LINES_OF_CODE_LANGUAGE &&
-        criteria !== constants.criteria.FILES_CREATED_LANGUAGE
+        criteria !== constants.criteria.FILES_CREATED_LANGUAGE &&
+        criteria !== constants.criteria.LAST_STREAK_DATE
       ) {
         const progression = new Progression({
           name: criteria,
           type: "integer",
           value: 0,
+        });
+        progressions.push(progression);
+      } else if (criteria === constants.criteria.LAST_STREAK_DATE) {
+        const progression = new Progression({
+          name: criteria,
+          type: "string",
+          value: "",
         });
         progressions.push(progression);
       } else if (criteria === constants.criteria.LINES_OF_CODE_LANGUAGE) {

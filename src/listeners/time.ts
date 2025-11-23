@@ -53,6 +53,7 @@ export namespace timeListeners {
           dailySession = await getCurrentDailySession();
           await dailySession.increase(sessionDuration);
           sessionStart = sessionEnd;
+          await TimeSpentController.updateConnectionStreak();
         }
       }, 60000);
 
@@ -83,6 +84,7 @@ export namespace timeListeners {
       // Increase daily session duration in the database
       await dailySession.increase(sessionDuration);
       sessionStart = undefined;
+      await TimeSpentController.updateConnectionStreak();
     }
   }
 

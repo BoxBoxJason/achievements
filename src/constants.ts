@@ -4,7 +4,7 @@
  * @author BoxBoxJason
  */
 
-import path from "path";
+import path from "node:path";
 
 /**
  * Constants for the achievements extension
@@ -48,6 +48,11 @@ export namespace constants {
     MERGES_AND_REBASES = "mergesAndRebasesCount",
     AMENDS = "amendsCount",
     FORCED_PUSHES = "forcedPushesCount",
+
+    // Connection streak
+    CURRENT_CONNECTION_STREAK = "currentConnectionStreak",
+    MAX_CONNECTION_STREAK = "maxConnectionStreak",
+    LAST_STREAK_DATE = "lastStreakDate",
     PUSHES = "pushesCount",
     // Opened tabs
     NUMBER_OF_SIMULTANEOUS_TABS = "simultaneousTabsCount",
