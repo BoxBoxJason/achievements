@@ -3,12 +3,13 @@
   "displayName": "Achievements",
   "description": "Add achievements to your coding experience, track and reward your coding journey",
   "publisher": "BoxBoxJason",
+  "icon": "icon.png",
   "author": {
     "name": "BoxBoxJason"
   },
   "version": "0.1.2",
   "engines": {
-    "vscode": "^1.105.0"
+    "vscode": "^1.106.1"
   },
   "categories": [
     "Other"
@@ -126,20 +127,20 @@
     "tailwind": "npx tailwindcss -i ./src/views/style/main.css -o ./dist/style/main.css --minify"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "4.1.16",
+    "@tailwindcss/cli": "4.1.17",
     "@types/mocha": "10.0.10",
-    "@types/node": "24.9.2",
-    "@types/react": "19.2.2",
-    "@types/react-dom": "19.2.2",
+    "@types/node": "24.10.1",
+    "@types/react": "19.2.6",
+    "@types/react-dom": "19.2.3",
     "@types/sql.js": "^1.4.9",
-    "@types/vscode": "1.105.0",
-    "@typescript-eslint/eslint-plugin": "8.46.2",
-    "@typescript-eslint/parser": "8.46.2",
+    "@types/vscode": "1.106.1",
+    "@typescript-eslint/eslint-plugin": "8.47.0",
+    "@typescript-eslint/parser": "8.47.0",
     "@vscode/test-cli": "0.0.12",
     "@vscode/test-electron": "2.5.2",
-    "@vscode/vsce": "3.6.2",
-    "esbuild": "0.25.11",
-    "eslint": "9.38.0",
+    "@vscode/vsce": "3.7.1",
+    "esbuild": "0.27.0",
+    "eslint": "9.39.1",
     "nyc": "^17.1.0",
     "ts-node": "10.9.2",
     "typescript": "5.9.3"
@@ -155,13 +156,14 @@
     "README.md",
     "CHANGELOG.md",
     "LICENSE.md",
+    "icon.png",
     "node_modules/sql.js/dist/sql-wasm.wasm",
     "node_modules/react/**",
     "node_modules/react-dom/**"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/BoxBoxJason/achievements.git"
+    "url": "https://github.com/BoxBoxJason/achievements"
   },
   "nyc": {
     "all": true,

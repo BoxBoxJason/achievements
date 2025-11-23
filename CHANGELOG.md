@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 - Add CHANGELOG for vsce publish
 - Add license
+- Add icon
 
 ## [0.1.1] - 2025-11-22
 
