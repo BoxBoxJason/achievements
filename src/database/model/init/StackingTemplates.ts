@@ -345,6 +345,22 @@ export namespace StackingTemplates {
         hidden: false,
         requires: [],
       });
+
+    export const connectionStreakTemplate = (): StackingAchievementTemplate => ({
+      title: "Connection Streak %d",
+      icon: "CONNECTION_STREAK",
+      category: constants.category.PRODUCTIVITY,
+      group: "Connection Streak",
+      labels: [constants.category.PRODUCTIVITY, "streak"],
+      criterias: [constants.criteria.CURRENT_CONNECTION_STREAK],
+      criteriasFunctions: [(x: number) => x + 1],
+      description: `Connect for ${constants.criteria.CURRENT_CONNECTION_STREAK} consecutive days`,
+      minTier: 0,
+      maxTier: 999,
+      expFunction: (x: number) => 1 + 2 * (x + 1),
+      hidden: false,
+      requires: [],
+    });
   }
 
   export namespace vscode {

@@ -224,6 +224,12 @@ export namespace webview {
         TAB_HOARDER: ["icons", "achievements", "productivity", "tab.png"],
         ERROR_FIXER: ["icons", "achievements", "productivity", "fix.png"],
         SHOWER_AVOIDER: ["icons", "achievements", "productivity", "shower.png"],
+        CONNECTION_STREAK: [
+          "icons",
+          "achievements",
+          "productivity",
+          "streak.png",
+        ],
       } as const;
     }
   }
