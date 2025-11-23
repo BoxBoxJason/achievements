@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### 📚 Documentation
 
 - Add CHANGELOG for vsce publish
+- Add license
 
 ## [0.1.1] - 2025-11-22
 
