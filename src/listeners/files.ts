@@ -92,8 +92,7 @@ export namespace fileListeners {
 
       // Retrieve file extension
       const extension = path.extname(uri.fsPath);
-      const language: string =
-        constants.labels.LANGUAGES_EXTENSIONS[extension];
+      const language: string = constants.labels.LANGUAGES_EXTENSIONS[extension];
       if (language) {
         // Increase file created language count
         const languageCriteria =
@@ -172,6 +171,10 @@ export namespace fileListeners {
         await ProgressionController.increaseProgression(
           constants.criteria.LINES_OF_CODE_LANGUAGE.replace("%s", language)
         );
+        // Increment generic lines of code progression
+        await ProgressionController.increaseProgression(
+          constants.criteria.LINES_OF_CODE
+        );
       } else {
         // Count non-empty lines added in the change
         const nonEmptyLinesCount = change.text
@@ -182,6 +185,11 @@ export namespace fileListeners {
         if (nonEmptyLinesCount > 0) {
           await ProgressionController.increaseProgression(
             constants.criteria.LINES_OF_CODE_LANGUAGE.replace("%s", language),
+            nonEmptyLinesCount
+          );
+          // Increment generic lines of code progression
+          await ProgressionController.increaseProgression(
+            constants.criteria.LINES_OF_CODE,
             nonEmptyLinesCount
           );
         }
