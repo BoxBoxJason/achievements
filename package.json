@@ -130,6 +130,7 @@
     "@tailwindcss/cli": "4.1.18",
     "@types/mocha": "10.0.10",
     "@types/node": "25.0.3",
+    "@types/proper-lockfile": "^4.1.4",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
     "@types/sql.js": "^1.4.9",
@@ -147,6 +148,7 @@
     "typescript": "5.9.3"
   },
   "dependencies": {
+    "proper-lockfile": "^4.1.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "sql.js": "^1.13.0"
