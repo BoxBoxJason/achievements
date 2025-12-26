@@ -592,6 +592,16 @@ class Achievement {
       conditions.push(`(${labelConditions.join(" AND ")})`);
       values.push(...filters.labels);
     }
+    if (filters.criterias && filters.criterias.length > 0) {
+      conditions.push(`EXISTS (
+        SELECT 1 FROM achievement_criterias ac
+        JOIN progressions p ON ac.progression_id = p.id
+        WHERE ac.achievement_id = a.id AND p.name IN (${filters.criterias
+          .map(() => "?")
+          .join(", ")})
+      )`);
+      values.push(...filters.criterias);
+    }
     if (filters.title) {
       conditions.push("a.title LIKE ?");
       values.push(`%${filters.title}%`);

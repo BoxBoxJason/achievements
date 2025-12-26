@@ -122,4 +122,30 @@ suite("Tables Test Suite", () => {
     // criteria is a dictionary
     assert.strictEqual(tier1.criteria["test_progression"], 10);
   });
+
+  test("DailySession: getStatsSummary should return correct stats", async () => {
+    const today = new Date().toISOString().split("T")[0];
+    const yesterday = new Date(Date.now() - 86400000)
+      .toISOString()
+      .split("T")[0];
+    const lastMonth = new Date(Date.now() - 30 * 86400000)
+      .toISOString()
+      .split("T")[0];
+
+    await DailySession.getOrCreate(today, 100);
+    await DailySession.getOrCreate(yesterday, 50);
+    await DailySession.getOrCreate(lastMonth, 200);
+
+    const stats = await DailySession.getStatsSummary(
+      today,
+      yesterday, // twoWeeksAgo
+      today, // monthStart (so yesterday is excluded from monthly)
+      today // yearStart
+    );
+
+    assert.strictEqual(stats.daily, 100);
+    assert.strictEqual(stats.twoWeeks, 150); // today + yesterday
+    assert.strictEqual(stats.monthly, 100); // only today
+    assert.strictEqual(stats.total, 350);
+  });
 });
