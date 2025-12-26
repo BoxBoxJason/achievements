@@ -12,6 +12,7 @@ import * as vscode from "vscode";
 import initSqlJs, { Database, SqlJsStatic } from "sql.js";
 import { applyMigration } from "./migrations";
 import { db_init } from "./init/init";
+import { db_lock } from "../lock";
 
 // ================== MODULE VARIABLES ==================
 // Path to the database file
@@ -90,10 +91,16 @@ export namespace db_model {
 
   /**
    * Save the database to disk.
+   * Will not save if in readonly mode.
    *
    * @returns {Promise<void>}
    */
   export async function saveDB(): Promise<void> {
+    if (db_lock.isReadOnly()) {
+      logger.debug("Skipping database save - running in readonly mode");
+      return;
+    }
+
     if (DB) {
       try {
         const data = DB.export();
@@ -114,37 +121,46 @@ export namespace db_model {
    * @function activate
    *
    * @param {vscode.ExtensionContext} context The extension context object
-   * @returns {Promise<void>}
+   * @param {string} dbPath Optional custom database path (for testing)
+   * @returns {Promise<boolean>} True if database is writable, false if readonly
    */
   export async function activate(
     context: vscode.ExtensionContext,
     dbPath?: string
-  ): Promise<void> {
+  ): Promise<boolean> {
     let databaseDir = context.globalStorageUri.fsPath;
     await fs.promises.mkdir(databaseDir, { recursive: true });
     DATABASE_PATH = dbPath || path.join(databaseDir, DATABASE_FILENAME);
 
+    // Try to acquire the database lock
+    const hasLock = await db_lock.acquireLock(DATABASE_PATH);
+
     await init(context);
 
     if (DB) {
-      // @ts-ignore
-      await applyMigration(DB, -1);
-      await db_init.activate();
-      await saveDB();
+      // Only apply migrations and init data if we have write access
+      if (hasLock) {
+        // @ts-ignore
+        await applyMigration(DB, -1);
+        await db_init.activate();
+        await saveDB();
+      }
     }
+
+    return hasLock;
   }
 
   /**
    * Deactivate the database module.
    * This function should be called when the extension is deactivated.
-   * It will close the database connection.
+   * It will close the database connection and release the lock.
    *
    * @memberof db_model
    * @function deactivate
    *
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  export function deactivate() {
+  export async function deactivate(): Promise<void> {
     if (DB) {
       try {
         DB.close();
@@ -154,6 +170,9 @@ export namespace db_model {
         logger.error(`Failed to close database: ${(err as Error).message}`);
       }
     }
+
+    // Release the database lock
+    await db_lock.releaseLock();
   }
 
   /**
