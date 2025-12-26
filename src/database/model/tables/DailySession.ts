@@ -126,4 +126,41 @@ export class DailySession {
     );
     return res.total_duration as number;
   }
+
+  static async getStatsSummary(
+    today: string,
+    twoWeeksAgo: string,
+    monthStart: string,
+    yearStart: string
+  ): Promise<{
+    daily: number;
+    twoWeeks: number;
+    monthly: number;
+    yearly: number;
+    total: number;
+  }> {
+    const db = await db_model.getDB();
+    const query = `
+      SELECT
+        SUM(CASE WHEN date = ? THEN duration ELSE 0 END) as daily,
+        SUM(CASE WHEN date >= ? THEN duration ELSE 0 END) as twoWeeks,
+        SUM(CASE WHEN date >= ? THEN duration ELSE 0 END) as monthly,
+        SUM(CASE WHEN date >= ? THEN duration ELSE 0 END) as yearly,
+        SUM(duration) as total
+      FROM daily_sessions
+    `;
+    const result = db_model.get(db, query, [
+      today,
+      twoWeeksAgo,
+      monthStart,
+      yearStart,
+    ]);
+    return {
+      daily: result.daily || 0,
+      twoWeeks: result.twoWeeks || 0,
+      monthly: result.monthly || 0,
+      yearly: result.yearly || 0,
+      total: result.total || 0,
+    };
+  }
 }

@@ -62,9 +62,10 @@ export namespace ProgressionController {
         { name: criteriaName },
         increase
       );
-      const updatedAchievements = await Progression.achieveCompletedAchievements(
-        updatedProgressionsIds.map((progression) => progression.id)
-      );
+      const updatedAchievements =
+        await Progression.achieveCompletedAchievements(
+          updatedProgressionsIds.map((progression) => progression.id)
+        );
       let awardedPoints = 0;
       for (let achievement of updatedAchievements) {
         // Notify the user of the unlocked achievement
@@ -98,15 +99,57 @@ export namespace ProgressionController {
         value.toString(),
         maximize
       );
-      const updatedAchievements = await Progression.achieveCompletedAchievements(
-        updatedProgressionsIds.map((progression) => progression.id)
-      );
+      const updatedAchievements =
+        await Progression.achieveCompletedAchievements(
+          updatedProgressionsIds.map((progression) => progression.id)
+        );
       for (let achievement of updatedAchievements) {
         // Notify the user of the unlocked achievement
         awardAchievement(achievement);
       }
     } catch (error) {
       logger.error(`Failed to update progression: ${(error as Error).message}`);
+    }
+  }
+
+  /**
+   * Update multiple progression values and check if any achievements have been unlocked
+   *
+   * @memberof achievements
+   * @function updateProgressions
+   *
+   * @param {Array<{name: string, value: string | number | Date | boolean}>} updates - The list of progressions to update
+   * @returns {Promise<void>}
+   */
+  export async function updateProgressions(
+    updates: Array<{
+      name: string;
+      value: string | number | Date | boolean;
+      maximize?: boolean;
+    }>
+  ): Promise<void> {
+    try {
+      const allUpdatedIds: number[] = [];
+      for (const update of updates) {
+        const updatedProgressionsIds = await Progression.updateValue(
+          { name: update.name },
+          update.value.toString(),
+          update.maximize
+        );
+        allUpdatedIds.push(...updatedProgressionsIds.map((p) => p.id));
+      }
+
+      if (allUpdatedIds.length > 0) {
+        const updatedAchievements =
+          await Progression.achieveCompletedAchievements(allUpdatedIds);
+        for (let achievement of updatedAchievements) {
+          awardAchievement(achievement);
+        }
+      }
+    } catch (error) {
+      logger.error(
+        `Failed to update progressions: ${(error as Error).message}`
+      );
     }
   }
 }

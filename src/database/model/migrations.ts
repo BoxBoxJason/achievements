@@ -130,6 +130,32 @@ export async function applyMigration(
               duration INTEGER NOT NULL
             )`
           );
+
+          const indexes_to_create: { [key: string]: string } = {
+            // Index for achievement_criterias progression_id (Critical for checkAchievements)
+            idx_achievement_criterias_progression_id:
+              "achievement_criterias(progression_id)",
+            // Index for achievements category filtering (UI)
+            idx_achievements_category: "achievements(category)",
+            // Index for achievements group filtering (UI)
+            idx_achievements_group: 'achievements("group")',
+            // Index for achievements achieved filtering (UI)
+            idx_achievements_achieved: "achievements(achieved)",
+            // Index for achievement_labels filtering (UI)
+            idx_achievement_labels_label: "achievement_labels(label)",
+            // Index for achievement_requirements requirement_id (Critical for achievable filter)
+            idx_achievement_requirements_requirement_id:
+              "achievement_requirements(requirement_id)",
+          };
+
+          for (const [indexName, indexColumns] of Object.entries(
+            indexes_to_create
+          )) {
+            db.run(
+              `CREATE INDEX IF NOT EXISTS ${indexName} ON ${indexColumns}`
+            );
+          }
+
           db.run("COMMIT");
         } catch (error) {
           db.run("ROLLBACK");
@@ -137,15 +163,31 @@ export async function applyMigration(
         }
       },
       down: () => {
+        const tables_to_drop = [
+          "schema_version",
+          "achievements",
+          "achievement_requirements",
+          "progressions",
+          "achievement_criterias",
+          "achievement_labels",
+          "daily_sessions",
+        ];
+        const indexes_to_drop = [
+          "idx_achievement_criterias_progression_id",
+          "idx_achievements_category",
+          "idx_achievements_group",
+          "idx_achievements_achieved",
+          "idx_achievement_labels_label",
+          "idx_achievement_requirements_requirement_id",
+        ];
         db.run("BEGIN TRANSACTION");
         try {
-          db.run("DROP TABLE IF EXISTS schema_version");
-          db.run("DROP TABLE IF EXISTS achievements");
-          db.run("DROP TABLE IF EXISTS achievement_requirements");
-          db.run("DROP TABLE IF EXISTS progressions");
-          db.run("DROP TABLE IF EXISTS achievement_criterias");
-          db.run("DROP TABLE IF EXISTS achievement_labels");
-          db.run("DROP TABLE IF EXISTS daily_sessions");
+          for (const index of indexes_to_drop) {
+            db.run(`DROP INDEX IF EXISTS ${index}`);
+          }
+          for (const table of tables_to_drop) {
+            db.run(`DROP TABLE IF EXISTS ${table}`);
+          }
           db.run("COMMIT");
         } catch (error) {
           db.run("ROLLBACK");

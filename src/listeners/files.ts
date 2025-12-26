@@ -154,47 +154,41 @@ export namespace fileListeners {
         path.extname(event.document.fileName)
       ];
     if (language) {
+      let totalLinesAdded = 0;
       for (const change of event.contentChanges) {
-        await processContentChange(change, language);
+        totalLinesAdded += countLinesAdded(change);
+      }
+
+      if (totalLinesAdded > 0) {
+        // Increment progression for the added lines
+        await ProgressionController.increaseProgression(
+          constants.criteria.LINES_OF_CODE_LANGUAGE.replace("%s", language),
+          totalLinesAdded
+        );
+        // Increment generic lines of code progression
+        await ProgressionController.increaseProgression(
+          constants.criteria.LINES_OF_CODE,
+          totalLinesAdded
+        );
       }
     }
   }
 
-  async function processContentChange(
-    change: vscode.TextDocumentContentChangeEvent,
-    language: string
-  ): Promise<void> {
+  function countLinesAdded(
+    change: vscode.TextDocumentContentChangeEvent
+  ): number {
     // Check if the change involves adding new lines
     if (change.text.includes("\n")) {
-      if (change.range.isSingleLine) {
-        // Increment progression for the added line
-        await ProgressionController.increaseProgression(
-          constants.criteria.LINES_OF_CODE_LANGUAGE.replace("%s", language)
-        );
-        // Increment generic lines of code progression
-        await ProgressionController.increaseProgression(
-          constants.criteria.LINES_OF_CODE
-        );
-      } else {
-        // Count non-empty lines added in the change
-        const nonEmptyLinesCount = change.text
-          .split(/\r?\n/)
-          .filter((line) => line.trim().length > 0).length;
+      const nonEmptyLinesCount = change.text
+        .split(/\r?\n/)
+        .filter((line) => line.trim().length > 0).length;
 
-        // Increment progression for the added lines
-        if (nonEmptyLinesCount > 0) {
-          await ProgressionController.increaseProgression(
-            constants.criteria.LINES_OF_CODE_LANGUAGE.replace("%s", language),
-            nonEmptyLinesCount
-          );
-          // Increment generic lines of code progression
-          await ProgressionController.increaseProgression(
-            constants.criteria.LINES_OF_CODE,
-            nonEmptyLinesCount
-          );
-        }
+      if (nonEmptyLinesCount > 0) {
+        return nonEmptyLinesCount;
       }
+      return 1;
     }
+    return 0;
   }
 
   let fileErrorCounts = new Map<string, number>();
