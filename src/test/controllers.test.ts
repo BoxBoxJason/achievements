@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 import * as path from "node:path";
 import { AchievementController } from "../database/controller/achievements";
 import { TimeSpentController } from "../database/controller/timespent";
+import { ProgressionController } from "../database/controller/progressions";
 import { getMockContext, cleanupMockContext } from "./utils";
 import { DailySession } from "../database/model/tables/DailySession";
 import Progression from "../database/model/tables/Progression";
@@ -161,5 +162,30 @@ suite("Controllers Test Suite", () => {
     const result = TimeSpentController.getTimeSpent(input);
     assert.strictEqual(result[constants.criteria.DAILY_TIME_SPENT], 100);
     assert.strictEqual(result[constants.criteria.TWO_WEEKS_TIME_SPENT], 200);
+  });
+
+  test("ProgressionController.updateProgressions should update multiple progressions", async () => {
+    // Create progressions first
+    const p1 = new Progression({
+      name: "test_prog_1",
+      value: 0,
+      type: "number",
+    });
+    await p1.toRow();
+    const p2 = new Progression({
+      name: "test_prog_2",
+      value: 0,
+      type: "number",
+    });
+    await p2.toRow();
+
+    await ProgressionController.updateProgressions([
+      { name: "test_prog_1", value: 10 },
+      { name: "test_prog_2", value: 20 },
+    ]);
+
+    const all = await ProgressionController.getProgressions();
+    assert.strictEqual(all["test_prog_1"], 10);
+    assert.strictEqual(all["test_prog_2"], 20);
   });
 });
