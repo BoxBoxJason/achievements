@@ -7,7 +7,7 @@
   "author": {
     "name": "BoxBoxJason"
   },
-  "version": "0.2.0",
+  "version": "0.3.0",
   "engines": {
     "vscode": "^1.107.0"
   },
@@ -124,7 +124,8 @@
     "test": "npm run clean && npx tsc && vscode-test --extensionDevelopmentPath=. --extensionTestsPath=dist/test/index.js",
     "test:coverage": "npm run clean && rm -rf .nyc_output dist-cov && npx tsc && npx nyc instrument dist dist-cov --include=\"**/*.js\" --exclude=\"**/test/**\" && cp -r dist-cov/* dist/ && node dist/test/runTest.js && npx nyc report --reporter=text-summary --reporter=text",
     "clean": "rm -rf dist dist-cov .nyc_output",
-    "tailwind": "npx tailwindcss -i ./src/views/style/main.css -o ./dist/style/main.css --minify"
+    "tailwind": "npx tailwindcss -i ./src/views/style/main.css -o ./dist/style/main.css --minify",
+    "changelog": "git-cliff -c cliff.toml -o CHANGELOG.md"
   },
   "devDependencies": {
     "@tailwindcss/cli": "4.1.18",
@@ -135,8 +136,8 @@
     "@types/react-dom": "19.2.3",
     "@types/sql.js": "^1.4.9",
     "@types/vscode": "1.107.0",
-    "@typescript-eslint/eslint-plugin": "8.50.1",
-    "@typescript-eslint/parser": "8.50.1",
+    "@typescript-eslint/eslint-plugin": "8.51.0",
+    "@typescript-eslint/parser": "8.51.0",
     "@vscode/test-cli": "0.0.12",
     "@vscode/test-electron": "2.5.2",
     "@vscode/vsce": "3.7.1",

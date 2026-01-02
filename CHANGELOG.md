@@ -2,144 +2,143 @@
 
 All notable changes to this project will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.3.0] - 2026-01-02
+
+### Added
+- Add git cliff configuration
+- Add database lockfile
+
+### Changed
+- Optimize database & queries
+- Upgrade all
+
+### Fixed
+- Code monkey progression
+
 ## [0.2.0] - 2025-11-24
 
-### 🚀 Features
-
+### Added
 - Add connection streak achievement
 
-## [0.1.2] - 2025-11-22
+## [0.1.2] - 2025-11-23
 
-### 📚 Documentation
-
-- Add CHANGELOG for vsce publish
-- Add license
+### Added
 - Add icon
+- Add license
+- Add CHANGELOG for vsce publish
 
 ## [0.1.1] - 2025-11-22
 
-### 🐛 Bug Fixes
+### Added
+- Add unit tests
+- Add renovate configuration file
 
+### Changed
+- Migrate from better-sqlite3 to sql.js
+- Update dependency node to v24
+- Update all-dependencies
+- Update all-dependencies
+- Update actions/setup-node action to v6
+
+### Fixed
 - Display text alignment
 
-### 💼 Other
-
+### Removed
 - Remove useless deps
-
-### 🚜 Refactor
-
-- Migrate from better-sqlite3 to sql.js
-
-### 🧪 Testing
-
-- Add unit tests
-
-### ⚙️ Miscellaneous Tasks
-
 - Remove dependabot
 
 ## [0.1.0] - 2025-09-29
 
-### 🚀 Features
-
-- Add achievements creating classes
-- Create all productivity stacking templates
-- Create files stacking templates
-- Standardize points attribution
-- Add vscode specific logger module
-- Add new achievements linked constants
-- Add config manager module (specific to vscode)
-- Add separate db migrations manager module
-- Move and upgrade Achievements model
-- Create progression management model
-- Add separate database populate module
-- Add extensions commands
-- Create proper achievements workflow controller
-- Add pusheen icons
-- Add skeleton for Achievements react webview
-- Add toggle notifications command
-- Add generic AchievementRequirement SQL script
-- Upgrade achievement model
-- Upgrade Achievements controller
-- Create Achievement webview page
-- Add separate module to handle frontend requests
-- Add containers styling
-- First UI release
-- Update logger module to accept any length / type arguments
-- Fix progressions model & controller workflow
-- Add resource creation / deletion listeners
-- Add git related achievements listeners
-- Add time time tracking
-- Add webview profile section
-- UX
-- Add terminal event listeners
-- Add tab events listeners
-- Add extensions listeners
-- Add debug listeners
-- Add new file edited listeners
-- Condition listeners setup
-- Proper image packaging
-- Add creator achievements logos
-- Style using tailwindcss
-- Add git achievements icons
-- Add terminal tasks icons
-- Add files icons
-- Add debugger icons
-- Add shortcuts icons
-- Add extensions icons
-- Add productivity icons
-- Add (temporary) speaker icons
-
-### 🐛 Bug Fixes
-
-- Leave error messages in lowercase
-- Errors in some default achievements
-- Change some constants to enums & fix awarder
-- Issues fix
-
-### 💼 Other
-
-- Default vscode extension setup
-- House cleaning
-- House cleaning
-- Prepare release
-- *(deps)* Upgrade all dependencies
-- Complete build method
-
-### 🚜 Refactor
-
-- Replace Python achievements builder with typescript
-- [**breaking**] Update model to use better-sqlite3
-- Move logger module
-- Move communication / requests to proper spots
-- Yet another achievements model rework
-- [**breaking**] Rename points to EXP
-- [**breaking**] Replace terminal by tasks
-- Move settings from raw JSON to VSCode
-
-### 📚 Documentation
-
-- Add proper README
-- Add docstrings everywhere
-- Update project description
-- Update changelog and install
-
-### ⚡ Performance
-
-- Upgrade achievements model (100x speedup)
-- Upgrade progressions model (100x speedup)
-- Cleanup db init to iterate over StackingTemplates
-
-### 🎨 Styling
-
-- Standardize StackingTemplates
-- Apply code formatters
-
-### ⚙️ Miscellaneous Tasks
-
-- Prepare build & config for better-sqlite3
-- Housekeeping
-- *(dependabot)* Configuration
+### Added
 - Add publish workflows
+- Add (temporary) speaker icons
+- Add productivity icons
+- Add extensions icons
+- Add shortcuts icons
+- Add debugger icons
+- Add files icons
+- Add terminal tasks icons
+- Add git achievements icons
+- Add creator achievements logos
+- Add new file edited listeners
+- Add debug listeners
+- Add extensions listeners
+- Add tab events listeners
+- Add terminal event listeners
+- Add webview profile section
+- Add time time tracking
+- Add docstrings everywhere
+- Add git related achievements listeners
+- Add resource creation / deletion listeners
+- Add containers styling
+- Add separate module to handle frontend requests
+- Add generic AchievementRequirement SQL script
+- Add toggle notifications command
+- Add proper README
+- Add skeleton for Achievements react webview
+- Add pusheen icons
+- Add extensions commands
+- Add separate database populate module
+- Add separate db migrations manager module
+- Add config manager module (specific to vscode)
+- Add new achievements linked constants
+- Add vscode specific logger module
+- Add achievements creating classes
+
+### Changed
+- Update changelog and install
+- Complete build method
+- Upgrade all dependencies
+- Configuration
+- Apply code formatters
+- Prepare release
+- Style using tailwindcss
+- Proper image packaging
+- Condition listeners setup
+- Move settings from raw JSON to VSCode
+- Update project description
+- Replace terminal by tasks
+- Rename points to EXP
+- Cleanup db init to iterate over StackingTemplates
+- UX
+- Update logger module to accept any length / type arguments
+- First UI release
+- Upgrade progressions model (100x speedup)
+- Yet another achievements model rework
+- Upgrade achievements model (100x speedup)
+- Move communication / requests to proper spots
+- Move logger module
+- Create Achievement webview page
+- Upgrade Achievements controller
+- Upgrade achievement model
+- House cleaning
+- House cleaning
+- Create proper achievements workflow controller
+- Standardize StackingTemplates
+- Create progression management model
+- Move and upgrade Achievements model
+- Update model to use better-sqlite3
+- Housekeeping
+- Prepare build & config for better-sqlite3
+- Replace Python achievements builder with typescript
+- Standardize points attribution
+- Create files stacking templates
+- Create all productivity stacking templates
+- Default vscode extension setup
+
+### Fixed
+- Issues fix
+- Change some constants to enums & fix awarder
+- Errors in some default achievements
+- Fix progressions model & controller workflow
+- Leave error messages in lowercase
+
+[0.3.0]: https://github.com///compare/0.2.0...0.3.0
+[0.2.0]: https://github.com///compare/0.1.2...0.2.0
+[0.1.2]: https://github.com///compare/0.1.1...0.1.2
+[0.1.1]: https://github.com///compare/0.1.0...0.1.1
 
 <!-- generated by git-cliff -->
