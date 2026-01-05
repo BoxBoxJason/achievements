@@ -2,6 +2,7 @@ import { constants } from "./src/constants";
 import * as esbuild from "esbuild";
 
 const production = process.argv.includes("--production");
+const watch = process.argv.includes("--watch");
 /**
  * An esbuild plugin to match and log problems during the build.
  * @type {esbuild.Plugin}
@@ -54,6 +55,31 @@ async function main() {
     logLevel: "silent",
     plugins: [esbuildProblemMatcherPlugin],
   });
+
+  if (watch) {
+    await ctxWebview.watch();
+    await ctxExtension.watch();
+    console.log("Watching for changes...");
+
+    const cleanup = async () => {
+      try {
+        await ctxWebview.dispose();
+      } catch {}
+      try {
+        await ctxExtension.dispose();
+      } catch {}
+    };
+
+    process.on("SIGINT", async () => {
+      await cleanup();
+      process.exit(0);
+    });
+    process.on("SIGTERM", async () => {
+      await cleanup();
+      process.exit(0);
+    });
+    return;
+  }
 
   // Single builds
   await ctxWebview.rebuild();
