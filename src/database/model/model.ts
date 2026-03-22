@@ -163,7 +163,6 @@ export namespace db_model {
       if (DB) {
         // Only apply migrations and init data if we have write access
         if (hasLock) {
-          // @ts-ignore
           await applyMigration(DB, -1);
           await db_init.activate();
         }
