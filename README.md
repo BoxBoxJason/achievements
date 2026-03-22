@@ -62,6 +62,8 @@ You can also access the settings by using the command `achievements.settings`.
 |`achievements.listeners.tabs`|Enable or disable tab listeners|
 |`achievements.listeners.tasks`|Enable or disable task listeners|
 |`achievements.listeners.time`|Enable or disable time tracking listeners|
+|`achievements.ignore.files`|List of file names ignored by file-based achievements (case-insensitive, for example `package-lock.json` matches `PACKAGE-LOCK.JSON`)|
+|`achievements.ignore.directories`|List of directory names ignored by file-based achievements (case-sensitive, for example `.git` matches only `.git`)|
 
 ## Installation
 

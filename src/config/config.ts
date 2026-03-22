@@ -86,7 +86,7 @@ export namespace config {
     vscode.window
       .showInformationMessage(
         "For a better experience, please set your username",
-        "Set Username"
+        "Set Username",
       )
       .then((selection) => {
         if (selection === "Set Username") {
@@ -158,7 +158,7 @@ export namespace config {
         debug: extensionRawConfig.get<boolean>("listeners.debug", true),
         extensions: extensionRawConfig.get<boolean>(
           "listeners.extensions",
-          true
+          true,
         ),
         files: extensionRawConfig.get<boolean>("listeners.files", true),
         git: extensionRawConfig.get<boolean>("listeners.git", true),
@@ -171,7 +171,7 @@ export namespace config {
     // Check if the log directory is a valid path, if not, set it to the default
     if (!path.isAbsolute(extensionConfig.logDirectory)) {
       logger.warn(
-        `Invalid log directory path: ${extensionConfig.logDirectory}, setting to default`
+        `Invalid log directory path: ${extensionConfig.logDirectory}, setting to default`,
       );
       updateConfig("logDirectory", defaultLogDir);
       extensionConfig.logDirectory = defaultLogDir;
@@ -180,7 +180,7 @@ export namespace config {
       fs.mkdirSync(extensionConfig.logDirectory, { recursive: true });
     } catch (error) {
       logger.error(
-        `Error creating log directory: ${error}, setting to default`
+        `Error creating log directory: ${error}, setting to default`,
       );
       updateConfig("logDirectory", defaultLogDir);
       extensionConfig.logDirectory = defaultLogDir;
@@ -261,7 +261,7 @@ export namespace config {
   }
 
   export function isListenerEnabled(
-    listener: keyof Config["listeners"]
+    listener: keyof Config["listeners"],
   ): boolean {
     const listeners = getConfig().listeners;
 
