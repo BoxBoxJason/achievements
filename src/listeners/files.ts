@@ -12,22 +12,30 @@ import path from "node:path";
 import logger from "../utils/logger";
 import { config } from "../config/config";
 
-const DEFAULT_IGNORED_FILES = [
-  "package-lock.json",
-  "yarn.lock",
-  "pnpm-lock.yaml",
-  "bun.lockb",
-  ".ds_store",
-  "thumbs.db",
-];
+let ignoredDirectoryNames = new Set<string>();
+let ignoredFileNames = new Set<string>();
 
-const DEFAULT_IGNORED_DIRECTORIES = [
-  ".git",
-  ".svn",
-  ".hg",
-  ".jj",
-  "node_modules",
-];
+function refreshIgnoredMatchers(): void {
+  const extensionRawConfig = vscode.workspace.getConfiguration("achievements");
+
+  ignoredDirectoryNames = new Set(
+    extensionRawConfig
+      .get<string[]>("ignore.directories", [
+        ...constants.ignore.DEFAULT_DIRECTORIES,
+      ])
+      .filter((name) => typeof name === "string")
+      .map((name) => name.trim())
+      .filter((name) => name.length > 0),
+  );
+
+  ignoredFileNames = new Set(
+    extensionRawConfig
+      .get<string[]>("ignore.files", [...constants.ignore.DEFAULT_FILES])
+      .filter((name) => typeof name === "string")
+      .map((name) => name.trim().toLowerCase())
+      .filter((name) => name.length > 0),
+  );
+}
 
 /**
  * Check if a given URI should be ignored for progression counting based on its path and file name.
@@ -40,21 +48,9 @@ function shouldIgnoreUri(uri: vscode.Uri): boolean {
     return true;
   }
 
-  const extensionRawConfig = vscode.workspace.getConfiguration("achievements");
-  const ignoredDirectoryNames = new Set(
-    extensionRawConfig
-      .get<string[]>("ignore.directories", DEFAULT_IGNORED_DIRECTORIES)
-      .filter((name) => typeof name === "string")
-      .map((name) => name.trim())
-      .filter((name) => name.length > 0),
-  );
-  const ignoredFileNames = new Set(
-    extensionRawConfig
-      .get<string[]>("ignore.files", DEFAULT_IGNORED_FILES)
-      .filter((name) => typeof name === "string")
-      .map((name) => name.trim().toLowerCase())
-      .filter((name) => name.length > 0),
-  );
+  if (ignoredDirectoryNames.size === 0 && ignoredFileNames.size === 0) {
+    refreshIgnoredMatchers();
+  }
 
   const normalizedPath = path.normalize(uri.fsPath);
   const segments = normalizedPath.split(path.sep);
@@ -85,6 +81,8 @@ export namespace fileListeners {
   export function activate(context: vscode.ExtensionContext): void {
     if (config.isListenerEnabled(constants.listeners.FILES)) {
       logger.info("Starting file events listeners");
+
+      refreshIgnoredMatchers();
 
       // Watcher for resources
       const resourcesWatcher = vscode.workspace.createFileSystemWatcher(
@@ -119,6 +117,19 @@ export namespace fileListeners {
       // Diagnostics changes
       vscode.languages.onDidChangeDiagnostics(
         handleDiagnosticChangedEvent,
+        null,
+        context.subscriptions,
+      );
+
+      vscode.workspace.onDidChangeConfiguration(
+        (event) => {
+          if (
+            event.affectsConfiguration("achievements.ignore.files") ||
+            event.affectsConfiguration("achievements.ignore.directories")
+          ) {
+            refreshIgnoredMatchers();
+          }
+        },
         null,
         context.subscriptions,
       );

@@ -10,6 +10,7 @@ import fs from "fs";
 import logger from "../utils/logger";
 import * as vscode from "vscode";
 import { webview } from "../views/viewconst";
+import { constants } from "../constants";
 
 // ==================== TYPES ====================
 // Config interface, defines the structure of the config object, always json serializable
@@ -131,24 +132,13 @@ export namespace config {
         .trim(),
       ignore: {
         files: extensionRawConfig
-          .get<string[]>("ignore.files", [
-            "package-lock.json",
-            "yarn.lock",
-            "pnpm-lock.yaml",
-            "bun.lockb",
-            ".ds_store",
-            "thumbs.db",
-          ])
+          .get<string[]>("ignore.files", [...constants.ignore.DEFAULT_FILES])
           .filter((name) => typeof name === "string")
           .map((name) => name.trim())
           .filter((name) => name.length > 0),
         directories: extensionRawConfig
           .get<string[]>("ignore.directories", [
-            ".git",
-            ".svn",
-            ".hg",
-            ".jj",
-            "node_modules",
+            ...constants.ignore.DEFAULT_DIRECTORIES,
           ])
           .filter((name) => typeof name === "string")
           .map((name) => name.trim())

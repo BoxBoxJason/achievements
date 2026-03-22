@@ -223,4 +223,16 @@ export namespace constants {
     TASKS: "tasks",
     TIME: "time",
   } as const;
+
+  export const ignore = {
+    DEFAULT_FILES: [
+      "package-lock.json",
+      "yarn.lock",
+      "pnpm-lock.yaml",
+      "bun.lockb",
+      ".ds_store",
+      "thumbs.db",
+    ],
+    DEFAULT_DIRECTORIES: [".git", ".svn", ".hg", ".jj", "node_modules"],
+  } as const;
 }

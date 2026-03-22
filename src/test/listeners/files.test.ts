@@ -260,4 +260,37 @@ suite("File Listeners Test Suite", () => {
       ProgressionController.increaseProgression = originalIncrease;
     }
   });
+
+  test("handleDiagnosticChangedEvent should ignore configured URIs", async () => {
+    const ignoredUri = vscode.Uri.file(
+      path.join(tempDir, "node_modules", "broken.ts"),
+    );
+
+    const originalIncrease = ProgressionController.increaseProgression;
+    const originalGetDiagnostics = vscode.languages.getDiagnostics;
+    let progressionCalls = 0;
+
+    ProgressionController.increaseProgression = async () => {
+      progressionCalls++;
+    };
+
+    (vscode.languages as any).getDiagnostics = () => [
+      { severity: vscode.DiagnosticSeverity.Error },
+    ];
+
+    try {
+      await fileListeners.handleDiagnosticChangedEvent({
+        uris: [ignoredUri],
+      } as vscode.DiagnosticChangeEvent);
+
+      await fileListeners.handleDiagnosticChangedEvent({
+        uris: [ignoredUri],
+      } as vscode.DiagnosticChangeEvent);
+
+      assert.strictEqual(progressionCalls, 0);
+    } finally {
+      ProgressionController.increaseProgression = originalIncrease;
+      (vscode.languages as any).getDiagnostics = originalGetDiagnostics;
+    }
+  });
 });
