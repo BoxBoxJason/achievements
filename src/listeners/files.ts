@@ -12,24 +12,22 @@ import path from "node:path";
 import logger from "../utils/logger";
 import { config } from "../config/config";
 
-// Define ignored paths and files for progression counting (directory names, case sensitive)
-const IGNORED_PATH_SEGMENTS = new Set([
-  ".git",
-  ".svn",
-  ".hg",
-  ".jj",
-  "node_modules",
-]);
-
-// Define ignored file names for progression counting (case-insensitive)
-const IGNORED_FILE_NAMES = new Set([
+const DEFAULT_IGNORED_FILES = [
   "package-lock.json",
   "yarn.lock",
   "pnpm-lock.yaml",
   "bun.lockb",
   ".ds_store",
   "thumbs.db",
-]);
+];
+
+const DEFAULT_IGNORED_DIRECTORIES = [
+  ".git",
+  ".svn",
+  ".hg",
+  ".jj",
+  "node_modules",
+];
 
 /**
  * Check if a given URI should be ignored for progression counting based on its path and file name.
@@ -42,17 +40,31 @@ function shouldIgnoreUri(uri: vscode.Uri): boolean {
     return true;
   }
 
-  const normalizedPath = path.normalize(uri.fsPath);
-  const segments = normalizedPath
-    .split(path.sep)
-    .map((segment) => segment.toLowerCase());
+  const extensionRawConfig = vscode.workspace.getConfiguration("achievements");
+  const ignoredDirectoryNames = new Set(
+    extensionRawConfig
+      .get<string[]>("ignore.directories", DEFAULT_IGNORED_DIRECTORIES)
+      .filter((name) => typeof name === "string")
+      .map((name) => name.trim())
+      .filter((name) => name.length > 0),
+  );
+  const ignoredFileNames = new Set(
+    extensionRawConfig
+      .get<string[]>("ignore.files", DEFAULT_IGNORED_FILES)
+      .filter((name) => typeof name === "string")
+      .map((name) => name.trim().toLowerCase())
+      .filter((name) => name.length > 0),
+  );
 
-  if (segments.some((segment) => IGNORED_PATH_SEGMENTS.has(segment))) {
+  const normalizedPath = path.normalize(uri.fsPath);
+  const segments = normalizedPath.split(path.sep);
+
+  if (segments.some((segment) => ignoredDirectoryNames.has(segment))) {
     return true;
   }
 
   const fileName = path.basename(normalizedPath).toLowerCase();
-  return IGNORED_FILE_NAMES.has(fileName);
+  return ignoredFileNames.has(fileName);
 }
 
 /**

@@ -19,6 +19,10 @@ export interface Config {
   notifications: boolean;
   logDirectory: string;
   username: string;
+  ignore: {
+    files: string[];
+    directories: string[];
+  };
   listeners: {
     debug: boolean;
     extensions: boolean;
@@ -125,6 +129,31 @@ export namespace config {
       username: extensionRawConfig
         .get<string>("username", webview.DEFAULT_USER)
         .trim(),
+      ignore: {
+        files: extensionRawConfig
+          .get<string[]>("ignore.files", [
+            "package-lock.json",
+            "yarn.lock",
+            "pnpm-lock.yaml",
+            "bun.lockb",
+            ".ds_store",
+            "thumbs.db",
+          ])
+          .filter((name) => typeof name === "string")
+          .map((name) => name.trim())
+          .filter((name) => name.length > 0),
+        directories: extensionRawConfig
+          .get<string[]>("ignore.directories", [
+            ".git",
+            ".svn",
+            ".hg",
+            ".jj",
+            "node_modules",
+          ])
+          .filter((name) => typeof name === "string")
+          .map((name) => name.trim())
+          .filter((name) => name.length > 0),
+      },
       listeners: {
         debug: extensionRawConfig.get<boolean>("listeners.debug", true),
         extensions: extensionRawConfig.get<boolean>(
