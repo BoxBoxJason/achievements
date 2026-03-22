@@ -8,7 +8,7 @@ const App = () => {
   const imageUris =
     (window as Window & { imageUris?: Record<string, string> }).imageUris ||
     {};
-  const [filters, setFilters] = useState({});
+  const [filters, setFilters] = useState<Record<string, unknown>>({});
   const [limit, setLimit] = useState(50);
 
   return (

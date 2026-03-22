@@ -26,15 +26,19 @@ export function showReadOnlyUI(context: vscode.ExtensionContext): void {
 
   // Show a persistent warning with an action to open settings
   void (async () => {
-    const selection = await vscode.window.showWarningMessage(
-      message,
-      "Open Settings",
-    );
-    if (selection === "Open Settings") {
-      await vscode.commands.executeCommand(
-        "workbench.action.openSettings",
-        "@ext:boxboxjason.achievements",
+    try {
+      const selection = await vscode.window.showWarningMessage(
+        message,
+        "Open Settings",
       );
+      if (selection === "Open Settings") {
+        await vscode.commands.executeCommand(
+          "workbench.action.openSettings",
+          "@ext:boxboxjason.achievements",
+        );
+      }
+    } catch (err) {
+      logger.error("Failed to show read-only warning UI: " + String(err));
     }
   })();
 

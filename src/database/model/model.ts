@@ -219,12 +219,12 @@ export namespace db_model {
   }
 
   /**
-   * Execute a query and return all rows as objects.
+   * Execute a query and return the first row as an object (or null if no rows).
    *
    * @param {Database} db The database connection object
    * @param {string} query The query to execute
-   * @param {any[]} params The parameters to bind to the query
-   * @returns {any[]} The result rows
+   * @param {SqlValue[]} params The parameters to bind to the query
+   * @returns {T | null} The first result row or null
    */
   export function get<T extends object>(
     db: Database,

@@ -66,10 +66,16 @@ export namespace ProgressionController {
         await Progression.achieveCompletedAchievements(
           updatedProgressionsIds.map((progression) => progression.id),
         );
-      for (const achievement of updatedAchievements) {
-        // Notify the user of the unlocked achievement
-        void awardAchievement(achievement);
-      }
+      // Award achievements and handle any errors from each award
+      await Promise.all(
+        updatedAchievements.map((achievement) =>
+          awardAchievement(achievement).catch((err: unknown) => {
+            logger.error(
+              `Failed to award achievement "${achievement.title}": ${String(err)}`,
+            );
+          }),
+        ),
+      );
     } catch (error) {
       logger.error(
         `Failed to increase progression: ${(error as Error).message}`,
@@ -102,10 +108,16 @@ export namespace ProgressionController {
         await Progression.achieveCompletedAchievements(
           updatedProgressionsIds.map((progression) => progression.id),
         );
-      for (const achievement of updatedAchievements) {
-        // Notify the user of the unlocked achievement
-        void awardAchievement(achievement);
-      }
+      // Award achievements and handle any errors from each award
+      await Promise.all(
+        updatedAchievements.map((achievement) =>
+          awardAchievement(achievement).catch((err: unknown) => {
+            logger.error(
+              `Failed to award achievement "${achievement.title}": ${String(err)}`,
+            );
+          }),
+        ),
+      );
     } catch (error) {
       logger.error(`Failed to update progression: ${(error as Error).message}`);
     }
@@ -141,9 +153,16 @@ export namespace ProgressionController {
       if (allUpdatedIds.length > 0) {
         const updatedAchievements =
           await Progression.achieveCompletedAchievements(allUpdatedIds);
-        for (const achievement of updatedAchievements) {
-          void awardAchievement(achievement);
-        }
+        // Award achievements and handle any errors from each award
+        await Promise.all(
+          updatedAchievements.map((achievement) =>
+            awardAchievement(achievement).catch((err: unknown) => {
+              logger.error(
+                `Failed to award achievement "${achievement.title}": ${String(err)}`,
+              );
+            }),
+          ),
+        );
       }
     } catch (error) {
       logger.error(

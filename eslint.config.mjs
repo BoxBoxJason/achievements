@@ -2,6 +2,8 @@ import eslint from "@eslint/js";
 import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 import promisePlugin from "eslint-plugin-promise";
+import reactPlugin from "eslint-plugin-react";
+import reactHooksPlugin from "eslint-plugin-react-hooks";
 
 export default [
   // Ignore patterns
@@ -19,6 +21,14 @@ export default [
     plugins: {
       "@typescript-eslint": typescriptEslint,
       promise: promisePlugin,
+      react: reactPlugin,
+      "react-hooks": reactHooksPlugin,
+    },
+
+    settings: {
+      react: {
+        version: "19.2",
+      },
     },
 
     languageOptions: {
@@ -130,6 +140,14 @@ export default [
       "prefer-const": "warn",
       "prefer-arrow-callback": "warn",
       "no-empty-function": "warn",
+
+      // React rules
+      "react/react-in-jsx-scope": "off",
+      "react/prop-types": "off", // Using TypeScript for prop validation
+      "react/no-unescaped-entities": "warn",
+      "react/display-name": "warn",
+      "react-hooks/rules-of-hooks": "warn",
+      "react-hooks/exhaustive-deps": "warn",
     },
   },
 
