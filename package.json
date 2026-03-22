@@ -160,6 +160,7 @@
     "changelog": "git-cliff -c cliff.toml -o CHANGELOG.md"
   },
   "devDependencies": {
+    "@eslint/js": "10.0.1",
     "@tailwindcss/cli": "4.2.2",
     "@types/mocha": "10.0.10",
     "@types/node": "25.5.0",
@@ -175,6 +176,9 @@
     "@vscode/vsce": "3.7.1",
     "esbuild": "0.27.4",
     "eslint": "10.1.0",
+    "eslint-plugin-promise": "^7.2.1",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-hooks": "^4.6.0",
     "nyc": "^18.0.0",
     "ovsx": "^0.10.9",
     "ts-node": "10.9.2",
