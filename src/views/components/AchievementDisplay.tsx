@@ -1,12 +1,15 @@
 import * as React from 'react';
 import { AchievementDict } from '../../database/model/tables/Achievement';
-import { webview } from '../viewconst';
 
 const AchievementDisplay: React.FC<AchievementDict> = (achievementDict: AchievementDict) => {
 
-  const imageUris = (window as any).imageUris || {};
+  const imageUris =
+    (window as Window & { imageUris?: Record<string, string> }).imageUris ||
+    {};
 
-  const parseDateString = (dateString: string): string => {
+  const parseDateString = (dateValue: string | Date): string => {
+    const dateString =
+      typeof dateValue === 'string' ? dateValue : dateValue.toISOString();
     const splitDate = dateString.split('T');
     const date = splitDate[0];
     const time = splitDate[1].split('.')[0];
@@ -19,7 +22,7 @@ const AchievementDisplay: React.FC<AchievementDict> = (achievementDict: Achievem
       <img className="achievement-icon w-18 h-18 mr-2.5 shrink-0 max-w-full max-h-full object-contain"
         src={imageUris[achievementDict.icon] || imageUris.PUSHEEN_ERROR}
         onError={(e) => {
-          e.currentTarget.src = imageUris.PUSHEEN_ERROR
+          e.currentTarget.src = imageUris.PUSHEEN_ERROR;
         }}
         alt={`${achievementDict.title} Icon`}
         style={{
@@ -42,7 +45,7 @@ const AchievementDisplay: React.FC<AchievementDict> = (achievementDict: Achievem
         {/* Status */}
         <span className={`achievement-status ${achievementDict.achieved ? 'text-text-gray' : 'text-text-red'}`}>
           {achievementDict.achieved && achievementDict.achievedAt
-            ? `Unlocked: ${parseDateString(achievementDict.achievedAt as any) || 'Date not available'}`
+            ? `Unlocked: ${parseDateString(achievementDict.achievedAt) || 'Date not available'}`
             : 'Not Achieved'}
         </span>
       </div>

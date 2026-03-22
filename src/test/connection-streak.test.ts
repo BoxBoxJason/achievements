@@ -143,7 +143,7 @@ suite("Connection Streak Test Suite", () => {
     mockDate("2023-01-01T12:00:00Z");
 
     // First update
-    let session = await DailySession.getOrCreate("2023-01-01");
+    const session = await DailySession.getOrCreate("2023-01-01");
     await session.increase(100);
     await TimeSpentController.updateConnectionStreak();
 

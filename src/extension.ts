@@ -25,22 +25,24 @@ export function showReadOnlyUI(context: vscode.ExtensionContext): void {
     "Achievements: Running in read-only mode because another VS Code instance is using the database. Achievements won't be tracked.";
 
   // Show a persistent warning with an action to open settings
-  vscode.window
-    .showWarningMessage(message, "Open Settings")
-    .then((selection) => {
-      if (selection === "Open Settings") {
-        vscode.commands.executeCommand(
-          "workbench.action.openSettings",
-          "@ext:boxboxjason.achievements"
-        );
-      }
-    });
+  void (async () => {
+    const selection = await vscode.window.showWarningMessage(
+      message,
+      "Open Settings",
+    );
+    if (selection === "Open Settings") {
+      await vscode.commands.executeCommand(
+        "workbench.action.openSettings",
+        "@ext:boxboxjason.achievements",
+      );
+    }
+  })();
 
   // Add a status bar item to make the state visible at all times
   try {
     const statusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Left,
-      100
+      100,
     );
     statusBarItem.text = "$(lock) Achievements (read-only)";
     statusBarItem.tooltip = message;
@@ -58,7 +60,7 @@ export function showReadOnlyUI(context: vscode.ExtensionContext): void {
 export async function activate(context: vscode.ExtensionContext) {
   // ==================== CONFIG ====================
   config.activate(context);
-  let configuration = config.getConfig();
+  const configuration = config.getConfig();
 
   // ==================== DATABASE ====================
   // hasWriteAccess will be false if another instance has the lock
@@ -75,7 +77,7 @@ export async function activate(context: vscode.ExtensionContext) {
     "achievements.enable",
     () => {
       config.enableExtension();
-    }
+    },
   );
   context.subscriptions.push(enableCommand);
 
@@ -85,9 +87,9 @@ export async function activate(context: vscode.ExtensionContext) {
     () => {
       vscode.commands.executeCommand(
         "workbench.action.openSettings",
-        "@ext:boxboxjason.achievements"
+        "@ext:boxboxjason.achievements",
       );
-    }
+    },
   );
   context.subscriptions.push(configurationCommand);
 
@@ -112,10 +114,10 @@ export async function activate(context: vscode.ExtensionContext) {
             currentPanel = undefined;
           },
           null,
-          context.subscriptions
+          context.subscriptions,
         );
       }
-    }
+    },
   );
   context.subscriptions.push(showAchievementsCommand);
 

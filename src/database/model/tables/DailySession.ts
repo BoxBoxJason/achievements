@@ -17,10 +17,7 @@ export class DailySession {
     this.id = id;
   }
 
-  static async getOrCreate(
-    date?: string,
-    duration: number = 0
-  ): Promise<DailySession> {
+  static async getOrCreate(date?: string, duration = 0): Promise<DailySession> {
     const dateStr = date || new Date().toISOString().split("T")[0];
     if (!dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
       throw new Error("date must be in the format YYYY-MM-DD");
@@ -30,17 +27,17 @@ export class DailySession {
     }
 
     const db = await db_model.getDB();
-    const existingSession = db_model.get(
+    const existingSession = db_model.get<DailySessionDict>(
       db,
       `SELECT * FROM daily_sessions WHERE date = ?`,
-      [dateStr]
-    ) as DailySessionDict;
+      [dateStr],
+    );
 
     if (existingSession) {
       return new DailySession(
         existingSession.date,
         existingSession.duration,
-        existingSession.id
+        existingSession.id,
       );
     } else {
       const statement = db.prepare(DailySession.INSERT_QUERY);
@@ -53,15 +50,18 @@ export class DailySession {
       // Better would be to use RETURNING clause if supported or a separate select.
       // SQLite supports RETURNING since 3.35.0. sql.js is based on recent SQLite.
       // Let's try to fetch it back by date which is unique.
-      const newSession = db_model.get(
+      const newSession = db_model.get<DailySessionDict>(
         db,
         `SELECT * FROM daily_sessions WHERE date = ?`,
-        [dateStr]
-      ) as DailySessionDict;
+        [dateStr],
+      );
+      if (!newSession) {
+        throw new Error("Failed to create daily session");
+      }
       return new DailySession(
         newSession.date,
         newSession.duration,
-        newSession.id
+        newSession.id,
       );
     }
   }
@@ -90,22 +90,22 @@ export class DailySession {
 
   static async getRawSessions(
     firstDate: string,
-    lastDate: string
+    lastDate: string,
   ): Promise<DailySessionDict[]> {
     const db = await db_model.getDB();
-    return db_model.getAll(
+    return db_model.getAll<DailySessionDict>(
       db,
       `
     SELECT * FROM daily_sessions
     WHERE date BETWEEN ? AND ?
     ORDER BY date`,
-      [firstDate, lastDate]
-    ) as DailySessionDict[];
+      [firstDate, lastDate],
+    );
   }
 
   static async getSessions(
     firstDate: string,
-    lastDate: string
+    lastDate: string,
   ): Promise<DailySession[]> {
     const rawSessions = await this.getRawSessions(firstDate, lastDate);
     return rawSessions.map(DailySession.fromRow);
@@ -113,25 +113,25 @@ export class DailySession {
 
   static async calculateDuration(
     firstDate: string,
-    lastDate: string
+    lastDate: string,
   ): Promise<number> {
     const db = await db_model.getDB();
-    const res = db_model.get(
+    const res = db_model.get<{ total_duration: number | null }>(
       db,
       `
     SELECT SUM(duration) as total_duration
     FROM daily_sessions
     WHERE date BETWEEN ? AND ?`,
-      [firstDate, lastDate]
+      [firstDate, lastDate],
     );
-    return res.total_duration as number;
+    return res?.total_duration ?? 0;
   }
 
   static async getStatsSummary(
     today: string,
     twoWeeksAgo: string,
     monthStart: string,
-    yearStart: string
+    yearStart: string,
   ): Promise<{
     daily: number;
     twoWeeks: number;
@@ -149,18 +149,19 @@ export class DailySession {
         SUM(duration) as total
       FROM daily_sessions
     `;
-    const result = db_model.get(db, query, [
-      today,
-      twoWeeksAgo,
-      monthStart,
-      yearStart,
-    ]);
+    const result = db_model.get<{
+      daily: number | null;
+      twoWeeks: number | null;
+      monthly: number | null;
+      yearly: number | null;
+      total: number | null;
+    }>(db, query, [today, twoWeeksAgo, monthStart, yearStart]);
     return {
-      daily: result.daily || 0,
-      twoWeeks: result.twoWeeks || 0,
-      monthly: result.monthly || 0,
-      yearly: result.yearly || 0,
-      total: result.total || 0,
+      daily: result?.daily || 0,
+      twoWeeks: result?.twoWeeks || 0,
+      monthly: result?.monthly || 0,
+      yearly: result?.yearly || 0,
+      total: result?.total || 0,
     };
   }
 }

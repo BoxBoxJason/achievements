@@ -7,6 +7,7 @@
 
 import { db_model } from "../model";
 import { parseValue } from "../../../utils/types";
+import { SqlValue } from "sql.js";
 
 // ==================== TYPES ====================
 
@@ -18,7 +19,7 @@ export interface StackingAchievementTemplate {
   group: string;
   labels: string[];
   criterias: string[];
-  criteriasFunctions: ((tier: number) => any)[];
+  criteriasFunctions: ((tier: number) => number)[];
   description: string;
   minTier: number;
   maxTier: number;
@@ -34,7 +35,7 @@ export interface AchievementDict {
   category: string;
   group: string;
   labels: string[];
-  criteria: { [key: string]: any };
+  criteria: { [key: string]: unknown };
   description: string;
   tier: number;
   exp: number;
@@ -96,7 +97,7 @@ export interface AchievementRow {
   requirements: number[];
   criteria: Array<{
     progression_name: string;
-    required_value: any;
+    required_value: unknown;
     type: string;
   }>;
 }
@@ -192,14 +193,14 @@ class Achievement {
   public category: string;
   public group: string;
   public labels: string[];
-  public criteria: { [key: string]: any };
+  public criteria: { [key: string]: unknown };
   public description: string;
   public tier: number;
   public exp: number;
   public hidden: boolean;
   public requires: number[];
   public repeatable: boolean;
-  public achieved: boolean = false;
+  public achieved = false;
   public achievedAt: Date | undefined;
 
   /**
@@ -213,21 +214,27 @@ class Achievement {
    */
   constructor(data: AchievementDict) {
     // Destructuring data object for validation and assignment
-    let {
+    const {
       id,
-      title,
-      icon,
-      category,
-      group,
+      title: rawTitle,
+      icon: rawIcon,
+      category: rawCategory,
+      group: rawGroup,
       labels,
       criteria,
-      description,
+      description: rawDescription,
       tier,
       exp,
       hidden,
       requires,
       repeatable,
     } = data;
+
+    let title = rawTitle;
+    let icon = rawIcon;
+    let category = rawCategory;
+    let group = rawGroup;
+    let description = rawDescription;
 
     // Input validation
     title = title.trim();
@@ -304,7 +311,7 @@ class Achievement {
    */
   static async fromStackingTemplateToDB(
     template: StackingAchievementTemplate,
-    multiplier: number = 1
+    multiplier = 1,
   ): Promise<void> {
     const {
       title,
@@ -322,11 +329,25 @@ class Achievement {
       requires,
     } = template;
 
-    const achievementData: any[] = [];
-    const criteriaData: any[] = [];
-    const requirementData: any[] = [];
-    const requirementByIdData: any[] = [];
-    const labelsData: any[] = [];
+    const achievementData: Array<
+      [
+        string,
+        string,
+        string,
+        string,
+        string,
+        number,
+        number,
+        number,
+        number,
+        number,
+        null,
+      ]
+    > = [];
+    const criteriaData: Array<[number, string, string, string]> = [];
+    const requirementData: Array<[string, string]> = [];
+    const requirementByIdData: Array<[number, string]> = [];
+    const labelsData: Array<[string, string]> = [];
     const tierTitles: string[] = [];
 
     // Prepare achievement data
@@ -334,14 +355,14 @@ class Achievement {
       const currentTitle = title.replace("%d", (tier - minTier + 1).toString());
 
       // Calculate criteria values and update description
-      const criteriaMap: { [key: string]: any } = {};
+      const criteriaMap: { [key: string]: number } = {};
       let currentDescription = description;
       for (let i = 0; i < criterias.length; i++) {
         const value = criteriasFunctions[i](tier);
         criteriaMap[criterias[i]] = value * multiplier;
         currentDescription = currentDescription.replace(
           criterias[i],
-          String(value)
+          String(value),
         );
       }
 
@@ -468,7 +489,7 @@ class Achievement {
       category: row.category,
       group: row.group,
       labels: row.labels,
-      criteria: row.criteria.reduce((acc: any, c: any) => {
+      criteria: row.criteria.reduce((acc: Record<string, unknown>, c) => {
         acc[c.progression_name] = parseValue(c.required_value, c.type);
         return acc;
       }, {}),
@@ -494,7 +515,7 @@ class Achievement {
    * @param {boolean} achieved - The achieved status of the achievement
    * @returns {Promise<void>}
    */
-  async updateAchieved(achieved: boolean = true): Promise<void> {
+  async updateAchieved(achieved = true): Promise<void> {
     this.achieved = achieved;
     this.achievedAt = achieved ? new Date() : undefined;
     const query = `UPDATE achievements SET achieved = ?, achievedAt = ? WHERE id = ?`;
@@ -526,7 +547,7 @@ class Achievement {
    */
   static async updateAchievedFromId(
     id: number,
-    achieved: boolean = true
+    achieved = true,
   ): Promise<void> {
     const query = `UPDATE achievements SET achieved = ?, achievedAt = ? WHERE id = ?`;
 
@@ -554,7 +575,7 @@ class Achievement {
    * @returns {Promise<{ count: number | null; achievements: AchievementRow[] }>} - The list of achievements
    */
   static async getAchievementsRawFormat(
-    filters: AchievementSelectRequestFilters
+    filters: AchievementSelectRequestFilters,
   ): Promise<{
     count: number | null;
     achievements: AchievementRow[];
@@ -562,7 +583,7 @@ class Achievement {
     const db = await db_model.getDB();
 
     // Base query for achievements
-    let baseQuery = `
+    const baseQuery = `
       FROM achievements a
       LEFT JOIN achievement_requirements ar ON a.id = ar.achievement_id
       LEFT JOIN achievements r ON ar.requirement_id = r.id
@@ -572,7 +593,7 @@ class Achievement {
     `;
 
     const conditions: string[] = [];
-    const values: any[] = [];
+    const values: SqlValue[] = [];
 
     // Apply filters
     if (filters.category) {
@@ -587,7 +608,7 @@ class Achievement {
       // Match achievements with all provided labels
       const labelConditions = filters.labels.map(
         () =>
-          "EXISTS (SELECT 1 FROM achievement_labels al WHERE al.achievement_id = a.id AND al.label = ?)"
+          "EXISTS (SELECT 1 FROM achievement_labels al WHERE al.achievement_id = a.id AND al.label = ?)",
       );
       conditions.push(`(${labelConditions.join(" AND ")})`);
       values.push(...filters.labels);
@@ -643,10 +664,8 @@ class Achievement {
         ${baseQuery}
         ${whereClause}
       `;
-      const countRow = db_model.get(db, countQuery, values) as {
-        total: number;
-      };
-      count = countRow.total;
+      const countRow = db_model.get<{ total: number }>(db, countQuery, values);
+      count = countRow?.total ?? 0;
     }
 
     // Query to get the achievements
@@ -686,11 +705,11 @@ class Achievement {
       values.push(filters.offset);
     }
 
-    const rows = db_model.getAll(
+    const rows = db_model.getAll<RawAchievementRow>(
       db,
       achievementsQuery,
-      values
-    ) as RawAchievementRow[];
+      values,
+    );
 
     // Parse JSON fields
     const achievements = rows.map((row) => ({
@@ -714,14 +733,13 @@ class Achievement {
    * @returns {Promise<{ count: number | null; achievements: Achievement[] }>} - The list of achievements
    */
   static async getAchievements(
-    filters: AchievementSelectRequestFilters
+    filters: AchievementSelectRequestFilters,
   ): Promise<{
     count: number | null;
     achievements: Achievement[];
   }> {
-    const { count, achievements } = await Achievement.getAchievementsRawFormat(
-      filters
-    );
+    const { count, achievements } =
+      await Achievement.getAchievementsRawFormat(filters);
     return {
       count,
       achievements: achievements.map(Achievement.fromRow),
@@ -768,8 +786,11 @@ class Achievement {
    */
   static async getGroups(): Promise<string[]> {
     const db = await db_model.getDB();
-    const rows = db_model.getAll(db, 'SELECT DISTINCT "group" FROM achievements');
-    return rows.map((row) => (row as any).group);
+    const rows = db_model.getAll(
+      db,
+      'SELECT DISTINCT "group" FROM achievements',
+    );
+    return rows.map((row) => (row as { group: string }).group);
   }
 
   /**
@@ -785,9 +806,9 @@ class Achievement {
     const db = await db_model.getDB();
     const rows = db_model.getAll(
       db,
-      "SELECT DISTINCT category FROM achievements"
+      "SELECT DISTINCT category FROM achievements",
     );
-    return rows.map((row) => (row as any).category);
+    return rows.map((row) => (row as { category: string }).category);
   }
 
   /**
@@ -803,9 +824,9 @@ class Achievement {
     const db = await db_model.getDB();
     const rows = db_model.getAll(
       db,
-      "SELECT DISTINCT label FROM achievement_labels"
+      "SELECT DISTINCT label FROM achievement_labels",
     );
-    return rows.map((row) => (row as any).label);
+    return rows.map((row) => (row as { label: string }).label);
   }
 }
 

@@ -6,6 +6,7 @@
  */
 
 import { db_model } from "../model";
+import { SqlValue } from "sql.js";
 
 // ==================== TYPES ====================
 
@@ -75,7 +76,7 @@ class Progression {
    * @param {any} row - The database row to create an instance from.
    * @returns {Progression} - An instance of Progression.
    */
-  static fromRow(row: any): Progression {
+  static fromRow(row: ProgressionRow): Progression {
     let value = row.value as string | number | Date | boolean;
     switch (row.type) {
       case "string":
@@ -115,7 +116,7 @@ class Progression {
   static async fromDB(): Promise<Progression[]> {
     const db = await db_model.getDB();
     const query = "SELECT * FROM progressions";
-    const rows = db_model.getAll(db, query);
+    const rows = db_model.getAll<ProgressionRow>(db, query);
     return rows.map((row) => Progression.fromRow(row));
   }
 
@@ -146,7 +147,10 @@ class Progression {
     await db_model.saveDB();
 
     // Change the id of the instance to the id of the row if it was inserted
-    const idRow = db_model.get(db, "SELECT last_insert_rowid() as id");
+    const idRow = db_model.get<{ id: number }>(
+      db,
+      "SELECT last_insert_rowid() as id",
+    );
     if (idRow?.id) {
       this.id = Number(idRow.id);
     }
@@ -201,7 +205,7 @@ class Progression {
    * @returns {Promise<{ id: number; title: string; achievedAt: string }[]>} - An array of newly achieved achievements.
    */
   static async achieveCompletedAchievements(
-    progressionIds: number[]
+    progressionIds: number[],
   ): Promise<{ id: number; title: string; achievedAt: string; exp: number }[]> {
     if (progressionIds.length === 0) {
       return []; // No progressions to process
@@ -246,7 +250,7 @@ class Progression {
     const rows = db_model.getAll(
       db,
       updateAchievementsQuery,
-      progressionIds
+      progressionIds,
     ) as {
       id: number;
       title: string;
@@ -268,7 +272,7 @@ class Progression {
    */
   static async addValue(
     filters: ProgressionSelectRequestFilters,
-    value: number | string = 1
+    value: number | string = 1,
   ): Promise<{ id: number }[]> {
     const ADD_VALUE_QUERY = `
       UPDATE progressions
@@ -292,7 +296,7 @@ class Progression {
     const rows = db_model.getAll(
       db,
       ADD_VALUE_QUERY.replace("SELECTOR_PLACEHOLDER", selectorColumn),
-      [value, value, value, value, value, value, selectorValue]
+      [value, value, value, value, value, value, selectorValue],
     ) as {
       id: number;
     }[];
@@ -314,7 +318,7 @@ class Progression {
   static async updateValue(
     filters: ProgressionSelectRequestFilters,
     value: string,
-    maximize: boolean = false
+    maximize = false,
   ): Promise<{ id: number }[]> {
     const UPDATE_VALUE_QUERY = maximize
       ? `
@@ -329,17 +333,17 @@ class Progression {
       WHERE SELECTOR_PLACEHOLDER
       RETURNING id;
       `;
-    let [selectorColumn, selectorValue] = parseUpdateFilters(filters);
-    let query = UPDATE_VALUE_QUERY.replace(
+    const [selectorColumn, selectorValue] = parseUpdateFilters(filters);
+    const query = UPDATE_VALUE_QUERY.replace(
       "SELECTOR_PLACEHOLDER",
-      selectorColumn
+      selectorColumn,
     );
 
     const db = await db_model.getDB();
     const rows = db_model.getAll(
       db,
       query,
-      maximize ? [value, selectorValue, value] : [value, selectorValue]
+      maximize ? [value, selectorValue, value] : [value, selectorValue],
     ) as { id: number }[];
     await db_model.saveDB();
     return rows;
@@ -358,12 +362,12 @@ class Progression {
    * @returns {Promise<ProgressionRow[]>} - An array of progressions in raw format.
    */
   static async getProgressionsRawFormat(
-    filters: ProgressionSelectRequestFilters
+    filters: ProgressionSelectRequestFilters,
   ): Promise<ProgressionRow[]> {
     const db = await db_model.getDB();
     let query = "SELECT * FROM progressions";
-    let where = [];
-    let values = [];
+    const where: string[] = [];
+    const values: SqlValue[] = [];
 
     if (filters.name) {
       where.push("name = ?");
@@ -389,7 +393,7 @@ class Progression {
       values.push(filters.offset);
     }
 
-    return db_model.getAll(db, query, values) as ProgressionRow[];
+    return db_model.getAll<ProgressionRow>(db, query, values);
   }
 
   /**
@@ -403,7 +407,7 @@ class Progression {
    * @returns {Promise<Progression[]>} - An array of progressions.
    */
   static async getProgressions(
-    filters: ProgressionSelectRequestFilters
+    filters: ProgressionSelectRequestFilters,
   ): Promise<Progression[]> {
     const rows = await Progression.getProgressionsRawFormat(filters);
     return rows.map((row) => Progression.fromRow(row));
@@ -411,7 +415,7 @@ class Progression {
 }
 
 function parseUpdateFilters(
-  filters: ProgressionSelectRequestFilters
+  filters: ProgressionSelectRequestFilters,
 ): [string, string] {
   let selectorValue: string;
   let selectorColumn: string;

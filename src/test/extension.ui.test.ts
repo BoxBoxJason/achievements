@@ -23,7 +23,7 @@ suite("Extension UI Test Suite", () => {
     let called = false;
     (vscode.window as any).showWarningMessage = (
       msg: string,
-      ...items: any[]
+      ..._items: any[]
     ) => {
       called = true;
       assert.ok(msg.includes("read-only"), "Message should mention read-only");
@@ -42,7 +42,7 @@ suite("Extension UI Test Suite", () => {
       (s: any) =>
         s &&
         typeof s.text === "string" &&
-        s.text.includes("Achievements (read-only)")
+        s.text.includes("Achievements (read-only)"),
     );
     assert.ok(found, "A status bar item should be present in subscriptions");
   });

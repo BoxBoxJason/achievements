@@ -32,7 +32,7 @@ interface Migration {
  */
 export async function applyMigration(
   db: Database,
-  wantedVersion: number = -1
+  wantedVersion = -1
 ): Promise<void> {
   const migrations: { [key: number]: Migration } = {
     1: {

@@ -188,7 +188,7 @@ export namespace AchievementController {
 
     // Trim the criterias and check if they are empty
     if (filters.criterias !== undefined) {
-      let trimmedCriterias: string[] = [];
+      const trimmedCriterias: string[] = [];
       for (let criteria of filters.criterias) {
         criteria = criteria.trim();
         if (criteria !== "") {
@@ -204,7 +204,7 @@ export namespace AchievementController {
 
     // Trim the labels and check if they are empty
     if (filters.labels !== undefined) {
-      let trimmedLabels: string[] = [];
+      const trimmedLabels: string[] = [];
       for (let label of filters.labels) {
         label = label.trim();
         if (label !== "") {

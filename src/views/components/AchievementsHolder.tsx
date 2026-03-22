@@ -5,7 +5,7 @@ import { PostMessage } from '../icons';
 import { webview } from '../viewconst';
 
 interface AchievementHolderProps {
-  filters: Record<string, any>;
+  filters: Record<string, unknown>;
   limit: number;
 }
 
@@ -22,7 +22,7 @@ const AchievementHolder: React.FC<AchievementHolderProps> = ({ filters, limit })
   }, []);
 
   useEffect(() => {
-    (window as any).vscode.postMessage(
+    window.vscode.postMessage(
       JSON.stringify({
         command: webview.commands.RETRIEVE_ACHIEVEMENTS,
         data: { count: true, offset, limit, ...filters },
@@ -35,8 +35,9 @@ const AchievementHolder: React.FC<AchievementHolderProps> = ({ filters, limit })
       const data: PostMessage = event.data;
 
       if (data.command === webview.commands.DISPLAY_ACHIEVEMENTS) {
-        setAchievements(data.data.achievements);
-        setMaxCount(data.data.count);
+        const payload = data.data as { achievements: Achievement[]; count: number };
+        setAchievements(payload.achievements);
+        setMaxCount(payload.count);
       }
     } catch (e) {
       console.error('Invalid message data:', e);

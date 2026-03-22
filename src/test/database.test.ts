@@ -51,12 +51,20 @@ suite("Database Model Test Suite", () => {
     db.run("INSERT INTO test (name) VALUES (?)", ["test1"]);
     db.run("INSERT INTO test (name) VALUES (?)", ["test2"]);
 
-    const all = db_model.getAll(db, "SELECT * FROM test");
+    const all = db_model.getAll<{ id: number; name: string }>(
+      db,
+      "SELECT * FROM test",
+    );
     assert.strictEqual(all.length, 2);
     assert.strictEqual(all[0].name, "test1");
     assert.strictEqual(all[1].name, "test2");
 
-    const one = db_model.get(db, "SELECT * FROM test WHERE id = ?", [1]);
+    const one = db_model.get<{ id: number; name: string }>(
+      db,
+      "SELECT * FROM test WHERE id = ?",
+      [1],
+    );
+    assert.ok(one, "Expected one row from test query");
     assert.strictEqual(one.name, "test1");
   });
 
@@ -73,7 +81,7 @@ suite("Database Model Test Suite", () => {
     assert.strictEqual(
       isLocked,
       false,
-      "Lock should be released after deactivate"
+      "Lock should be released after deactivate",
     );
   });
 });

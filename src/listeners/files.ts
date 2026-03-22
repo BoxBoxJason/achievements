@@ -278,7 +278,7 @@ export namespace fileListeners {
     return 0;
   }
 
-  let fileErrorCounts = new Map<string, number>();
+  const fileErrorCounts = new Map<string, number>();
   let errorCounterFree = true;
 
   export async function handleDiagnosticChangedEvent(

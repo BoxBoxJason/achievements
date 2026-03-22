@@ -19,14 +19,14 @@ export namespace TimeSpentController {
     const currentDateString = currentDate.toISOString().split("T")[0];
 
     const fourteenDaysAgo = new Date(
-      currentDate.getTime() - 14 * 24 * 60 * 60 * 1000
+      currentDate.getTime() - 14 * 24 * 60 * 60 * 1000,
     );
     const fourteenDaysAgoString = fourteenDaysAgo.toISOString().split("T")[0];
 
     const firstDayOfMonth = new Date(
       currentDate.getFullYear(),
       currentDate.getMonth(),
-      1
+      1,
     );
     const firstDayOfMonthString = firstDayOfMonth.toISOString().split("T")[0];
 
@@ -39,7 +39,7 @@ export namespace TimeSpentController {
       currentDateString,
       fourteenDaysAgoString,
       firstDayOfMonthString,
-      firstDayOfYearString
+      firstDayOfYearString,
     );
 
     await ProgressionController.updateProgressions([
@@ -85,9 +85,7 @@ export namespace TimeSpentController {
       constants.criteria.TOTAL_TIME_SPENT,
     ] as string[];
     return Object.fromEntries(
-      Object.entries(progressions).filter(([key, value]) =>
-        toLookFor.includes(key)
-      )
+      Object.entries(progressions).filter(([key]) => toLookFor.includes(key)),
     );
   }
 
@@ -121,9 +119,8 @@ export namespace TimeSpentController {
     yesterdayDate.setDate(yesterdayDate.getDate() - 1);
     const yesterdayDateString = yesterdayDate.toISOString().split("T")[0];
 
-    const yesterdaySession = await DailySession.getOrCreate(
-      yesterdayDateString
-    );
+    const yesterdaySession =
+      await DailySession.getOrCreate(yesterdayDateString);
 
     let newStreak = 1;
 
@@ -142,20 +139,20 @@ export namespace TimeSpentController {
     // Update current streak
     await ProgressionController.updateProgression(
       constants.criteria.CURRENT_CONNECTION_STREAK,
-      newStreak
+      newStreak,
     );
 
     // Update max streak
     await ProgressionController.updateProgression(
       constants.criteria.MAX_CONNECTION_STREAK,
       newStreak,
-      true
+      true,
     );
 
     // Update last streak date
     await ProgressionController.updateProgression(
       constants.criteria.LAST_STREAK_DATE,
-      currentDateString
+      currentDateString,
     );
   }
 }

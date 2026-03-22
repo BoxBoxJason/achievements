@@ -4,16 +4,16 @@ import { webview } from "./viewconst";
 
 export interface PostMessage {
   command: string;
-  data: any;
+  data: unknown;
 }
 
 export function getWebviewImageUri(
   context: vscode.ExtensionContext,
   webview: vscode.Webview,
-  relativePath: string
+  relativePath: string,
 ): vscode.Uri {
   const imagePath = vscode.Uri.file(
-    path.join(context.extensionPath, relativePath)
+    path.join(context.extensionPath, relativePath),
   );
 
   return webview.asWebviewUri(imagePath);
@@ -21,12 +21,12 @@ export function getWebviewImageUri(
 
 export function getPackagedImages(
   context: vscode.ExtensionContext,
-  view: vscode.Webview
+  view: vscode.Webview,
 ): { [key: string]: string } {
   const images: { [key: string]: string } = {};
 
   // Merge all flat icons maps
-  let iconsMap = {
+  const iconsMap = {
     ...webview.icons.pusheen,
     ...webview.icons.achievements.git,
     ...webview.icons.achievements.terminal,
@@ -43,7 +43,7 @@ export function getPackagedImages(
     images[key] = getWebviewImageUri(
       context,
       view,
-      path.join("assets", ...iconsMap[key])
+      path.join("assets", ...iconsMap[key]),
     ).toString();
   }
 
