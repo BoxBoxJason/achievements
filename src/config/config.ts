@@ -10,6 +10,7 @@ import fs from "fs";
 import logger from "../utils/logger";
 import * as vscode from "vscode";
 import { webview } from "../views/viewconst";
+import { constants } from "../constants";
 
 // ==================== TYPES ====================
 // Config interface, defines the structure of the config object, always json serializable
@@ -19,6 +20,10 @@ export interface Config {
   notifications: boolean;
   logDirectory: string;
   username: string;
+  ignore: {
+    files: string[];
+    directories: string[];
+  };
   listeners: {
     debug: boolean;
     extensions: boolean;
@@ -82,7 +87,7 @@ export namespace config {
     vscode.window
       .showInformationMessage(
         "For a better experience, please set your username",
-        "Set Username"
+        "Set Username",
       )
       .then((selection) => {
         if (selection === "Set Username") {
@@ -125,11 +130,25 @@ export namespace config {
       username: extensionRawConfig
         .get<string>("username", webview.DEFAULT_USER)
         .trim(),
+      ignore: {
+        files: extensionRawConfig
+          .get<string[]>("ignore.files", [...constants.ignore.DEFAULT_FILES])
+          .filter((name) => typeof name === "string")
+          .map((name) => name.trim())
+          .filter((name) => name.length > 0),
+        directories: extensionRawConfig
+          .get<string[]>("ignore.directories", [
+            ...constants.ignore.DEFAULT_DIRECTORIES,
+          ])
+          .filter((name) => typeof name === "string")
+          .map((name) => name.trim())
+          .filter((name) => name.length > 0),
+      },
       listeners: {
         debug: extensionRawConfig.get<boolean>("listeners.debug", true),
         extensions: extensionRawConfig.get<boolean>(
           "listeners.extensions",
-          true
+          true,
         ),
         files: extensionRawConfig.get<boolean>("listeners.files", true),
         git: extensionRawConfig.get<boolean>("listeners.git", true),
@@ -142,7 +161,7 @@ export namespace config {
     // Check if the log directory is a valid path, if not, set it to the default
     if (!path.isAbsolute(extensionConfig.logDirectory)) {
       logger.warn(
-        `Invalid log directory path: ${extensionConfig.logDirectory}, setting to default`
+        `Invalid log directory path: ${extensionConfig.logDirectory}, setting to default`,
       );
       updateConfig("logDirectory", defaultLogDir);
       extensionConfig.logDirectory = defaultLogDir;
@@ -151,7 +170,7 @@ export namespace config {
       fs.mkdirSync(extensionConfig.logDirectory, { recursive: true });
     } catch (error) {
       logger.error(
-        `Error creating log directory: ${error}, setting to default`
+        `Error creating log directory: ${error}, setting to default`,
       );
       updateConfig("logDirectory", defaultLogDir);
       extensionConfig.logDirectory = defaultLogDir;
@@ -232,7 +251,7 @@ export namespace config {
   }
 
   export function isListenerEnabled(
-    listener: keyof Config["listeners"]
+    listener: keyof Config["listeners"],
   ): boolean {
     const listeners = getConfig().listeners;
 

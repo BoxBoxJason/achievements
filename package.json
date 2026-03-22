@@ -110,6 +110,35 @@
             "type": "boolean",
             "default": true,
             "description": "Enable or disable time events listeners for the Achievements extension."
+          },
+          "achievements.ignore.files": {
+            "type": "array",
+            "default": [
+              "package-lock.json",
+              "yarn.lock",
+              "pnpm-lock.yaml",
+              "bun.lockb",
+              ".ds_store",
+              "thumbs.db"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "File names ignored by file-related achievements (case-insensitive)."
+          },
+          "achievements.ignore.directories": {
+            "type": "array",
+            "default": [
+              ".git",
+              ".svn",
+              ".hg",
+              ".jj",
+              "node_modules"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Directory names ignored by file-related achievements (case-sensitive)."
           }
         }
       }

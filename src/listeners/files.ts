@@ -12,6 +12,57 @@ import path from "node:path";
 import logger from "../utils/logger";
 import { config } from "../config/config";
 
+let ignoredDirectoryNames = new Set<string>();
+let ignoredFileNames = new Set<string>();
+
+function refreshIgnoredMatchers(): void {
+  const extensionRawConfig = vscode.workspace.getConfiguration("achievements");
+
+  ignoredDirectoryNames = new Set(
+    extensionRawConfig
+      .get<string[]>("ignore.directories", [
+        ...constants.ignore.DEFAULT_DIRECTORIES,
+      ])
+      .filter((name) => typeof name === "string")
+      .map((name) => name.trim())
+      .filter((name) => name.length > 0),
+  );
+
+  ignoredFileNames = new Set(
+    extensionRawConfig
+      .get<string[]>("ignore.files", [...constants.ignore.DEFAULT_FILES])
+      .filter((name) => typeof name === "string")
+      .map((name) => name.trim().toLowerCase())
+      .filter((name) => name.length > 0),
+  );
+}
+
+/**
+ * Check if a given URI should be ignored for progression counting based on its path and file name.
+ *
+ * @param {vscode.Uri} uri - The URI to check
+ * @returns {boolean} True if the URI should be ignored, false otherwise
+ */
+function shouldIgnoreUri(uri: vscode.Uri): boolean {
+  if (uri.scheme !== "file") {
+    return true;
+  }
+
+  if (ignoredDirectoryNames.size === 0 && ignoredFileNames.size === 0) {
+    refreshIgnoredMatchers();
+  }
+
+  const normalizedPath = path.normalize(uri.fsPath);
+  const segments = normalizedPath.split(path.sep);
+
+  if (segments.some((segment) => ignoredDirectoryNames.has(segment))) {
+    return true;
+  }
+
+  const fileName = path.basename(normalizedPath).toLowerCase();
+  return ignoredFileNames.has(fileName);
+}
+
 /**
  * File related events listeners functions and handlers
  *
@@ -31,41 +82,56 @@ export namespace fileListeners {
     if (config.isListenerEnabled(constants.listeners.FILES)) {
       logger.info("Starting file events listeners");
 
+      refreshIgnoredMatchers();
+
       // Watcher for resources
       const resourcesWatcher = vscode.workspace.createFileSystemWatcher(
         "**/*",
         false,
         false,
-        false
+        false,
       );
 
       resourcesWatcher.onDidCreate(
         handleCreateEvent,
         null,
-        context.subscriptions
+        context.subscriptions,
       );
       resourcesWatcher.onDidDelete(
         handleDeleteEvent,
         null,
-        context.subscriptions
+        context.subscriptions,
       );
       vscode.workspace.onDidRenameFiles(
         handleRenameEvent,
         null,
-        context.subscriptions
+        context.subscriptions,
       );
 
       // Text document changes
       vscode.workspace.onDidChangeTextDocument(
         handleTextChangedEvent,
         null,
-        context.subscriptions
+        context.subscriptions,
       );
       // Diagnostics changes
       vscode.languages.onDidChangeDiagnostics(
         handleDiagnosticChangedEvent,
         null,
-        context.subscriptions
+        context.subscriptions,
+      );
+
+      vscode.workspace.onDidChangeConfiguration(
+        (event) => {
+          if (
+            event.affectsConfiguration("achievements.ignore.files") ||
+            event.affectsConfiguration("achievements.ignore.directories")
+          ) {
+            refreshIgnoredMatchers();
+          }
+        },
+        null,
+        context.subscriptions,
       );
 
       logger.debug("File listeners activated");
@@ -83,11 +149,15 @@ export namespace fileListeners {
    * @returns {Promise<void>}
    */
   export async function handleCreateEvent(uri: vscode.Uri): Promise<void> {
+    if (shouldIgnoreUri(uri)) {
+      return;
+    }
+
     const stats = await vscode.workspace.fs.stat(uri);
     if (stats.type === vscode.FileType.File) {
       // Increase file created count
       await ProgressionController.increaseProgression(
-        constants.criteria.FILES_CREATED
+        constants.criteria.FILES_CREATED,
       );
 
       // Retrieve file extension
@@ -102,7 +172,7 @@ export namespace fileListeners {
     } else if (stats.type === vscode.FileType.Directory) {
       // Increase directory created count
       await ProgressionController.increaseProgression(
-        constants.criteria.DIRECTORY_CREATED
+        constants.criteria.DIRECTORY_CREATED,
       );
     }
   }
@@ -116,8 +186,12 @@ export namespace fileListeners {
    * @returns {Promise<void>}
    */
   export async function handleDeleteEvent(uri: vscode.Uri): Promise<void> {
+    if (shouldIgnoreUri(uri)) {
+      return;
+    }
+
     await ProgressionController.increaseProgression(
-      constants.criteria.RESOURCE_DELETED
+      constants.criteria.RESOURCE_DELETED,
     );
   }
 
@@ -130,11 +204,20 @@ export namespace fileListeners {
    * @returns {Promise<void>}
    */
   export async function handleRenameEvent(
-    event: vscode.FileRenameEvent
+    event: vscode.FileRenameEvent,
   ): Promise<void> {
+    const relevantFileCount = event.files.filter(
+      ({ oldUri, newUri }) =>
+        !shouldIgnoreUri(oldUri) && !shouldIgnoreUri(newUri),
+    ).length;
+
+    if (relevantFileCount === 0) {
+      return;
+    }
+
     await ProgressionController.increaseProgression(
       constants.criteria.FILES_RENAMED,
-      event.files.length
+      relevantFileCount,
     );
   }
 
@@ -147,8 +230,12 @@ export namespace fileListeners {
    * @returns {Promise<void>}
    */
   export async function handleTextChangedEvent(
-    event: vscode.TextDocumentChangeEvent
+    event: vscode.TextDocumentChangeEvent,
   ): Promise<void> {
+    if (shouldIgnoreUri(event.document.uri)) {
+      return;
+    }
+
     const language =
       constants.labels.LANGUAGES_EXTENSIONS[
         path.extname(event.document.fileName)
@@ -163,19 +250,19 @@ export namespace fileListeners {
         // Increment progression for the added lines
         await ProgressionController.increaseProgression(
           constants.criteria.LINES_OF_CODE_LANGUAGE.replace("%s", language),
-          totalLinesAdded
+          totalLinesAdded,
         );
         // Increment generic lines of code progression
         await ProgressionController.increaseProgression(
           constants.criteria.LINES_OF_CODE,
-          totalLinesAdded
+          totalLinesAdded,
         );
       }
     }
   }
 
   function countLinesAdded(
-    change: vscode.TextDocumentContentChangeEvent
+    change: vscode.TextDocumentContentChangeEvent,
   ): number {
     // Check if the change involves adding new lines
     if (change.text.includes("\n")) {
@@ -195,16 +282,20 @@ export namespace fileListeners {
   let errorCounterFree = true;
 
   export async function handleDiagnosticChangedEvent(
-    event: vscode.DiagnosticChangeEvent
+    event: vscode.DiagnosticChangeEvent,
   ): Promise<void> {
     if (errorCounterFree) {
       errorCounterFree = false;
       for (const uri of event.uris) {
+        if (shouldIgnoreUri(uri)) {
+          continue;
+        }
+
         const errorCount = vscode.languages
           .getDiagnostics(uri)
           .filter(
             (diagnostic) =>
-              diagnostic.severity === vscode.DiagnosticSeverity.Error
+              diagnostic.severity === vscode.DiagnosticSeverity.Error,
           ).length;
         const filePath = uri.fsPath;
         const previousErrorCount = fileErrorCounts.get(filePath);
@@ -212,7 +303,7 @@ export namespace fileListeners {
           if (errorCount < previousErrorCount) {
             await ProgressionController.increaseProgression(
               constants.criteria.ERRORS_FIXED,
-              previousErrorCount - errorCount
+              previousErrorCount - errorCount,
             );
           }
         }
