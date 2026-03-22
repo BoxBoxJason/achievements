@@ -40,7 +40,7 @@ suite("File Listeners Test Suite", () => {
       // So criteria: FILES_CREATED_TypeScript
       const langCriteria = constants.criteria.FILES_CREATED_LANGUAGE.replace(
         "%s",
-        "TypeScript"
+        "TypeScript",
       );
       if (constants.labels.LANGUAGES_EXTENSIONS[".ts"] === "TypeScript") {
         assert.ok(increasedCriteria.includes(langCriteria));
@@ -69,7 +69,7 @@ suite("File Listeners Test Suite", () => {
       await fileListeners.handleCreateEvent(uri);
       assert.strictEqual(
         increasedCriteria,
-        constants.criteria.DIRECTORY_CREATED
+        constants.criteria.DIRECTORY_CREATED,
       );
     } finally {
       ProgressionController.increaseProgression = originalIncrease;
@@ -93,8 +93,116 @@ suite("File Listeners Test Suite", () => {
       await fileListeners.handleDeleteEvent(uri);
       assert.strictEqual(
         increasedCriteria,
-        constants.criteria.RESOURCE_DELETED
+        constants.criteria.RESOURCE_DELETED,
       );
+    } finally {
+      ProgressionController.increaseProgression = originalIncrease;
+    }
+  });
+
+  test("handleCreateEvent should ignore files under .git and node_modules", async () => {
+    const ignoredGitUri = vscode.Uri.file(
+      path.join(tempDir, ".git", "objects", "tmp"),
+    );
+    const ignoredNodeModulesUri = vscode.Uri.file(
+      path.join(tempDir, "node_modules", "pkg", "index.js"),
+    );
+
+    let callCount = 0;
+    const originalIncrease = ProgressionController.increaseProgression;
+    ProgressionController.increaseProgression = async () => {
+      callCount++;
+    };
+
+    try {
+      await fileListeners.handleCreateEvent(ignoredGitUri);
+      await fileListeners.handleCreateEvent(ignoredNodeModulesUri);
+      assert.strictEqual(callCount, 0);
+    } finally {
+      ProgressionController.increaseProgression = originalIncrease;
+    }
+  });
+
+  test("handleDeleteEvent should ignore lock files", async () => {
+    const ignoredUri = vscode.Uri.file(path.join(tempDir, "package-lock.json"));
+
+    let callCount = 0;
+    const originalIncrease = ProgressionController.increaseProgression;
+    ProgressionController.increaseProgression = async () => {
+      callCount++;
+    };
+
+    try {
+      await fileListeners.handleDeleteEvent(ignoredUri);
+      assert.strictEqual(callCount, 0);
+    } finally {
+      ProgressionController.increaseProgression = originalIncrease;
+    }
+  });
+
+  test("handleRenameEvent should only count non-ignored paths", async () => {
+    const event: vscode.FileRenameEvent = {
+      files: [
+        {
+          oldUri: vscode.Uri.file(path.join(tempDir, "src", "a.ts")),
+          newUri: vscode.Uri.file(path.join(tempDir, "src", "b.ts")),
+        },
+        {
+          oldUri: vscode.Uri.file(path.join(tempDir, ".git", "tmpA")),
+          newUri: vscode.Uri.file(path.join(tempDir, ".git", "tmpB")),
+        },
+      ],
+    };
+
+    let calls: Array<{ criteria: string; amount: number | string }> = [];
+    const originalIncrease = ProgressionController.increaseProgression;
+    ProgressionController.increaseProgression = async (
+      criteria: string,
+      amount: number | string = 1,
+    ) => {
+      calls.push({ criteria, amount });
+    };
+
+    try {
+      await fileListeners.handleRenameEvent(event);
+      assert.strictEqual(calls.length, 1);
+      assert.strictEqual(calls[0]?.criteria, constants.criteria.FILES_RENAMED);
+      assert.strictEqual(Number(calls[0]?.amount), 1);
+    } finally {
+      ProgressionController.increaseProgression = originalIncrease;
+    }
+  });
+
+  test("handleTextChangedEvent should ignore files in generated folders", async () => {
+    const testFile = path.join(tempDir, "node_modules", "bundle.ts");
+    const uri = vscode.Uri.file(testFile);
+    const document = {
+      fileName: testFile,
+      uri: uri,
+    } as vscode.TextDocument;
+
+    const event = {
+      document: document,
+      reason: undefined,
+      contentChanges: [
+        {
+          range: new vscode.Range(0, 0, 0, 0),
+          rangeOffset: 0,
+          rangeLength: 0,
+          text: "new line\n",
+        },
+      ],
+    } as vscode.TextDocumentChangeEvent;
+
+    let callCount = 0;
+    const originalIncrease = ProgressionController.increaseProgression;
+    ProgressionController.increaseProgression = async () => {
+      callCount++;
+    };
+
+    try {
+      await fileListeners.handleTextChangedEvent(event);
+      assert.strictEqual(callCount, 0);
     } finally {
       ProgressionController.increaseProgression = originalIncrease;
     }
@@ -132,7 +240,7 @@ suite("File Listeners Test Suite", () => {
     const originalIncrease = ProgressionController.increaseProgression;
     ProgressionController.increaseProgression = async (
       criteria: string,
-      amount: number | string = 1
+      amount: number | string = 1,
     ) => {
       if (criteria === constants.criteria.LINES_OF_CODE) {
         callCount++;
@@ -145,7 +253,7 @@ suite("File Listeners Test Suite", () => {
       assert.strictEqual(
         callCount,
         1,
-        "Should call increaseProgression once for generic lines"
+        "Should call increaseProgression once for generic lines",
       );
       assert.strictEqual(totalLines, 3, "Should sum up all lines (1 + 2)");
     } finally {
