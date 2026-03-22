@@ -22,6 +22,8 @@ const DATABASE_FILENAME = "achievements.sqlite";
 // Database connection object
 let DB: Database | null = null;
 let SQL: SqlJsStatic | null = null;
+// Flag to prevent database saves during initialization
+let isInitializing = false;
 
 // ================== MODULE FUNCTIONS ==================
 
@@ -49,6 +51,16 @@ export namespace db_model {
   }
 
   /**
+   * Check if the database is ready for operations.
+   * Returns false while initialization is in progress.
+   *
+   * @returns {boolean} True if database is fully initialized and ready
+   */
+  export function isReady(): boolean {
+    return !isInitializing && DB !== null;
+  }
+
+  /**
    * Initialize the database.
    *
    * @param {vscode.ExtensionContext} context The extension context object
@@ -61,7 +73,7 @@ export namespace db_model {
         "node_modules",
         "sql.js",
         "dist",
-        "sql-wasm.wasm"
+        "sql-wasm.wasm",
       );
 
       SQL = await initSqlJs({
@@ -91,11 +103,17 @@ export namespace db_model {
 
   /**
    * Save the database to disk.
-   * Will not save if in readonly mode.
+   * Will not save if in readonly mode or during initialization.
    *
    * @returns {Promise<void>}
    */
   export async function saveDB(): Promise<void> {
+    // Prevent saves during database initialization to avoid partial/corrupted state
+    if (isInitializing) {
+      logger.debug("Skipping database save - database is still initializing");
+      return;
+    }
+
     if (db_lock.isReadOnly()) {
       logger.debug("Skipping database save - running in readonly mode");
       return;
@@ -126,23 +144,34 @@ export namespace db_model {
    */
   export async function activate(
     context: vscode.ExtensionContext,
-    dbPath?: string
+    dbPath?: string,
   ): Promise<boolean> {
-    let databaseDir = context.globalStorageUri.fsPath;
-    await fs.promises.mkdir(databaseDir, { recursive: true });
-    DATABASE_PATH = dbPath || path.join(databaseDir, DATABASE_FILENAME);
+    // Set flag to prevent saves during initialization
+    isInitializing = true;
+    let hasLock = false;
 
-    // Try to acquire the database lock
-    const hasLock = await db_lock.acquireLock(DATABASE_PATH);
+    try {
+      let databaseDir = context.globalStorageUri.fsPath;
+      await fs.promises.mkdir(databaseDir, { recursive: true });
+      DATABASE_PATH = dbPath || path.join(databaseDir, DATABASE_FILENAME);
 
-    await init(context);
+      // Try to acquire the database lock
+      hasLock = await db_lock.acquireLock(DATABASE_PATH);
 
-    if (DB) {
-      // Only apply migrations and init data if we have write access
-      if (hasLock) {
-        // @ts-ignore
-        await applyMigration(DB, -1);
-        await db_init.activate();
+      await init(context);
+
+      if (DB) {
+        // Only apply migrations and init data if we have write access
+        if (hasLock) {
+          // @ts-ignore
+          await applyMigration(DB, -1);
+          await db_init.activate();
+        }
+      }
+    } finally {
+      // Mark database as ready and perform final save if we have write access
+      isInitializing = false;
+      if (hasLock && DB && !db_lock.isReadOnly()) {
         await saveDB();
       }
     }
@@ -161,6 +190,9 @@ export namespace db_model {
    * @returns {Promise<void>}
    */
   export async function deactivate(): Promise<void> {
+    // Reset initialization flag on deactivation
+    isInitializing = false;
+
     if (DB) {
       try {
         DB.close();
@@ -173,6 +205,18 @@ export namespace db_model {
 
     // Release the database lock
     await db_lock.releaseLock();
+  }
+
+  /**
+   * Reset module state for testing purposes.
+   * This function should only be used in tests.
+   *
+   * @internal
+   */
+  export function _resetState(): void {
+    isInitializing = false;
+    DB = null;
+    SQL = null;
   }
 
   /**
