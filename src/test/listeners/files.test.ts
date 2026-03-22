@@ -26,7 +26,7 @@ suite("File Listeners Test Suite", () => {
     fs.writeFileSync(testFile, "content");
     const uri = vscode.Uri.file(testFile);
 
-    let increasedCriteria: string[] = [];
+    const increasedCriteria: string[] = [];
     const originalIncrease = ProgressionController.increaseProgression;
     ProgressionController.increaseProgression = async (criteria: string) => {
       increasedCriteria.push(criteria);
@@ -154,7 +154,7 @@ suite("File Listeners Test Suite", () => {
       ],
     };
 
-    let calls: Array<{ criteria: string; amount: number | string }> = [];
+    const calls: Array<{ criteria: string; amount: number | string }> = [];
     const originalIncrease = ProgressionController.increaseProgression;
     ProgressionController.increaseProgression = async (
       criteria: string,

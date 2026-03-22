@@ -5,8 +5,10 @@ import AchievementHolder from "./components/AchievementsHolder";
 import UserStats from "./components/UserStats";
 
 const App = () => {
-  const imageUris = (window as any).imageUris || {};
-  const [filters, setFilters] = useState({});
+  const imageUris =
+    (window as Window & { imageUris?: Record<string, string> }).imageUris ||
+    {};
+  const [filters, setFilters] = useState<Record<string, unknown>>({});
   const [limit, setLimit] = useState(50);
 
   return (

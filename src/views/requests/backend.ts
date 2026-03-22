@@ -13,11 +13,14 @@ import * as vscode from "vscode";
 export namespace backendRequests {
   export async function handleMessage(
     message: PostMessage,
-    panel: vscode.WebviewPanel
+    panel: vscode.WebviewPanel,
   ): Promise<void> {
     switch (message.command) {
       case webview.commands.RETRIEVE_ACHIEVEMENTS:
-        await handleAchievementsSelect(message.data, panel);
+        await handleAchievementsSelect(
+          (message.data ?? null) as AchievementSelectRequestFilters | null,
+          panel,
+        );
         break;
       case webview.commands.RETRIEVE_ACHIEVEMENTS_FILTERS:
         await handleAchievementsSelectFilters(panel);
@@ -35,7 +38,7 @@ export namespace backendRequests {
 
   export async function handleAchievementsSelect(
     filters: AchievementSelectRequestFilters | null,
-    panel: vscode.WebviewPanel
+    panel: vscode.WebviewPanel,
   ): Promise<void> {
     if (filters) {
       const achievements = await AchievementController.getAchievements(filters);
@@ -49,7 +52,7 @@ export namespace backendRequests {
   }
 
   export async function handleAchievementsSelectFilters(
-    panel: vscode.WebviewPanel
+    panel: vscode.WebviewPanel,
   ): Promise<void> {
     const filters = await AchievementController.getJsonFilters();
     panel.webview.postMessage({
@@ -58,7 +61,9 @@ export namespace backendRequests {
     });
   }
 
-  export async function handleProgressionsSelect(panel: vscode.WebviewPanel): Promise<void> {
+  export async function handleProgressionsSelect(
+    panel: vscode.WebviewPanel,
+  ): Promise<void> {
     const progressions = await ProgressionController.getProgressions();
     panel.webview.postMessage({
       command: webview.commands.SET_PROGRESSIONS,
@@ -66,16 +71,18 @@ export namespace backendRequests {
     });
   }
 
-  export async function handleProfileSelect(panel: vscode.WebviewPanel): Promise<void> {
-    const progressions = await ProgressionController.getProgressions() as {
-      [key: string]: any;
+  export async function handleProfileSelect(
+    panel: vscode.WebviewPanel,
+  ): Promise<void> {
+    const progressions = (await ProgressionController.getProgressions()) as {
+      [key: string]: number;
     };
     panel.webview.postMessage({
       command: webview.commands.SET_PROFILE,
       data: {
         username: config.getUsername(),
         timeSpent: TimeSpentController.getTimeSpent(progressions),
-        ...await Achievement.getAchievementStats(),
+        ...(await Achievement.getAchievementStats()),
         totalExp: progressions[constants.criteria.EXP],
       },
     });

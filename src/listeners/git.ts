@@ -28,45 +28,39 @@ export namespace gitListeners {
     if (config.isListenerEnabled(constants.listeners.GIT)) {
       logger.info("Starting git events listeners");
 
-      const gitExtension = vscode.extensions.getExtension("vscode.git")
-        ?.exports;
+      const gitExtension =
+        vscode.extensions.getExtension("vscode.git")?.exports;
       if (!gitExtension) {
         logger.error(
-          "Git extension not found, git listeners will not be created"
+          "Git extension not found, git listeners will not be created",
         );
         return;
       }
 
       const gitAPI = gitExtension.getAPI(1);
 
-            // Handle current workspace repositories commits
+      // Handle current workspace repositories commits
       for (const repository of gitAPI.repositories) {
-        repository.onDidCommit(
-          handleCommit,
-          null,
-          context.subscriptions
-        );
+        repository.onDidCommit(handleCommit, null, context.subscriptions);
       }
 
       // Handle new repositories commits
       gitAPI.onDidOpenRepository(
-        (repository: any) => {
-          repository.onDidCommit(
-            handleCommit,
-            null,
-            context.subscriptions
-          );
+        (repository: {
+          onDidCommit: (
+            handler: () => Promise<void>,
+            thisArg: null,
+            disposables: vscode.Disposable[],
+          ) => void;
+        }) => {
+          repository.onDidCommit(handleCommit, null, context.subscriptions);
         },
         null,
-        context.subscriptions
+        context.subscriptions,
       );
 
       // Handle push event
-      gitAPI.onDidPublish(
-        handlePublish,
-        null,
-        context.subscriptions
-      );
+      gitAPI.onDidPublish(handlePublish, null, context.subscriptions);
 
       logger.debug("Git listeners activated");
     } else {
@@ -75,14 +69,10 @@ export namespace gitListeners {
   }
 
   export async function handleCommit() {
-    await ProgressionController.increaseProgression(
-      constants.criteria.COMMITS
-    );
+    await ProgressionController.increaseProgression(constants.criteria.COMMITS);
   }
 
   export async function handlePublish() {
-    await ProgressionController.increaseProgression(
-      constants.criteria.PUSHES
-    );
+    await ProgressionController.increaseProgression(constants.criteria.PUSHES);
   }
 }

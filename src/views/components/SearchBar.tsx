@@ -3,7 +3,7 @@ import { queries, webview } from '../viewconst';
 import { PostMessage } from '../icons';
 
 interface SearchBarProps {
-  setFilters: React.Dispatch<React.SetStateAction<Record<string, any>>>;
+  setFilters: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
   limit: number;
   setLimit: React.Dispatch<React.SetStateAction<number>>;
 }
@@ -21,7 +21,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ setFilters, limit, setLimit }) =>
   useEffect(() => {
     window.addEventListener('message', handleMessage);
 
-    (window as any).vscode.postMessage(
+    window.vscode.postMessage(
       JSON.stringify({
         command: webview.commands.RETRIEVE_ACHIEVEMENTS_FILTERS,
       })
@@ -49,7 +49,8 @@ const SearchBar: React.FC<SearchBarProps> = ({ setFilters, limit, setLimit }) =>
       const data: PostMessage = event.data;
 
       if (data.command === webview.commands.DISPLAY_ACHIEVEMENTS_FILTERS) {
-        setAvailableLabels(data.data.labels);
+        const payload = data.data as { labels: string[] };
+        setAvailableLabels(payload.labels);
       }
     } catch (e) {
       console.error('Invalid message data:', e);

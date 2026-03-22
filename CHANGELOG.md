@@ -5,140 +5,169 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-03-22
+
+### Changed
+- Bump package version by @BoxBoxJason
+- Ignore files & directories in files achievements by @BoxBoxJason in [#46](https://github.com/BoxBoxJason/achievements/pull/46)
+- Update all node dependencies by @BoxBoxJason
+
+### Fixed
+- Quick open - close database erasure by @BoxBoxJason
+
+### Removed
+- Remove ignore comment by @BoxBoxJason in [#45](https://github.com/BoxBoxJason/achievements/pull/45)
+
+## [0.3.1] - 2026-01-05
+
+### Added
+- Add contributing guide by @BoxBoxJason
+- Add issues templates by @BoxBoxJason
+- Add vscode custom files by @BoxBoxJason
+- Add watch commands by @BoxBoxJason
+
 ## [0.3.0] - 2026-01-02
 
 ### Added
-- Add git cliff configuration
-- Add database lockfile
+- Add git cliff configuration by @BoxBoxJason
+- Add database lockfile by @BoxBoxJason
 
 ### Changed
-- Optimize database & queries
-- Upgrade all
+- Optimize database & queries by @BoxBoxJason
+- Upgrade all by @BoxBoxJason
 
 ### Fixed
-- Code monkey progression
+- Code monkey progression by @BoxBoxJason
 
 ## [0.2.0] - 2025-11-24
 
 ### Added
-- Add connection streak achievement
+- Add connection streak achievement by @BoxBoxJason in [#32](https://github.com/BoxBoxJason/achievements/pull/32)
 
 ## [0.1.2] - 2025-11-23
 
 ### Added
-- Add icon
-- Add license
-- Add CHANGELOG for vsce publish
+- Add icon by @BoxBoxJason
+- Add license by @BoxBoxJason
+- Add CHANGELOG for vsce publish by @BoxBoxJason
 
 ## [0.1.1] - 2025-11-22
 
 ### Added
-- Add unit tests
+- Add unit tests by @BoxBoxJason
 - Add renovate configuration file
 
 ### Changed
-- Migrate from better-sqlite3 to sql.js
+- Migrate from better-sqlite3 to sql.js by @BoxBoxJason
 - Update dependency node to v24
 - Update all-dependencies
 - Update all-dependencies
 - Update actions/setup-node action to v6
 
 ### Fixed
-- Display text alignment
+- Display text alignment by @BoxBoxJason
 
 ### Removed
-- Remove useless deps
-- Remove dependabot
+- Remove useless deps by @BoxBoxJason
+- Remove dependabot by @BoxBoxJason in [#30](https://github.com/BoxBoxJason/achievements/pull/30)
+
+### New Contributors
+* @ made their first contribution
 
 ## [0.1.0] - 2025-09-29
 
 ### Added
-- Add publish workflows
-- Add (temporary) speaker icons
-- Add productivity icons
-- Add extensions icons
-- Add shortcuts icons
-- Add debugger icons
-- Add files icons
-- Add terminal tasks icons
-- Add git achievements icons
-- Add creator achievements logos
-- Add new file edited listeners
-- Add debug listeners
-- Add extensions listeners
-- Add tab events listeners
-- Add terminal event listeners
-- Add webview profile section
-- Add time time tracking
-- Add docstrings everywhere
-- Add git related achievements listeners
-- Add resource creation / deletion listeners
-- Add containers styling
-- Add separate module to handle frontend requests
-- Add generic AchievementRequirement SQL script
-- Add toggle notifications command
-- Add proper README
-- Add skeleton for Achievements react webview
-- Add pusheen icons
-- Add extensions commands
-- Add separate database populate module
-- Add separate db migrations manager module
-- Add config manager module (specific to vscode)
-- Add new achievements linked constants
-- Add vscode specific logger module
-- Add achievements creating classes
+- Add publish workflows by @BoxBoxJason
+- Add (temporary) speaker icons by @BoxBoxJason
+- Add productivity icons by @BoxBoxJason
+- Add extensions icons by @BoxBoxJason
+- Add shortcuts icons by @BoxBoxJason
+- Add debugger icons by @BoxBoxJason
+- Add files icons by @BoxBoxJason
+- Add terminal tasks icons by @BoxBoxJason
+- Add git achievements icons by @BoxBoxJason
+- Add creator achievements logos by @BoxBoxJason
+- Add new file edited listeners by @BoxBoxJason
+- Add debug listeners by @BoxBoxJason
+- Add extensions listeners by @BoxBoxJason
+- Add tab events listeners by @BoxBoxJason
+- Add terminal event listeners by @BoxBoxJason
+- Add webview profile section by @BoxBoxJason
+- Add time time tracking by @BoxBoxJason
+- Add docstrings everywhere by @BoxBoxJason
+- Add git related achievements listeners by @BoxBoxJason
+- Add resource creation / deletion listeners by @BoxBoxJason
+- Add containers styling by @BoxBoxJason
+- Add separate module to handle frontend requests by @BoxBoxJason
+- Add generic AchievementRequirement SQL script by @BoxBoxJason
+- Add toggle notifications command by @BoxBoxJason
+- Add proper README by @BoxBoxJason
+- Add skeleton for Achievements react webview by @BoxBoxJason
+- Add pusheen icons by @BoxBoxJason
+- Add extensions commands by @BoxBoxJason
+- Add separate database populate module by @BoxBoxJason
+- Add separate db migrations manager module by @BoxBoxJason
+- Add config manager module (specific to vscode) by @BoxBoxJason
+- Add new achievements linked constants by @BoxBoxJason
+- Add vscode specific logger module by @BoxBoxJason
+- Add achievements creating classes by @BoxBoxJason
 
 ### Changed
-- Update changelog and install
-- Complete build method
-- Upgrade all dependencies
-- Configuration
-- Apply code formatters
-- Prepare release
-- Style using tailwindcss
-- Proper image packaging
-- Condition listeners setup
-- Move settings from raw JSON to VSCode
-- Update project description
-- Replace terminal by tasks
-- Rename points to EXP
-- Cleanup db init to iterate over StackingTemplates
-- UX
-- Update logger module to accept any length / type arguments
-- First UI release
-- Upgrade progressions model (100x speedup)
-- Yet another achievements model rework
-- Upgrade achievements model (100x speedup)
-- Move communication / requests to proper spots
-- Move logger module
-- Create Achievement webview page
-- Upgrade Achievements controller
-- Upgrade achievement model
-- House cleaning
-- House cleaning
-- Create proper achievements workflow controller
-- Standardize StackingTemplates
-- Create progression management model
-- Move and upgrade Achievements model
-- Update model to use better-sqlite3
-- Housekeeping
-- Prepare build & config for better-sqlite3
-- Replace Python achievements builder with typescript
-- Standardize points attribution
-- Create files stacking templates
-- Create all productivity stacking templates
-- Default vscode extension setup
+- Update changelog and install by @BoxBoxJason
+- Complete build method by @BoxBoxJason
+- Upgrade all dependencies by @BoxBoxJason
+- Configuration by @BoxBoxJason
+- Apply code formatters by @BoxBoxJason
+- Prepare release by @BoxBoxJason
+- Style using tailwindcss by @BoxBoxJason
+- Proper image packaging by @BoxBoxJason
+- Condition listeners setup by @BoxBoxJason
+- Move settings from raw JSON to VSCode by @BoxBoxJason
+- Update project description by @BoxBoxJason
+- Replace terminal by tasks by @BoxBoxJason
+- Rename points to EXP by @BoxBoxJason
+- Cleanup db init to iterate over StackingTemplates by @BoxBoxJason
+- UX by @BoxBoxJason
+- Update logger module to accept any length / type arguments by @BoxBoxJason
+- First UI release by @BoxBoxJason
+- Upgrade progressions model (100x speedup) by @BoxBoxJason
+- Yet another achievements model rework by @BoxBoxJason
+- Upgrade achievements model (100x speedup) by @BoxBoxJason
+- Move communication / requests to proper spots by @BoxBoxJason
+- Move logger module by @BoxBoxJason
+- Create Achievement webview page by @BoxBoxJason
+- Upgrade Achievements controller by @BoxBoxJason
+- Upgrade achievement model by @BoxBoxJason
+- House cleaning by @BoxBoxJason
+- House cleaning by @BoxBoxJason
+- Create proper achievements workflow controller by @BoxBoxJason
+- Standardize StackingTemplates by @BoxBoxJason
+- Create progression management model by @BoxBoxJason
+- Move and upgrade Achievements model by @BoxBoxJason
+- Update model to use better-sqlite3 by @BoxBoxJason
+- Housekeeping by @BoxBoxJason
+- Prepare build & config for better-sqlite3 by @BoxBoxJason
+- Replace Python achievements builder with typescript by @BoxBoxJason
+- Standardize points attribution by @BoxBoxJason
+- Create files stacking templates by @BoxBoxJason
+- Create all productivity stacking templates by @BoxBoxJason
+- Default vscode extension setup by @BoxBoxJason
 
 ### Fixed
-- Issues fix
-- Change some constants to enums & fix awarder
-- Errors in some default achievements
-- Fix progressions model & controller workflow
-- Leave error messages in lowercase
+- Issues fix by @BoxBoxJason
+- Change some constants to enums & fix awarder by @BoxBoxJason
+- Errors in some default achievements by @BoxBoxJason
+- Fix progressions model & controller workflow by @BoxBoxJason
+- Leave error messages in lowercase by @BoxBoxJason
 
-[0.3.0]: https://github.com///compare/0.2.0...0.3.0
-[0.2.0]: https://github.com///compare/0.1.2...0.2.0
-[0.1.2]: https://github.com///compare/0.1.1...0.1.2
-[0.1.1]: https://github.com///compare/0.1.0...0.1.1
+### New Contributors
+* @BoxBoxJason made their first contribution
+
+[0.4.0]: https://github.com/BoxBoxJason/achievements/compare/0.3.1...0.4.0
+[0.3.1]: https://github.com/BoxBoxJason/achievements/compare/0.3.0...0.3.1
+[0.3.0]: https://github.com/BoxBoxJason/achievements/compare/0.2.0...0.3.0
+[0.2.0]: https://github.com/BoxBoxJason/achievements/compare/0.1.2...0.2.0
+[0.1.2]: https://github.com/BoxBoxJason/achievements/compare/0.1.1...0.1.2
+[0.1.1]: https://github.com/BoxBoxJason/achievements/compare/0.1.0...0.1.1
 
 <!-- generated by git-cliff -->

@@ -25,13 +25,19 @@ export async function awardAchievement(achievement: {
 }): Promise<void> {
   const message = `Achievement unlocked: ${achievement.title} (${achievement.exp} exp)`;
   if (config.notificationsEnabled()) {
-    vscode.window
+    void vscode.window
       .showInformationMessage(`🏆 ${message}`, "Browse Achievements")
-      .then((selection) => {
-        if (selection === "Browse Achievements") {
-          vscode.commands.executeCommand("achievements.show");
-        }
-      });
+      .then(
+        (selection) => {
+          if (selection === "Browse Achievements") {
+            return vscode.commands.executeCommand("achievements.show");
+          }
+          return undefined;
+        },
+        (error: unknown) => {
+          logger.error(error);
+        },
+      );
   }
   await Progression.addValue({ name: constants.criteria.EXP }, achievement.exp);
   logger.info(message);

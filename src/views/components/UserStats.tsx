@@ -7,7 +7,7 @@ const UserStats: React.FC = () => {
   const [totalAchievements, setTotalAchievements] = useState(0);
   const [totalExp, setTotalExp] = useState(0);
   const [achievedCount, setAchievedCount] = useState(0);
-  const [timeSpent, setTimeSpent] = useState({
+  const [timeSpent, setTimeSpent] = useState<Record<string, number>>({
     [queries.criteria.DAILY_TIME_SPENT]: 0,
     [queries.criteria.TWO_WEEKS_TIME_SPENT]: 0,
     [queries.criteria.MONTHLY_TIME_SPENT]: 0,
@@ -18,7 +18,7 @@ const UserStats: React.FC = () => {
   useEffect(() => {
     window.addEventListener('message', handleMessage);
 
-    (window as any).vscode.postMessage(
+    window.vscode.postMessage(
       JSON.stringify({
         command: webview.commands.RETRIEVE_PROFILE,
       })
@@ -33,16 +33,23 @@ const UserStats: React.FC = () => {
     try {
       const data: PostMessage = message.data;
       if (data.command === webview.commands.SET_PROFILE) {
-        setUsername(data.data.username);
-        setTotalAchievements(data.data.totalAchievements);
-        setTotalExp(data.data.totalExp);
-        setAchievedCount(data.data.achievedCount);
-        setTimeSpent(data.data.timeSpent);
+        const payload = data.data as {
+          username: string;
+          totalAchievements: number;
+          totalExp: number;
+          achievedCount: number;
+          timeSpent: Record<string, number>;
+        };
+        setUsername(payload.username);
+        setTotalAchievements(payload.totalAchievements);
+        setTotalExp(payload.totalExp);
+        setAchievedCount(payload.achievedCount);
+        setTimeSpent(payload.timeSpent);
       }
     } catch (error) {
       console.error('Failed to parse message data: ' + error);
     }
-  }
+  };
 
   return (
     <div className="achievements-profile w-9/10 mx-auto flex flex-col gap-2.5">
@@ -74,7 +81,7 @@ const UserStats: React.FC = () => {
     </div>
   );
 
-}
+};
 
 const ProfileBox: React.FC<{ value: string, label: string }> = ({ value, label }) => {
   return (
@@ -83,6 +90,6 @@ const ProfileBox: React.FC<{ value: string, label: string }> = ({ value, label }
       <span className="text-sm font-sans">{label}</span>
     </div>
   );
-}
+};
 
 export default UserStats;

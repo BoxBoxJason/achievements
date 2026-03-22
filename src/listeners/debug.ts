@@ -29,23 +29,23 @@ export namespace debugListeners {
       logger.info("Starting debug events listeners");
 
       vscode.debug.onDidStartDebugSession(
-        async (event: vscode.DebugSession) => {
+        async (_event: vscode.DebugSession) => {
           await ProgressionController.increaseProgression(
-            constants.criteria.DEBUGGER_SESSIONS
+            constants.criteria.DEBUGGER_SESSIONS,
           );
         },
         null,
-        context.subscriptions
+        context.subscriptions,
       );
 
       vscode.debug.onDidChangeBreakpoints(
         async (event: vscode.BreakpointsChangeEvent) => {
           for (const _ of event.added) {
             await ProgressionController.increaseProgression(
-              constants.criteria.BREAKPOINTS
+              constants.criteria.BREAKPOINTS,
             );
           }
-        }
+        },
       );
 
       logger.debug("Debug listeners activated");

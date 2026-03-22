@@ -34,8 +34,8 @@ export namespace ProgressionController {
    */
   export async function getProgressions(): Promise<ProgressionDict> {
     const progressions = await Progression.getProgressions({});
-    let progressionDict: ProgressionDict = Object();
-    for (let progression of progressions) {
+    const progressionDict: ProgressionDict = Object();
+    for (const progression of progressions) {
       progressionDict[progression.name] = progression.value;
     }
 
@@ -54,26 +54,31 @@ export namespace ProgressionController {
    */
   export async function increaseProgression(
     criteriaName: string,
-    increase: number | string = 1
+    increase: number | string = 1,
   ): Promise<void> {
     // Update the progression value and retrieve all progressions
     try {
       const updatedProgressionsIds = await Progression.addValue(
         { name: criteriaName },
-        increase
+        increase,
       );
       const updatedAchievements =
         await Progression.achieveCompletedAchievements(
-          updatedProgressionsIds.map((progression) => progression.id)
+          updatedProgressionsIds.map((progression) => progression.id),
         );
-      let awardedPoints = 0;
-      for (let achievement of updatedAchievements) {
-        // Notify the user of the unlocked achievement
-        awardAchievement(achievement);
-      }
+      // Award achievements and handle any errors from each award
+      await Promise.all(
+        updatedAchievements.map((achievement) =>
+          awardAchievement(achievement).catch((err: unknown) => {
+            logger.error(
+              `Failed to award achievement "${achievement.title}": ${String(err)}`,
+            );
+          }),
+        ),
+      );
     } catch (error) {
       logger.error(
-        `Failed to increase progression: ${(error as Error).message}`
+        `Failed to increase progression: ${(error as Error).message}`,
       );
     }
   }
@@ -91,22 +96,28 @@ export namespace ProgressionController {
   export async function updateProgression(
     criteriaName: string,
     value: string | number | Date | boolean,
-    maximize: boolean = false
+    maximize = false,
   ): Promise<void> {
     try {
       const updatedProgressionsIds = await Progression.updateValue(
         { name: criteriaName },
         value.toString(),
-        maximize
+        maximize,
       );
       const updatedAchievements =
         await Progression.achieveCompletedAchievements(
-          updatedProgressionsIds.map((progression) => progression.id)
+          updatedProgressionsIds.map((progression) => progression.id),
         );
-      for (let achievement of updatedAchievements) {
-        // Notify the user of the unlocked achievement
-        awardAchievement(achievement);
-      }
+      // Award achievements and handle any errors from each award
+      await Promise.all(
+        updatedAchievements.map((achievement) =>
+          awardAchievement(achievement).catch((err: unknown) => {
+            logger.error(
+              `Failed to award achievement "${achievement.title}": ${String(err)}`,
+            );
+          }),
+        ),
+      );
     } catch (error) {
       logger.error(`Failed to update progression: ${(error as Error).message}`);
     }
@@ -126,7 +137,7 @@ export namespace ProgressionController {
       name: string;
       value: string | number | Date | boolean;
       maximize?: boolean;
-    }>
+    }>,
   ): Promise<void> {
     try {
       const allUpdatedIds: number[] = [];
@@ -134,7 +145,7 @@ export namespace ProgressionController {
         const updatedProgressionsIds = await Progression.updateValue(
           { name: update.name },
           update.value.toString(),
-          update.maximize
+          update.maximize,
         );
         allUpdatedIds.push(...updatedProgressionsIds.map((p) => p.id));
       }
@@ -142,13 +153,20 @@ export namespace ProgressionController {
       if (allUpdatedIds.length > 0) {
         const updatedAchievements =
           await Progression.achieveCompletedAchievements(allUpdatedIds);
-        for (let achievement of updatedAchievements) {
-          awardAchievement(achievement);
-        }
+        // Award achievements and handle any errors from each award
+        await Promise.all(
+          updatedAchievements.map((achievement) =>
+            awardAchievement(achievement).catch((err: unknown) => {
+              logger.error(
+                `Failed to award achievement "${achievement.title}": ${String(err)}`,
+              );
+            }),
+          ),
+        );
       }
     } catch (error) {
       logger.error(
-        `Failed to update progressions: ${(error as Error).message}`
+        `Failed to update progressions: ${(error as Error).message}`,
       );
     }
   }

@@ -9,10 +9,10 @@ import logger from "../utils/logger";
  */
 export namespace AchievementsWebview {
   export function setupAchievementsPanel(
-    context: vscode.ExtensionContext
+    context: vscode.ExtensionContext,
   ): vscode.WebviewPanel {
     // Create and show the webview panel
-    let panel: vscode.WebviewPanel | undefined =
+    const panel: vscode.WebviewPanel | undefined =
       vscode.window.createWebviewPanel(
         "achievements",
         "Achievements",
@@ -25,23 +25,23 @@ export namespace AchievementsWebview {
             vscode.Uri.file(path.join(context.extensionPath, "dist", "style")),
             vscode.Uri.file(path.join(context.extensionPath, "dist")),
           ],
-        }
+        },
       );
     panel.webview.html = getDefaultWebviewContentReact(context, panel);
 
     // Receive messages from the webview event
     panel.webview.onDidReceiveMessage(
-      (message) => {
+      async (message) => {
         try {
           const parsedMessage = JSON.parse(message) as PostMessage;
 
-          backendRequests.handleMessage(parsedMessage, panel);
+          await backendRequests.handleMessage(parsedMessage, panel);
         } catch (e) {
           logger.error("Cannot parse message: " + e);
         }
       },
       undefined,
-      context.subscriptions
+      context.subscriptions,
     );
 
     return panel;
@@ -49,10 +49,10 @@ export namespace AchievementsWebview {
 
   function getDefaultWebviewContentReact(
     context: vscode.ExtensionContext,
-    panel: vscode.WebviewPanel
+    panel: vscode.WebviewPanel,
   ): string {
-    let reactScriptUri = panel.webview.asWebviewUri(
-      vscode.Uri.file(path.join(__dirname, "webview.js"))
+    const reactScriptUri = panel.webview.asWebviewUri(
+      vscode.Uri.file(path.join(__dirname, "webview.js")),
     );
     return `<!DOCTYPE html>
 <html lang="en">
@@ -61,8 +61,8 @@ export namespace AchievementsWebview {
     <title>Achievements</title>
     <link rel="stylesheet" type="text/css" href="${panel.webview.asWebviewUri(
       vscode.Uri.file(
-        path.join(context.extensionPath, "dist", "style", "main.css")
-      )
+        path.join(context.extensionPath, "dist", "style", "main.css"),
+      ),
     )}">
   </head>
   <body>
@@ -70,7 +70,7 @@ export namespace AchievementsWebview {
     <script src="${panel.webview.cspSource}"></script>
     <script>
       window.imageUris = ${JSON.stringify(
-        getPackagedImages(context, panel.webview)
+        getPackagedImages(context, panel.webview),
       )}
       window.vscode = acquireVsCodeApi();
     </script>

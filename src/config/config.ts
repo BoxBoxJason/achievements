@@ -36,7 +36,7 @@ export interface Config {
 }
 
 // ==================== VARIABLES ====================
-let defaultLogDir: string = "";
+let defaultLogDir = "";
 
 // ==================== MODULE FUNCTIONS ====================
 /**
@@ -71,7 +71,7 @@ export namespace config {
 
     // Prompt the user to set an username if it is the default one
     if (config.username === webview.DEFAULT_USER) {
-      handleSetUsername();
+      void handleSetUsername();
     }
   }
 
@@ -83,29 +83,25 @@ export namespace config {
    *
    * @returns {void}
    */
-  function handleSetUsername() {
-    vscode.window
-      .showInformationMessage(
-        "For a better experience, please set your username",
-        "Set Username",
-      )
-      .then((selection) => {
-        if (selection === "Set Username") {
-          vscode.window
-            .showInputBox({
-              prompt: "Enter your username",
-              placeHolder: webview.DEFAULT_USER,
-              validateInput: (input) => {
-                return input.trim() ? null : "Username cannot be empty";
-              },
-            })
-            .then((username) => {
-              if (username) {
-                setUsername(username);
-              }
-            });
-        }
+  async function handleSetUsername() {
+    const selection = await vscode.window.showInformationMessage(
+      "For a better experience, please set your username",
+      "Set Username",
+    );
+
+    if (selection === "Set Username") {
+      const username = await vscode.window.showInputBox({
+        prompt: "Enter your username",
+        placeHolder: webview.DEFAULT_USER,
+        validateInput: (input) => {
+          return input.trim() ? null : "Username cannot be empty";
+        },
       });
+
+      if (username) {
+        setUsername(username);
+      }
+    }
   }
 
   /**
@@ -120,7 +116,7 @@ export namespace config {
   export function getConfig(): Readonly<Config> {
     const extensionRawConfig =
       vscode.workspace.getConfiguration("achievements");
-    let extensionConfig: Config = {
+    const extensionConfig: Config = {
       enabled: extensionRawConfig.get<boolean>("enabled", true),
       logLevel: extensionRawConfig.get<string>("logLevel", "info"),
       notifications: extensionRawConfig.get<boolean>("notifications", true),
@@ -193,8 +189,8 @@ export namespace config {
     const enabled = !config.enabled;
     updateConfig("enabled", enabled);
 
-    let enabledString = enabled ? "enabled" : "disabled";
-    let enabledMessage = `Achievement ${enabledString}!`;
+    const enabledString = enabled ? "enabled" : "disabled";
+    const enabledMessage = `Achievement ${enabledString}!`;
     logger.info(enabledMessage);
     vscode.window.showInformationMessage(enabledMessage);
   }
@@ -245,7 +241,7 @@ export namespace config {
     return getConfig().username;
   }
 
-  function updateConfig(key: string, value: any) {
+  function updateConfig(key: string, value: unknown) {
     const config = vscode.workspace.getConfiguration("achievements");
     config.update(key, value, vscode.ConfigurationTarget.Global);
   }

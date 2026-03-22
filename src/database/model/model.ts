@@ -9,7 +9,7 @@ import * as path from "node:path";
 import * as fs from "node:fs";
 import logger from "../../utils/logger";
 import * as vscode from "vscode";
-import initSqlJs, { Database, SqlJsStatic } from "sql.js";
+import initSqlJs, { Database, SqlJsStatic, SqlValue } from "sql.js";
 import { applyMigration } from "./migrations";
 import { db_init } from "./init/init";
 import { db_lock } from "../lock";
@@ -151,7 +151,7 @@ export namespace db_model {
     let hasLock = false;
 
     try {
-      let databaseDir = context.globalStorageUri.fsPath;
+      const databaseDir = context.globalStorageUri.fsPath;
       await fs.promises.mkdir(databaseDir, { recursive: true });
       DATABASE_PATH = dbPath || path.join(databaseDir, DATABASE_FILENAME);
 
@@ -219,38 +219,46 @@ export namespace db_model {
   }
 
   /**
-   * Execute a query and return all rows as objects.
+   * Execute a query and return the first row as an object (or null if no rows).
    *
    * @param {Database} db The database connection object
    * @param {string} query The query to execute
-   * @param {any[]} params The parameters to bind to the query
-   * @returns {any[]} The result rows
+   * @param {SqlValue[]} params The parameters to bind to the query
+   * @returns {T | null} The first result row or null
    */
-  export function getAll(db: Database, query: string, params?: any[]): any[] {
+  export function get<T extends object>(
+    db: Database,
+    query: string,
+    params?: SqlValue[],
+  ): T | null {
     const stmt = db.prepare(query);
     stmt.bind(params);
-    const result = [];
-    while (stmt.step()) {
-      result.push(stmt.getAsObject());
+    let result: T | null = null;
+    if (stmt.step()) {
+      result = stmt.getAsObject() as T;
     }
     stmt.free();
     return result;
   }
 
   /**
-   * Execute a query and return the first row as an object.
+   * Execute a query and return all rows as objects.
    *
    * @param {Database} db The database connection object
    * @param {string} query The query to execute
-   * @param {any[]} params The parameters to bind to the query
-   * @returns {any} The result row
+   * @param {SqlValue[]} params The parameters to bind to the query
+   * @returns {T[]} The result rows
    */
-  export function get(db: Database, query: string, params?: any[]): any {
+  export function getAll<T extends object>(
+    db: Database,
+    query: string,
+    params?: SqlValue[],
+  ): T[] {
     const stmt = db.prepare(query);
     stmt.bind(params);
-    let result = null;
-    if (stmt.step()) {
-      result = stmt.getAsObject();
+    const result: T[] = [];
+    while (stmt.step()) {
+      result.push(stmt.getAsObject() as T);
     }
     stmt.free();
     return result;

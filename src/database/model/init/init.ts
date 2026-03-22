@@ -97,7 +97,7 @@ export namespace db_init {
    */
   async function createIntegerProgressions(): Promise<void> {
     logger.debug("Creating integer progressions");
-    let progressions: Progression[] = [];
+    const progressions: Progression[] = [];
 
     for (const criteria of Object.values(constants.criteria)) {
       if (

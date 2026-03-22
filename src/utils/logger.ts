@@ -80,7 +80,7 @@ export namespace logger {
    * @param {any[]} args - The message to log
    * @returns void
    */
-  export function debug(...args: any[]) {
+  export function debug(...args: unknown[]) {
     if (logLevel <= LOG_LEVELS.DEBUG) {
       logMessage(LOG_LEVELS_SLUG.DEBUG, ...args);
     }
@@ -95,7 +95,7 @@ export namespace logger {
    * @param {any[]} args - The message to log
    * @returns void
    */
-  export function info(...args: any[]) {
+  export function info(...args: unknown[]) {
     if (logLevel <= LOG_LEVELS.INFO) {
       logMessage(LOG_LEVELS_SLUG.INFO, ...args);
     }
@@ -110,7 +110,7 @@ export namespace logger {
    * @param {any[]} args - The message to log
    * @returns void
    */
-  export function notify(...args: any[]) {
+  export function notify(...args: unknown[]) {
     if (config.notificationsEnabled()) {
       vscode.window.showInformationMessage(args.join(" "));
     }
@@ -128,7 +128,7 @@ export namespace logger {
    * @param {any[]} args - The message to log
    * @returns void
    */
-  export function warn(...args: any[]) {
+  export function warn(...args: unknown[]) {
     if (logLevel <= LOG_LEVELS.WARN) {
       logMessage(LOG_LEVELS_SLUG.WARN, ...args);
     }
@@ -143,7 +143,7 @@ export namespace logger {
    * @param {any[]} args - The message to log
    * @returns void
    */
-  export function error(...args: any[]) {
+  export function error(...args: unknown[]) {
     if (logLevel <= LOG_LEVELS.ERROR) {
       logMessage(LOG_LEVELS_SLUG.ERROR, ...args);
       vscode.window.showErrorMessage(args.join(" "));
@@ -159,7 +159,7 @@ export namespace logger {
    * @param {any[]} args - The message to log
    * @returns void
    */
-  export function fatal(...args: any[]) {
+  export function fatal(...args: unknown[]) {
     if (logLevel <= LOG_LEVELS.FATAL) {
       logMessage(LOG_LEVELS_SLUG.FATAL, ...args);
       vscode.window.showErrorMessage(args.join(" "));
@@ -177,14 +177,13 @@ export namespace logger {
    * @param {any[]} args - The message to log
    * @returns void
    */
-  function logMessage(level: string, ...args: any[]) {
+  function logMessage(level: string, ...args: unknown[]) {
     const timestamp = getFormattedTime();
     const logMessage = `ACHIEVEMENTS ${timestamp}: ${level}: ${args
       .map((arg) => formatArg(arg))
       .join(" ")}`;
 
     outputChannel.appendLine(logMessage);
-    console.log(logMessage);
     logToFile(logMessage);
   }
 
@@ -197,7 +196,7 @@ export namespace logger {
    * @param {any}
    * @returns {string} the formatted argument
    */
-  function formatArg(arg: any): string {
+  function formatArg(arg: unknown): string {
     if (typeof arg === "object") {
       try {
         return JSON.stringify(arg);
@@ -227,7 +226,7 @@ export namespace logger {
       outputChannel.appendLine(
         `${LOG_LEVELS_SLUG.ERROR}: Failed to write log to file: ${
           (error as Error).message
-        }`
+        }`,
       );
     }
   }
@@ -251,7 +250,7 @@ export namespace logger {
     } else {
       const rotatedLogFilePath = logFilePath.replace(
         /\.log$/,
-        `_${Date.now()}.log`
+        `_${Date.now()}.log`,
       );
       try {
         fs.renameSync(logFilePath, rotatedLogFilePath);
