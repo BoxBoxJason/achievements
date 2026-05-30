@@ -103,6 +103,7 @@ suite("Listeners Test Suite", () => {
         fileName: "test.ts",
         uri: vscode.Uri.file("test.ts"),
         languageId: "typescript",
+        lineAt: (_line: number) => ({ text: "const x = 1;" }),
       },
       contentChanges: [
         {

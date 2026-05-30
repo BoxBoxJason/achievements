@@ -242,8 +242,10 @@ export namespace fileListeners {
       ];
     if (language) {
       let totalLinesAdded = 0;
+      let totalCommentLinesAdded = 0;
       for (const change of event.contentChanges) {
         totalLinesAdded += countLinesAdded(change);
+        totalCommentLinesAdded += countCommentLinesAdded(change, event.document);
       }
 
       if (totalLinesAdded > 0) {
@@ -256,6 +258,13 @@ export namespace fileListeners {
         await ProgressionController.increaseProgression(
           constants.criteria.LINES_OF_CODE,
           totalLinesAdded,
+        );
+      }
+
+      if (totalCommentLinesAdded > 0) {
+        await ProgressionController.increaseProgression(
+          constants.criteria.LINES_OF_COMMENTS,
+          totalCommentLinesAdded,
         );
       }
     }
@@ -276,6 +285,53 @@ export namespace fileListeners {
       return 1;
     }
     return 0;
+  }
+
+  function isCommentLine(line: string): boolean {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      return false;
+    }
+    if (trimmed.startsWith("//") || trimmed.startsWith("/*")) {
+      return true;
+    }
+    // Block comment continuation/end: "* text" or "*/"
+    if (
+      trimmed[0] === "*" &&
+      (trimmed.length === 1 || trimmed[1] === " " || trimmed[1] === "/")
+    ) {
+      return true;
+    }
+    return (
+      trimmed.startsWith("#") ||
+      trimmed.startsWith("--") ||
+      trimmed.startsWith("%") ||
+      trimmed.startsWith("<!--") ||
+      trimmed.startsWith("-->")
+    );
+  }
+
+  function countCommentLinesAdded(
+    change: vscode.TextDocumentContentChangeEvent,
+    document: vscode.TextDocument,
+  ): number {
+    if (!change.text.includes("\n")) {
+      return 0;
+    }
+    // When the added text is only whitespace (bare Enter, possibly with
+    // auto-indentation), the comment content is NOT in change.text — it
+    // was already in the document. Check the line the cursor was on.
+    if (change.text.trim().length === 0) {
+      return isCommentLine(
+        document.lineAt(change.range.start.line).text,
+      )
+        ? 1
+        : 0;
+    }
+    // Multi-line paste / snippet: count comment lines in the inserted content.
+    return change.text
+      .split(/\r?\n/)
+      .filter((line) => isCommentLine(line)).length;
   }
 
   const fileErrorCounts = new Map<string, number>();
