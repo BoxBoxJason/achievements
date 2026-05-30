@@ -624,8 +624,8 @@ class Achievement {
       values.push(...filters.criterias);
     }
     if (filters.title) {
-      conditions.push("a.title LIKE ?");
-      values.push(`%${filters.title}%`);
+      conditions.push("LOWER(a.title) LIKE ?");
+      values.push(`%${filters.title.toLowerCase()}%`);
     }
     if (filters.achieved !== undefined) {
       conditions.push("a.achieved = ?");
