@@ -42,7 +42,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ setFilters, limit, setLimit }) =>
       sortCriteria,
       sortDirection,
     });
-  }, [partialTitle, achievable, achieved, label, limit, sortCriteria, sortDirection]);
+  }, [partialTitle, achievable, achieved, label, limit, sortCriteria, sortDirection, setFilters]);
 
   const handleMessage = (event: MessageEvent) => {
     try {
