@@ -245,7 +245,10 @@ export namespace fileListeners {
       let totalCommentLinesAdded = 0;
       for (const change of event.contentChanges) {
         totalLinesAdded += countLinesAdded(change);
-        totalCommentLinesAdded += countCommentLinesAdded(change, event.document);
+        totalCommentLinesAdded += countCommentLinesAdded(
+          change,
+          event.document,
+        );
       }
 
       if (totalLinesAdded > 0) {
@@ -319,19 +322,16 @@ export namespace fileListeners {
       return 0;
     }
     // When the added text is only whitespace (bare Enter, possibly with
-    // auto-indentation), the comment content is NOT in change.text — it
+    // auto-indentation), the comment content is NOT in change.text - it
     // was already in the document. Check the line the cursor was on.
     if (change.text.trim().length === 0) {
-      return isCommentLine(
-        document.lineAt(change.range.start.line).text,
-      )
+      return isCommentLine(document.lineAt(change.range.start.line).text)
         ? 1
         : 0;
     }
     // Multi-line paste / snippet: count comment lines in the inserted content.
-    return change.text
-      .split(/\r?\n/)
-      .filter((line) => isCommentLine(line)).length;
+    return change.text.split(/\r?\n/).filter((line) => isCommentLine(line))
+      .length;
   }
 
   const fileErrorCounts = new Map<string, number>();

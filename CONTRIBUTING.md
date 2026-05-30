@@ -41,8 +41,8 @@ This launches an **Extension Development Host** window.
 
 The debug launch uses the default VS Code task `watch` (see [.vscode/tasks.json](.vscode/tasks.json)). It runs:
 
-- `npm run watch:esbuild` — bundles the extension entrypoint and the React webview bundle.
-- `npm run watch:tsc` — TypeScript type-check in watch mode (no emit).
+- `npm run watch:esbuild` - bundles the extension entrypoint and the React webview bundle.
+- `npm run watch:tsc` - TypeScript type-check in watch mode (no emit).
 
 If you prefer the command line, you can run those scripts directly in separate terminals.
 
