@@ -261,6 +261,151 @@ suite("File Listeners Test Suite", () => {
     }
   });
 
+  test("handleTextChangedEvent should increase LINES_OF_COMMENTS for comment lines", async () => {
+    const testFile = path.join(tempDir, "test_comment.ts");
+    const uri = vscode.Uri.file(testFile);
+    const document = {
+      fileName: testFile,
+      uri: uri,
+    } as vscode.TextDocument;
+
+    const event = {
+      document: document,
+      reason: undefined,
+      contentChanges: [
+        {
+          range: new vscode.Range(0, 0, 0, 0),
+          rangeOffset: 0,
+          rangeLength: 0,
+          text: "// single line comment\n",
+        },
+        {
+          range: new vscode.Range(1, 0, 1, 0),
+          rangeOffset: 1,
+          rangeLength: 0,
+          text: "/*\n * block comment\n */\n",
+        },
+      ],
+    } as vscode.TextDocumentChangeEvent;
+
+    let commentLinesTotal = 0;
+    const originalIncrease = ProgressionController.increaseProgression;
+    ProgressionController.increaseProgression = async (
+      criteria: string,
+      amount: number | string = 1,
+    ) => {
+      if (criteria === constants.criteria.LINES_OF_COMMENTS) {
+        commentLinesTotal += Number(amount);
+      }
+    };
+
+    try {
+      await fileListeners.handleTextChangedEvent(event);
+      assert.strictEqual(
+        commentLinesTotal,
+        4,
+        "Should count: //, /*, * block comment, */",
+      );
+    } finally {
+      ProgressionController.increaseProgression = originalIncrease;
+    }
+  });
+
+  test("handleTextChangedEvent should not count non-comment lines as LINES_OF_COMMENTS", async () => {
+    const testFile = path.join(tempDir, "test_no_comment.ts");
+    const uri = vscode.Uri.file(testFile);
+    const document = {
+      fileName: testFile,
+      uri: uri,
+    } as vscode.TextDocument;
+
+    const event = {
+      document: document,
+      reason: undefined,
+      contentChanges: [
+        {
+          range: new vscode.Range(0, 0, 0, 0),
+          rangeOffset: 0,
+          rangeLength: 0,
+          text: "const x = 1;\nconst y = 2;\n",
+        },
+      ],
+    } as vscode.TextDocumentChangeEvent;
+
+    let commentLinesCalled = false;
+    const originalIncrease = ProgressionController.increaseProgression;
+    ProgressionController.increaseProgression = async (criteria: string) => {
+      if (criteria === constants.criteria.LINES_OF_COMMENTS) {
+        commentLinesCalled = true;
+      }
+    };
+
+    try {
+      await fileListeners.handleTextChangedEvent(event);
+      assert.strictEqual(
+        commentLinesCalled,
+        false,
+        "Should not count code lines as comments",
+      );
+    } finally {
+      ProgressionController.increaseProgression = originalIncrease;
+    }
+  });
+
+  test("handleTextChangedEvent should recognize various comment styles", async () => {
+    const testFile = path.join(tempDir, "test_comment_styles.ts");
+    const uri = vscode.Uri.file(testFile);
+    const document = {
+      fileName: testFile,
+      uri: uri,
+    } as vscode.TextDocument;
+
+    const commentStyles = [
+      "// C-style single-line\n",
+      "/* C-style block open\n",
+      " * block continuation\n",
+      " */\n",
+      "# hash style\n",
+      "-- SQL style\n",
+      "% matlab style\n",
+      "<!-- HTML comment\n",
+    ];
+
+    for (const commentLine of commentStyles) {
+      const event = {
+        document: document,
+        reason: undefined,
+        contentChanges: [
+          {
+            range: new vscode.Range(0, 0, 0, 0),
+            rangeOffset: 0,
+            rangeLength: 0,
+            text: commentLine,
+          },
+        ],
+      } as vscode.TextDocumentChangeEvent;
+
+      let counted = false;
+      const originalIncrease = ProgressionController.increaseProgression;
+      ProgressionController.increaseProgression = async (criteria: string) => {
+        if (criteria === constants.criteria.LINES_OF_COMMENTS) {
+          counted = true;
+        }
+      };
+
+      try {
+        await fileListeners.handleTextChangedEvent(event);
+        assert.strictEqual(
+          counted,
+          true,
+          `Should count as comment: ${JSON.stringify(commentLine)}`,
+        );
+      } finally {
+        ProgressionController.increaseProgression = originalIncrease;
+      }
+    }
+  });
+
   test("handleDiagnosticChangedEvent should ignore configured URIs", async () => {
     const ignoredUri = vscode.Uri.file(
       path.join(tempDir, "node_modules", "broken.ts"),
