@@ -34,3 +34,6 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Test
+        run: xvfb-run -a npm run test
