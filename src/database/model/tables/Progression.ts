@@ -142,8 +142,11 @@ class Progression {
     } else {
       value = this.value;
     }
-    statement.run([this.name, value, this.type]);
-    statement.free();
+    try {
+      statement.run([this.name, value, this.type]);
+    } finally {
+      statement.free();
+    }
     await db_model.saveDB();
 
     // Change the id of the instance to the id of the row if it was inserted
@@ -171,18 +174,21 @@ class Progression {
     const statement = db.prepare(Progression.INSERT_QUERY);
     db.run("BEGIN TRANSACTION");
     try {
-      for (const progression of progressions) {
-        let value: number | string | null;
-        if (progression.value instanceof Date) {
-          value = progression.value.toISOString();
-        } else if (typeof progression.value === "boolean") {
-          value = progression.value ? 1 : 0;
-        } else {
-          value = progression.value;
+      try {
+        for (const progression of progressions) {
+          let value: number | string | null;
+          if (progression.value instanceof Date) {
+            value = progression.value.toISOString();
+          } else if (typeof progression.value === "boolean") {
+            value = progression.value ? 1 : 0;
+          } else {
+            value = progression.value;
+          }
+          statement.run([progression.name, value, progression.type]);
         }
-        statement.run([progression.name, value, progression.type]);
+      } finally {
+        statement.free();
       }
-      statement.free();
       db.run("COMMIT");
       await db_model.saveDB();
     } catch (error) {
