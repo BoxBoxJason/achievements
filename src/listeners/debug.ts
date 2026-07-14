@@ -40,12 +40,15 @@ export namespace debugListeners {
 
       vscode.debug.onDidChangeBreakpoints(
         async (event: vscode.BreakpointsChangeEvent) => {
-          for (const _ of event.added) {
+          if (event.added.length > 0) {
             await ProgressionController.increaseProgression(
               constants.criteria.BREAKPOINTS,
+              event.added.length,
             );
           }
         },
+        null,
+        context.subscriptions,
       );
 
       logger.debug("Debug listeners activated");
