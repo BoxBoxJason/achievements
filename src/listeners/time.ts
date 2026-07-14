@@ -8,6 +8,7 @@
 import * as vscode from "vscode";
 import { DailySession } from "../database/model/tables/DailySession";
 import { TimeSpentController } from "../database/controller/timespent";
+import { db_model } from "../database/model/model";
 import logger from "../utils/logger";
 import { config } from "../config/config";
 import { constants } from "../constants";
@@ -21,6 +22,9 @@ import { constants } from "../constants";
 export namespace timeListeners {
   let sessionStart: Date | undefined = undefined;
   let dailySession: DailySession | undefined = undefined;
+  let autoSaveInterval: ReturnType<typeof setInterval> | undefined = undefined;
+  let recomputeInterval: ReturnType<typeof setInterval> | undefined =
+    undefined;
 
   /**
    * Create time related events listeners
@@ -43,9 +47,9 @@ export namespace timeListeners {
       );
 
       // Periodic (1 minute) auto save to mitigate data loss
-      setInterval(async () => {
+      autoSaveInterval = setInterval(async () => {
         logger.debug("CRONJOB: time spent auto save");
-        if (sessionStart) {
+        if (sessionStart && db_model.isReady()) {
           const sessionEnd = new Date();
           const sessionDuration = Math.floor(
             (sessionEnd.getTime() - sessionStart.getTime()) / 1000
@@ -56,13 +60,21 @@ export namespace timeListeners {
           await TimeSpentController.updateConnectionStreak();
         }
       }, 60000);
+      context.subscriptions.push({
+        dispose: () => clearInterval(autoSaveInterval),
+      });
 
       await TimeSpentController.updateTimeSpentFromSessions();
       // Periodic (15 minutes) recompute of the total time spent
-      setInterval(async () => {
+      recomputeInterval = setInterval(async () => {
         logger.debug("CRONJOB: time spent update");
-        await TimeSpentController.updateTimeSpentFromSessions();
+        if (db_model.isReady()) {
+          await TimeSpentController.updateTimeSpentFromSessions();
+        }
       }, 900000);
+      context.subscriptions.push({
+        dispose: () => clearInterval(recomputeInterval),
+      });
 
       logger.debug("Time listeners activated");
     } else {
@@ -117,6 +129,14 @@ export namespace timeListeners {
    */
   export async function deactivate() {
     logger.debug("Deactivating time listeners");
+    if (autoSaveInterval) {
+      clearInterval(autoSaveInterval);
+      autoSaveInterval = undefined;
+    }
+    if (recomputeInterval) {
+      clearInterval(recomputeInterval);
+      recomputeInterval = undefined;
+    }
     if (sessionStart) {
       const sessionEnd = new Date();
       const sessionDuration = Math.floor(
