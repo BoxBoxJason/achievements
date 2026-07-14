@@ -102,6 +102,21 @@ export interface AchievementRow {
   }>;
 }
 
+// Allow-list mapping an accepted sortCriteria value to the fixed, known-safe
+// column expression it may be interpolated as in ORDER BY. SQL identifiers
+// can't be bound as query parameters, so this validation lives here, in the
+// method that builds the query, rather than relying on callers (e.g.
+// AchievementController) to have already validated the value.
+const VALID_SORT_COLUMNS: Record<string, string> = {
+  achieved: "a.achieved",
+  title: "a.title",
+  category: "a.category",
+  '"group"': 'a."group"',
+  achievedAt: "a.achievedAt",
+  tier: "a.tier",
+  exp: "a.exp",
+};
+
 /**
  * Achievement class, contains the information of an achievement and its processing methods
  *
@@ -690,9 +705,17 @@ class Achievement {
     `;
 
     if (filters.sortCriteria) {
-      achievementsQuery += ` ORDER BY a.${filters.sortCriteria}`;
+      const sortColumn = VALID_SORT_COLUMNS[filters.sortCriteria];
+      if (!sortColumn) {
+        throw new Error(`Invalid sort criteria: ${filters.sortCriteria}`);
+      }
+      achievementsQuery += ` ORDER BY ${sortColumn}`;
       if (filters.sortDirection) {
-        achievementsQuery += ` ${filters.sortDirection.toUpperCase()}`;
+        const sortDirection = filters.sortDirection.toUpperCase();
+        if (sortDirection !== "ASC" && sortDirection !== "DESC") {
+          throw new Error(`Invalid sort direction: ${filters.sortDirection}`);
+        }
+        achievementsQuery += ` ${sortDirection}`;
       }
     }
 
