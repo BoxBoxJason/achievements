@@ -58,9 +58,9 @@ const AchievementHolder: React.FC<AchievementHolderProps> = ({ filters, limit })
 
   return (
     <div className="achievement-holder flex flex-col items-center gap-2.5 w-full py-2.5 px-0">
-      {achievements.map((achievement, index) => (
+      {achievements.map((achievement) => (
         <AchievementDisplay
-          key={index}
+          key={achievement.title}
           icon={achievement.icon}
           title={achievement.title}
           description={achievement.description}
