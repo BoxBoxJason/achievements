@@ -47,6 +47,16 @@ export namespace AchievementsWebview {
     return panel;
   }
 
+  function getNonce(): string {
+    const possible =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let nonce = "";
+    for (let i = 0; i < 32; i++) {
+      nonce += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return nonce;
+  }
+
   function getDefaultWebviewContentReact(
     context: vscode.ExtensionContext,
     panel: vscode.WebviewPanel,
@@ -54,10 +64,12 @@ export namespace AchievementsWebview {
     const reactScriptUri = panel.webview.asWebviewUri(
       vscode.Uri.file(path.join(__dirname, "webview.js")),
     );
+    const nonce = getNonce();
     return `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${panel.webview.cspSource}; style-src ${panel.webview.cspSource}; script-src 'nonce-${nonce}';">
     <title>Achievements</title>
     <link rel="stylesheet" type="text/css" href="${panel.webview.asWebviewUri(
       vscode.Uri.file(
@@ -67,14 +79,13 @@ export namespace AchievementsWebview {
   </head>
   <body>
     <div id="achievement-view"></div>
-    <script src="${panel.webview.cspSource}"></script>
-    <script>
+    <script nonce="${nonce}">
       window.imageUris = ${JSON.stringify(
         getPackagedImages(context, panel.webview),
       )}
       window.vscode = acquireVsCodeApi();
     </script>
-    <script src="${reactScriptUri}"></script>
+    <script nonce="${nonce}" src="${reactScriptUri}"></script>
   </body>
 </html>` as const;
   }
