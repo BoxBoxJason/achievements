@@ -147,7 +147,7 @@ class Progression {
     } finally {
       statement.free();
     }
-    await db_model.saveDB();
+    db_model.scheduleSave();
 
     // Change the id of the instance to the id of the row if it was inserted
     const idRow = db_model.get<{ id: number }>(
@@ -190,7 +190,7 @@ class Progression {
         statement.free();
       }
       db.run("COMMIT");
-      await db_model.saveDB();
+      db_model.scheduleSave();
     } catch (error) {
       db.run("ROLLBACK");
       throw error;
@@ -266,7 +266,7 @@ class Progression {
       achievedAt: string;
       exp: number;
     }[];
-    await db_model.saveDB();
+    db_model.scheduleSave();
     return rows;
   }
 
@@ -309,7 +309,7 @@ class Progression {
     ) as {
       id: number;
     }[];
-    await db_model.saveDB();
+    db_model.scheduleSave();
     return rows;
   }
 
@@ -354,7 +354,7 @@ class Progression {
       query,
       maximize ? [value, selectorValue, value] : [value, selectorValue],
     ) as { id: number }[];
-    await db_model.saveDB();
+    db_model.scheduleSave();
     return rows;
   }
 

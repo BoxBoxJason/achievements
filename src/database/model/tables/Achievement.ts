@@ -496,7 +496,7 @@ class Achievement {
       }
 
       db.run("COMMIT");
-      await db_model.saveDB();
+      db_model.scheduleSave();
     } catch (error) {
       db.run("ROLLBACK");
       throw error;
@@ -566,7 +566,7 @@ class Achievement {
     } finally {
       statement.free();
     }
-    await db_model.saveDB();
+    db_model.scheduleSave();
   }
 
   /**
@@ -597,7 +597,7 @@ class Achievement {
     } finally {
       statement.free();
     }
-    await db_model.saveDB();
+    db_model.scheduleSave();
   }
 
   // ==================== GET ====================
