@@ -92,7 +92,6 @@ export namespace timeListeners {
    * Get the current daily session, create a new one if none is found
    *
    * @returns {DailySession} - Current daily session
-   * @throws {Error} - Multiple daily sessions found for the same day
    */
   async function getCurrentDailySession(): Promise<DailySession> {
     const currentDay = new Date().toISOString().split("T")[0];
@@ -100,14 +99,7 @@ export namespace timeListeners {
       return dailySession;
     }
 
-    const dailySessions = await DailySession.getSessions(currentDay, currentDay);
-    if (dailySessions.length === 0) {
-      return await DailySession.getOrCreate(currentDay, 0);
-    } else if (dailySessions.length > 1) {
-      throw new Error("multiple daily sessions found for the same day");
-    } else {
-      return dailySessions[0];
-    }
+    return await DailySession.getOrCreate(currentDay, 0);
   }
 
   /**

@@ -9,6 +9,7 @@ import Achievement, {
 import { PostMessage } from "../icons";
 import { webview } from "../viewconst";
 import * as vscode from "vscode";
+import logger from "../../utils/logger";
 
 export namespace backendRequests {
   export async function handleMessage(
@@ -32,7 +33,7 @@ export namespace backendRequests {
         await handleProfileSelect(panel);
         break;
       default:
-        console.error("Unknown command: " + message.command);
+        logger.error("Unknown command: " + message.command);
     }
   }
 
