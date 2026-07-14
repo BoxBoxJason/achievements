@@ -176,7 +176,7 @@
     "@types/vscode": "1.125.0",
     "@typescript-eslint/eslint-plugin": "8.64.0",
     "@typescript-eslint/parser": "8.64.0",
-    "@vscode/test-cli": "^0.0.15",
+    "@vscode/test-cli": "0.0.15",
     "@vscode/test-electron": "3.0.0",
     "@vscode/vsce": "3.9.2",
     "esbuild": "0.28.1",
@@ -184,10 +184,10 @@
     "eslint-plugin-promise": "7.3.0",
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "7.1.1",
-    "nyc": "^18.0.0",
+    "nyc": "18.0.0",
     "ovsx": "1.0.2",
     "ts-node": "10.9.2",
-    "typescript": "6.0.3"
+    "typescript": "7.0.2"
   },
   "dependencies": {
     "proper-lockfile": "4.1.2",
