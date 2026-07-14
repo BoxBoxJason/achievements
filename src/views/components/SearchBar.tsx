@@ -10,6 +10,7 @@ interface SearchBarProps {
 
 const SearchBar: React.FC<SearchBarProps> = ({ setFilters, limit, setLimit }) => {
   const [partialTitle, setPartialTitle] = useState('');
+  const [debouncedTitle, setDebouncedTitle] = useState('');
   const [achievable, setAchievable] = useState<true | undefined>(true);
   const [achieved, setAchieved] = useState<true | undefined>(undefined);
   const [label, setLabel] = useState<string | undefined>(undefined);
@@ -33,8 +34,15 @@ const SearchBar: React.FC<SearchBarProps> = ({ setFilters, limit, setLimit }) =>
   }, []);
 
   useEffect(() => {
+    const debounceHandle = setTimeout(() => {
+      setDebouncedTitle(partialTitle);
+    }, 250);
+    return () => clearTimeout(debounceHandle);
+  }, [partialTitle]);
+
+  useEffect(() => {
     setFilters({
-      title: partialTitle,
+      title: debouncedTitle,
       achievable,
       achieved,
       labels: label ? [label] : undefined,
@@ -42,7 +50,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ setFilters, limit, setLimit }) =>
       sortCriteria,
       sortDirection,
     });
-  }, [partialTitle, achievable, achieved, label, limit, sortCriteria, sortDirection, setFilters]);
+  }, [debouncedTitle, achievable, achieved, label, limit, sortCriteria, sortDirection, setFilters]);
 
   const handleMessage = (event: MessageEvent) => {
     try {
