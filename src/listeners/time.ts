@@ -39,6 +39,22 @@ export namespace timeListeners {
    * @param {vscode.ExtensionContext} context - Extension context
    * @returns {void}
    */
+  /**
+   * Track time spent connected to a remote / container development window,
+   * scoped locally to the current remote environment (vscode.env.remoteName).
+   *
+   * @param {number} sessionDuration - The session duration in seconds
+   * @returns {Promise<void>}
+   */
+  export async function trackRemoteTimeSpent(sessionDuration: number): Promise<void> {
+    if (vscode.env.remoteName) {
+      await ProgressionController.increaseProgression(
+        constants.criteria.REMOTE_TIME_SPENT,
+        sessionDuration
+      );
+    }
+  }
+
   export async function activate(context: vscode.ExtensionContext): Promise<void> {
     if (config.isListenerEnabled(constants.listeners.TIME)) {
       logger.info("Starting time events listeners");
@@ -64,6 +80,7 @@ export namespace timeListeners {
           );
           dailySession = await getCurrentDailySession();
           await dailySession.increase(sessionDuration);
+          await trackRemoteTimeSpent(sessionDuration);
           sessionStart = sessionEnd;
           await TimeSpentController.updateConnectionStreak();
         }
@@ -104,6 +121,7 @@ export namespace timeListeners {
       );
       // Increase daily session duration in the database
       await dailySession.increase(sessionDuration);
+      await trackRemoteTimeSpent(sessionDuration);
       sessionStart = undefined;
       await TimeSpentController.updateConnectionStreak();
     }
@@ -167,6 +185,7 @@ export namespace timeListeners {
       );
       dailySession = await getCurrentDailySession();
       await dailySession.increase(sessionDuration);
+      await trackRemoteTimeSpent(sessionDuration);
     }
     logger.debug("Time listeners deactivated");
   }

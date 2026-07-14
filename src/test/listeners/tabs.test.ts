@@ -40,6 +40,30 @@ suite("Tab Listeners Test Suite", () => {
     }
   });
 
+  test("handleWorkspaceFoldersChangedEvent should update NUMBER_OF_SIMULTANEOUS_WORKSPACE_FOLDERS progression", async () => {
+    let updatedCriteria: string | undefined;
+    let updatedValue: unknown;
+    const originalUpdate = ProgressionController.updateProgression;
+    ProgressionController.updateProgression = async (
+      criteria: string,
+      value: string | number | Date | boolean,
+    ) => {
+      updatedCriteria = criteria;
+      updatedValue = value;
+    };
+
+    try {
+      await tabListeners.handleWorkspaceFoldersChangedEvent();
+      assert.strictEqual(
+        updatedCriteria,
+        constants.criteria.NUMBER_OF_SIMULTANEOUS_WORKSPACE_FOLDERS,
+      );
+      assert.strictEqual(typeof updatedValue, "number");
+    } finally {
+      ProgressionController.updateProgression = originalUpdate;
+    }
+  });
+
   test("handleSelectionChangedEvent should count only the transition to multi-cursor", async () => {
     const increasedCriteria: string[] = [];
     const originalIncrease = ProgressionController.increaseProgression;

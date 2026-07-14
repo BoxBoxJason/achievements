@@ -1,4 +1,5 @@
 import * as assert from "node:assert";
+import * as vscode from "vscode";
 import { timeListeners } from "../../listeners/time";
 import { ProgressionController } from "../../database/controller/progressions";
 import { constants } from "../../constants";
@@ -58,6 +59,69 @@ suite("Time Listeners Test Suite", () => {
       assert.strictEqual(increasedCriteria.length, 0);
     } finally {
       ProgressionController.increaseProgression = originalIncrease;
+    }
+  });
+
+  test("trackRemoteTimeSpent should increase REMOTE_TIME_SPENT progression when running in a remote environment", async () => {
+    const originalRemoteName = Object.getOwnPropertyDescriptor(
+      vscode.env,
+      "remoteName",
+    );
+    Object.defineProperty(vscode.env, "remoteName", {
+      value: "ssh-remote",
+      configurable: true,
+    });
+
+    let increasedCriteria: string | undefined;
+    let increasedValue: unknown;
+    const originalIncrease = ProgressionController.increaseProgression;
+    ProgressionController.increaseProgression = async (
+      criteria: string,
+      increase: number | string = 1,
+    ) => {
+      increasedCriteria = criteria;
+      increasedValue = increase;
+    };
+
+    try {
+      await timeListeners.trackRemoteTimeSpent(42);
+      assert.strictEqual(
+        increasedCriteria,
+        constants.criteria.REMOTE_TIME_SPENT,
+      );
+      assert.strictEqual(increasedValue, 42);
+    } finally {
+      ProgressionController.increaseProgression = originalIncrease;
+      if (originalRemoteName) {
+        Object.defineProperty(vscode.env, "remoteName", originalRemoteName);
+      }
+    }
+  });
+
+  test("trackRemoteTimeSpent should not increase REMOTE_TIME_SPENT progression when running locally", async () => {
+    const originalRemoteName = Object.getOwnPropertyDescriptor(
+      vscode.env,
+      "remoteName",
+    );
+    Object.defineProperty(vscode.env, "remoteName", {
+      value: undefined,
+      configurable: true,
+    });
+
+    let called = false;
+    const originalIncrease = ProgressionController.increaseProgression;
+    ProgressionController.increaseProgression = async () => {
+      called = true;
+    };
+
+    try {
+      await timeListeners.trackRemoteTimeSpent(42);
+      assert.strictEqual(called, false);
+    } finally {
+      ProgressionController.increaseProgression = originalIncrease;
+      if (originalRemoteName) {
+        Object.defineProperty(vscode.env, "remoteName", originalRemoteName);
+      }
     }
   });
 });

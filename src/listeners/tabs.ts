@@ -21,6 +21,7 @@ let hasMultiCursorSelection = false;
  * @function handleTabsChangedEvent - Handler for tab groups/tabs changes
  * @function handleSelectionChangedEvent - Handler for text editor selection changes
  * @function handleTerminalOpenedEvent - Handler for terminal opened event
+ * @function handleWorkspaceFoldersChangedEvent - Handler for workspace folders changes
  */
 export namespace tabListeners {
   /**
@@ -49,6 +50,16 @@ export namespace tabListeners {
         handleTerminalOpenedEvent,
         null,
         context.subscriptions,
+      );
+
+      vscode.workspace.onDidChangeWorkspaceFolders(
+        handleWorkspaceFoldersChangedEvent,
+        null,
+        context.subscriptions,
+      );
+      // Capture the workspace folder count already present at startup
+      handleWorkspaceFoldersChangedEvent().catch((err: unknown) =>
+        logger.error(err),
       );
 
       logger.debug("Tabs listeners activated");
@@ -117,6 +128,22 @@ export namespace tabListeners {
   export async function handleTerminalOpenedEvent(): Promise<void> {
     await ProgressionController.increaseProgression(
       constants.criteria.TERMINALS_OPENED,
+    );
+  }
+
+  /**
+   * Handler for workspace folders changes.
+   * Tracks the number of simultaneously opened workspace folders
+   * (multi-root workspaces).
+   *
+   * @memberof tabListeners
+   *
+   * @returns {Promise<void>}
+   */
+  export async function handleWorkspaceFoldersChangedEvent(): Promise<void> {
+    await ProgressionController.updateProgression(
+      constants.criteria.NUMBER_OF_SIMULTANEOUS_WORKSPACE_FOLDERS,
+      vscode.workspace.workspaceFolders?.length ?? 0,
     );
   }
 }

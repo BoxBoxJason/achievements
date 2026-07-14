@@ -366,6 +366,42 @@ export namespace StackingTemplates {
         requires: [],
       });
 
+    export const numberOfSimultaneousWorkspaceFoldersTemplate =
+      (): StackingAchievementTemplate => ({
+        title: "Multi-tasker %d",
+        icon: "MULTI_TASKER",
+        category: constants.category.PRODUCTIVITY,
+        group: "Number of Simultaneous Workspace Folders",
+        labels: [
+          constants.category.PRODUCTIVITY,
+          constants.labels.WORKSPACE_FOLDERS,
+        ],
+        criterias: [constants.criteria.NUMBER_OF_SIMULTANEOUS_WORKSPACE_FOLDERS],
+        criteriasFunctions: [STANDARD_INFERNAL_CRITERIA_FUNCTION],
+        description: `Open ${constants.criteria.NUMBER_OF_SIMULTANEOUS_WORKSPACE_FOLDERS} workspace folders simultaneously`,
+        minTier: 0,
+        maxTier: 5,
+        expFunction: STANDARD_EXP_FUNCTION,
+        hidden: false,
+        requires: [],
+      });
+
+    export const remoteTimeSpentTemplate = (): StackingAchievementTemplate => ({
+      title: "Remote Worker %d",
+      icon: "REMOTE_WORKER",
+      category: constants.category.PRODUCTIVITY,
+      group: "time spent",
+      labels: [constants.category.PRODUCTIVITY, constants.labels.REMOTE],
+      criterias: [constants.criteria.REMOTE_TIME_SPENT],
+      criteriasFunctions: [STANDARD_INFERNAL_CRITERIA_FUNCTION],
+      description: `Spend ${constants.criteria.REMOTE_TIME_SPENT} hours coding remotely`,
+      minTier: 0,
+      maxTier: 13,
+      expFunction: STANDARD_EXP_FUNCTION,
+      hidden: false,
+      requires: [],
+    });
+
     export const multiCursorSessionsTemplate =
       (): StackingAchievementTemplate => ({
         title: "Hydra Editing %d",
