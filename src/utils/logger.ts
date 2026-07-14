@@ -4,7 +4,6 @@
  * @date 2024-11-13
  */
 
-import { exit } from "process";
 import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
@@ -164,7 +163,6 @@ export namespace logger {
       logMessage(LOG_LEVELS_SLUG.FATAL, ...args);
       vscode.window.showErrorMessage(args.join(" "));
     }
-    exit(1);
   }
 
   /**
