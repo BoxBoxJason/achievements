@@ -239,18 +239,21 @@ class Progression {
         )
       )
       UPDATE achievements
-      SET achieved = TRUE, achievedAt = CURRENT_TIMESTAMP
+      SET achieved = TRUE, achievedAt = ?
       WHERE id IN (SELECT achievement_id FROM valid_achievements)
       RETURNING id, title, achievedAt, exp;
     `;
 
     const db = await db_model.getDB();
 
-    // Pass the progressionIds as parameters to the query
+    // Pass the progressionIds and the achievedAt timestamp (ISO-8601, to
+    // match the format used by the JS-side updateAchieved path) as
+    // parameters to the query, in the order their placeholders appear.
+    const achievedAt = new Date().toISOString();
     const rows = db_model.getAll(
       db,
       updateAchievementsQuery,
-      progressionIds,
+      [...progressionIds, achievedAt],
     ) as {
       id: number;
       title: string;

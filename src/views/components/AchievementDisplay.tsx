@@ -10,10 +10,16 @@ const AchievementDisplay: React.FC<AchievementDict> = (achievementDict: Achievem
   const parseDateString = (dateValue: string | Date): string => {
     const dateString =
       typeof dateValue === 'string' ? dateValue : dateValue.toISOString();
-    const splitDate = dateString.split('T');
-    const date = splitDate[0];
-    const time = splitDate[1].split('.')[0];
-    return `${date} @${time}`;
+    // Accept both ISO-8601 ("YYYY-MM-DDTHH:MM:SS.sssZ") and SQLite's
+    // CURRENT_TIMESTAMP ("YYYY-MM-DD HH:MM:SS") formats.
+    const [date, time] = dateString.split(/[T ]/);
+    if (!date) {
+      return dateString;
+    }
+    if (!time) {
+      return date;
+    }
+    return `${date} @${time.split('.')[0]}`;
   };
 
   return (
