@@ -43,7 +43,7 @@ function refreshIgnoredMatchers(): void {
  * @param {vscode.Uri} uri - The URI to check
  * @returns {boolean} True if the URI should be ignored, false otherwise
  */
-function shouldIgnoreUri(uri: vscode.Uri): boolean {
+export function shouldIgnoreUri(uri: vscode.Uri): boolean {
   if (uri.scheme !== "file") {
     return true;
   }

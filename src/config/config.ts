@@ -30,6 +30,7 @@ export interface Config {
     extensions: boolean;
     files: boolean;
     git: boolean;
+    shortcuts: boolean;
     tabs: boolean;
     tasks: boolean;
     time: boolean;
@@ -153,6 +154,10 @@ export namespace config {
         ),
         files: extensionRawConfig.get<boolean>("listeners.files", true),
         git: extensionRawConfig.get<boolean>("listeners.git", true),
+        shortcuts: extensionRawConfig.get<boolean>(
+          "listeners.shortcuts",
+          true,
+        ),
         tabs: extensionRawConfig.get<boolean>("listeners.tabs", true),
         tasks: extensionRawConfig.get<boolean>("listeners.tasks", true),
         time: extensionRawConfig.get<boolean>("listeners.time", true),

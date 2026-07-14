@@ -70,6 +70,7 @@ You can also access the settings by using the command `achievements.settings`.
 |`achievements.listeners.extensions`|Enable or disable extension listeners|
 |`achievements.checkOutdatedExtensions`|Opt-in: check installed extensions against the VS Marketplace for outdated versions (sends your installed extension IDs over the network; disabled by default)|
 |`achievements.listeners.files`|Enable or disable file listeners|
+|`achievements.listeners.shortcuts`|Enable or disable paste shortcut listeners|
 |`achievements.listeners.tabs`|Enable or disable tab listeners|
 |`achievements.listeners.tasks`|Enable or disable task listeners|
 |`achievements.listeners.time`|Enable or disable time tracking listeners|

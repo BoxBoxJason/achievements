@@ -101,6 +101,11 @@
             "default": true,
             "description": "Enable or disable git events listeners for the Achievements extension."
           },
+          "achievements.listeners.shortcuts": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable or disable paste shortcut events listeners for the Achievements extension."
+          },
           "achievements.listeners.tabs": {
             "type": "boolean",
             "default": true,
