@@ -189,12 +189,16 @@ export namespace extensionsListeners {
         context.subscriptions,
       );
 
-      vscode.extensions.onDidChange(
-        () =>
-          checkOutdatedExtensions().catch((err: unknown) => logger.error(err)),
-        null,
-        context.subscriptions,
-      );
+      if (config.checkOutdatedExtensionsEnabled()) {
+        vscode.extensions.onDidChange(
+          () =>
+            checkOutdatedExtensions().catch((err: unknown) =>
+              logger.error(err),
+            ),
+          null,
+          context.subscriptions,
+        );
+      }
 
       vscode.window.onDidChangeActiveColorTheme(
         handleThemeChange,
@@ -206,7 +210,12 @@ export namespace extensionsListeners {
 
       // Check the total number of installed extensions at the boot
       checkExtensions().catch((err: unknown) => logger.error(err));
-      checkOutdatedExtensions().catch((err: unknown) => logger.error(err));
+
+      // Opt-in only: this sends the user's installed extension IDs to the
+      // VS Marketplace over the network. See achievements.checkOutdatedExtensions.
+      if (config.checkOutdatedExtensionsEnabled()) {
+        checkOutdatedExtensions().catch((err: unknown) => logger.error(err));
+      }
     } else {
       logger.info("Extensions events listeners are disabled");
     }

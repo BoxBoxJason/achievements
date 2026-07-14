@@ -33,6 +33,16 @@ Achievements is a Visual Studio Code extension that allows you to track your pro
 - A lock prevents multiple VS Code instances from writing the database at the same time.
   - If another instance is using the DB, the extension runs in **read-only** mode: listeners are disabled and a status bar item indicates the state.
 
+### Network access
+
+By default, this extension makes **no network requests** and works fully offline.
+
+The only exception is the optional `achievements.checkOutdatedExtensions` setting (disabled
+by default). When enabled, it periodically sends the IDs of your installed (non-builtin)
+extensions to the VS Marketplace (`marketplace.visualstudio.com`) to check for outdated
+versions and award related achievements. Enable it only if you're comfortable sharing your
+installed-extension list with the Marketplace.
+
 ## Extension Commands
 
 Several commands are available to interact with the Achievements extension. You can access these commands through the Command Palette (Ctrl+Shift+P) or by using keybindings.
@@ -58,6 +68,7 @@ You can also access the settings by using the command `achievements.settings`.
 |`achievements.listeners.debug`|Enable or disable debug listeners|
 |`achievements.listeners.git`|Enable or disable git listeners|
 |`achievements.listeners.extensions`|Enable or disable extension listeners|
+|`achievements.checkOutdatedExtensions`|Opt-in: check installed extensions against the VS Marketplace for outdated versions (sends your installed extension IDs over the network; disabled by default)|
 |`achievements.listeners.files`|Enable or disable file listeners|
 |`achievements.listeners.tabs`|Enable or disable tab listeners|
 |`achievements.listeners.tasks`|Enable or disable task listeners|

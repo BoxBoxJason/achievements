@@ -84,7 +84,12 @@
           "achievements.listeners.extensions": {
             "type": "boolean",
             "default": true,
-            "description": "Enable or disable extensions / themes events listeners for the Achievements extension."
+            "description": "Enable or disable extensions / themes events listeners for the Achievements extension. This only tracks locally installed/enabled extensions and does not make any network request; see achievements.checkOutdatedExtensions for the opt-in Marketplace check."
+          },
+          "achievements.checkOutdatedExtensions": {
+            "type": "boolean",
+            "default": false,
+            "description": "Opt-in: periodically send the IDs of your installed (non-builtin) extensions to the VS Marketplace (marketplace.visualstudio.com) to check for outdated versions and award related achievements. Disabled by default since this is the only network request made by this extension."
           },
           "achievements.listeners.files": {
             "type": "boolean",

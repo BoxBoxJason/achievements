@@ -20,6 +20,7 @@ export interface Config {
   notifications: boolean;
   logDirectory: string;
   username: string;
+  checkOutdatedExtensions: boolean;
   ignore: {
     files: string[];
     directories: string[];
@@ -126,6 +127,10 @@ export namespace config {
       username: extensionRawConfig
         .get<string>("username", webview.DEFAULT_USER)
         .trim(),
+      checkOutdatedExtensions: extensionRawConfig.get<boolean>(
+        "checkOutdatedExtensions",
+        false,
+      ),
       ignore: {
         files: extensionRawConfig
           .get<string[]>("ignore.files", [...constants.ignore.DEFAULT_FILES])
@@ -206,6 +211,22 @@ export namespace config {
    */
   export function notificationsEnabled(): boolean {
     return getConfig().notifications;
+  }
+
+  /**
+   * Returns whether checking for outdated extensions against the VS
+   * Marketplace is enabled. This is opt-in and separate from
+   * `listeners.extensions`, since it makes a network request that sends the
+   * user's installed extension IDs to a third-party server.
+   *
+   * @memberof config
+   * @function checkOutdatedExtensionsEnabled
+   *
+   * @returns {boolean} - Whether the outdated extensions check is enabled
+   * @throws {Error} - If the module has not been initialized
+   */
+  export function checkOutdatedExtensionsEnabled(): boolean {
+    return getConfig().checkOutdatedExtensions;
   }
 
   /**
