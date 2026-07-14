@@ -96,7 +96,12 @@ export namespace db_model {
 
       logger.debug("Database initialized successfully");
     } catch (err) {
-      logger.error(`Failed to initialize database: ${(err as Error).message}`);
+      // Fatal for the extension's core functionality and not otherwise
+      // surfaced to the user (the caller re-throws without its own UI),
+      // so this is one of the rare cases worth an explicit notification.
+      logger.showError(
+        `Achievements: Failed to initialize database: ${(err as Error).message}`,
+      );
       throw err;
     }
   }

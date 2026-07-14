@@ -135,7 +135,9 @@ export namespace logger {
   }
 
   /**
-   * Logs an error message (if log level allows)
+   * Logs an error message (if log level allows). Does not surface a UI
+   * notification: most errors logged this way are internal failures the
+   * user cannot act on. Use `showError` for the rare user-actionable case.
    *
    * @memberof logger
    * @function error
@@ -146,6 +148,25 @@ export namespace logger {
   export function error(...args: unknown[]) {
     if (logLevel <= LOG_LEVELS.ERROR) {
       logMessage(LOG_LEVELS_SLUG.ERROR, ...args);
+    }
+  }
+
+  /**
+   * Logs an error message and, if notifications are enabled, surfaces it as
+   * an error notification. Reserve this for errors the user genuinely needs
+   * to see and can act on.
+   *
+   * @memberof logger
+   * @function showError
+   *
+   * @param {any[]} args - The message to log and display
+   * @returns void
+   */
+  export function showError(...args: unknown[]) {
+    if (logLevel <= LOG_LEVELS.ERROR) {
+      logMessage(LOG_LEVELS_SLUG.ERROR, ...args);
+    }
+    if (config.notificationsEnabled()) {
       vscode.window.showErrorMessage(args.join(" "));
     }
   }
