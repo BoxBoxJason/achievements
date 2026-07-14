@@ -335,13 +335,24 @@ export namespace fileListeners {
   }
 
   const fileErrorCounts = new Map<string, number>();
-  let errorCounterFree = true;
+  // Serializes handleDiagnosticChangedEvent invocations so overlapping
+  // events are processed in order instead of being dropped.
+  let diagnosticEventQueue: Promise<void> = Promise.resolve();
 
   export async function handleDiagnosticChangedEvent(
     event: vscode.DiagnosticChangeEvent,
   ): Promise<void> {
-    if (errorCounterFree) {
-      errorCounterFree = false;
+    diagnosticEventQueue = diagnosticEventQueue.then(() =>
+      processDiagnosticChangedEvent(event),
+    );
+    await diagnosticEventQueue;
+  }
+
+  async function processDiagnosticChangedEvent(
+    event: vscode.DiagnosticChangeEvent,
+  ): Promise<void> {
+    try {
+      let totalErrorsFixed = 0;
       for (const uri of event.uris) {
         if (shouldIgnoreUri(uri)) {
           continue;
@@ -355,17 +366,23 @@ export namespace fileListeners {
           ).length;
         const filePath = uri.fsPath;
         const previousErrorCount = fileErrorCounts.get(filePath);
-        if (previousErrorCount !== undefined) {
-          if (errorCount < previousErrorCount) {
-            await ProgressionController.increaseProgression(
-              constants.criteria.ERRORS_FIXED,
-              previousErrorCount - errorCount,
-            );
-          }
+        if (
+          previousErrorCount !== undefined &&
+          errorCount < previousErrorCount
+        ) {
+          totalErrorsFixed += previousErrorCount - errorCount;
         }
         fileErrorCounts.set(filePath, errorCount);
       }
-      errorCounterFree = true;
+
+      if (totalErrorsFixed > 0) {
+        await ProgressionController.increaseProgression(
+          constants.criteria.ERRORS_FIXED,
+          totalErrorsFixed,
+        );
+      }
+    } catch (err) {
+      logger.error(`Failed to process diagnostics change event: ${err}`);
     }
   }
 }
