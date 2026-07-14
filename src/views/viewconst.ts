@@ -235,6 +235,8 @@ export namespace webview {
           "productivity",
           "multi_cursor.png",
         ],
+        NIGHT_OWL: ["icons", "achievements", "productivity", "owl.png"],
+        EARLY_BIRD: ["icons", "achievements", "productivity", "bird.png"],
         ERROR_FIXER: ["icons", "achievements", "productivity", "fix.png"],
         SHOWER_AVOIDER: ["icons", "achievements", "productivity", "shower.png"],
         CONNECTION_STREAK: [

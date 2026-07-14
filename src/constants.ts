@@ -62,6 +62,10 @@ export namespace constants {
     MULTI_CURSOR_SESSIONS = "multiCursorSessionsCount",
     // Terminals opened
     TERMINALS_OPENED = "terminalsOpenedCount",
+    // Coding sessions started late at night (local time)
+    NIGHT_OWL_SESSIONS = "nightOwlSessionsCount",
+    // Coding sessions started early in the morning (local time)
+    EARLY_BIRD_SESSIONS = "earlyBirdSessionsCount",
     // Time spent (daily)
     DAILY_TIME_SPENT = "dailyTimeSpentCount",
     // Time spent (bi-monthly)

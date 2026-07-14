@@ -9,9 +9,16 @@ import * as vscode from "vscode";
 import { DailySession } from "../database/model/tables/DailySession";
 import { TimeSpentController } from "../database/controller/timespent";
 import { db_model } from "../database/model/model";
+import { ProgressionController } from "../database/controller/progressions";
 import logger from "../utils/logger";
 import { config } from "../config/config";
 import { constants } from "../constants";
+
+// Local-time hour ranges (inclusive start, exclusive end) for flavor achievements
+const NIGHT_OWL_START_HOUR = 0;
+const NIGHT_OWL_END_HOUR = 4;
+const EARLY_BIRD_START_HOUR = 5;
+const EARLY_BIRD_END_HOUR = 7;
 
 /**
  * Time related events listeners functions and handlers
@@ -38,6 +45,7 @@ export namespace timeListeners {
 
       dailySession = await getCurrentDailySession();
       sessionStart = new Date();
+      await trackTimeOfDaySession(sessionStart);
 
       // Window focus change event
       vscode.window.onDidChangeWindowState(
@@ -85,6 +93,7 @@ export namespace timeListeners {
   export async function handleWindowStateChange(windowState: vscode.WindowState) {
     if (windowState.focused) {
       sessionStart = new Date();
+      await trackTimeOfDaySession(sessionStart);
     } else if (sessionStart) {
       // Retrieve current daily session
       dailySession = await getCurrentDailySession();
@@ -97,6 +106,28 @@ export namespace timeListeners {
       await dailySession.increase(sessionDuration);
       sessionStart = undefined;
       await TimeSpentController.updateConnectionStreak();
+    }
+  }
+
+  /**
+   * Track flavor achievements based on the local hour a coding session starts.
+   * Exported so tests can call it directly with an arbitrary Date.
+   *
+   * @param {Date} sessionStartDate - The date/time the session started at
+   * @returns {Promise<void>}
+   */
+  export async function trackTimeOfDaySession(
+    sessionStartDate: Date
+  ): Promise<void> {
+    const hour = sessionStartDate.getHours();
+    if (hour >= NIGHT_OWL_START_HOUR && hour < NIGHT_OWL_END_HOUR) {
+      await ProgressionController.increaseProgression(
+        constants.criteria.NIGHT_OWL_SESSIONS
+      );
+    } else if (hour >= EARLY_BIRD_START_HOUR && hour < EARLY_BIRD_END_HOUR) {
+      await ProgressionController.increaseProgression(
+        constants.criteria.EARLY_BIRD_SESSIONS
+      );
     }
   }
 

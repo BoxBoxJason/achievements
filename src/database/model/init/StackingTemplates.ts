@@ -69,7 +69,7 @@ export namespace StackingTemplates {
             .replace("LANGUAGE", language)
             .replace(
               "FILES",
-              constants.criteria.FILES_CREATED_LANGUAGE.replace("%s", language)
+              constants.criteria.FILES_CREATED_LANGUAGE.replace("%s", language),
             ),
           minTier: 0,
           maxTier: 11,
@@ -250,7 +250,7 @@ export namespace StackingTemplates {
             .replace("LANGUAGE", language)
             .replace(
               "LOC",
-              constants.criteria.LINES_OF_CODE_LANGUAGE.replace("%s", language)
+              constants.criteria.LINES_OF_CODE_LANGUAGE.replace("%s", language),
             ),
           minTier: 0,
           maxTier: 15,
@@ -372,7 +372,10 @@ export namespace StackingTemplates {
         icon: "MULTI_CURSOR",
         category: constants.category.PRODUCTIVITY,
         group: "Multi Cursor Sessions",
-        labels: [constants.category.PRODUCTIVITY, constants.labels.MULTI_CURSOR],
+        labels: [
+          constants.category.PRODUCTIVITY,
+          constants.labels.MULTI_CURSOR,
+        ],
         criterias: [constants.criteria.MULTI_CURSOR_SESSIONS],
         criteriasFunctions: [STANDARD_HARD_CRITERIA_FUNCTION],
         description: `Start multi-cursor editing ${constants.criteria.MULTI_CURSOR_SESSIONS} times`,
@@ -383,21 +386,56 @@ export namespace StackingTemplates {
         requires: [],
       });
 
-    export const connectionStreakTemplate = (): StackingAchievementTemplate => ({
-      title: "Connection Streak %d",
-      icon: "CONNECTION_STREAK",
-      category: constants.category.PRODUCTIVITY,
-      group: "Connection Streak",
-      labels: [constants.category.PRODUCTIVITY, "streak"],
-      criterias: [constants.criteria.CURRENT_CONNECTION_STREAK],
-      criteriasFunctions: [(x: number) => x + 1],
-      description: `Connect for ${constants.criteria.CURRENT_CONNECTION_STREAK} consecutive days`,
-      minTier: 0,
-      maxTier: 999,
-      expFunction: (x: number) => 1 + 2 * (x + 1),
-      hidden: false,
-      requires: [],
-    });
+    export const nightOwlSessionsTemplate =
+      (): StackingAchievementTemplate => ({
+        title: "Night Owl %d",
+        icon: "NIGHT_OWL",
+        category: constants.category.PRODUCTIVITY,
+        group: "Night Owl Sessions",
+        labels: [constants.category.PRODUCTIVITY, "fun"],
+        criterias: [constants.criteria.NIGHT_OWL_SESSIONS],
+        criteriasFunctions: [STANDARD_INFERNAL_CRITERIA_FUNCTION],
+        description: `Start ${constants.criteria.NIGHT_OWL_SESSIONS} coding sessions late at night`,
+        minTier: 0,
+        maxTier: 10,
+        expFunction: STANDARD_EXP_FUNCTION,
+        hidden: false,
+        requires: [],
+      });
+
+    export const earlyBirdSessionsTemplate =
+      (): StackingAchievementTemplate => ({
+        title: "Early Bird %d",
+        icon: "EARLY_BIRD",
+        category: constants.category.PRODUCTIVITY,
+        group: "Early Bird Sessions",
+        labels: [constants.category.PRODUCTIVITY, "fun"],
+        criterias: [constants.criteria.EARLY_BIRD_SESSIONS],
+        criteriasFunctions: [STANDARD_INFERNAL_CRITERIA_FUNCTION],
+        description: `Start ${constants.criteria.EARLY_BIRD_SESSIONS} coding sessions early in the morning`,
+        minTier: 0,
+        maxTier: 10,
+        expFunction: STANDARD_EXP_FUNCTION,
+        hidden: false,
+        requires: [],
+      });
+
+    export const connectionStreakTemplate =
+      (): StackingAchievementTemplate => ({
+        title: "Connection Streak %d",
+        icon: "CONNECTION_STREAK",
+        category: constants.category.PRODUCTIVITY,
+        group: "Connection Streak",
+        labels: [constants.category.PRODUCTIVITY, "streak"],
+        criterias: [constants.criteria.CURRENT_CONNECTION_STREAK],
+        criteriasFunctions: [(x: number) => x + 1],
+        description: `Connect for ${constants.criteria.CURRENT_CONNECTION_STREAK} consecutive days`,
+        minTier: 0,
+        maxTier: 999,
+        expFunction: (x: number) => 1 + 2 * (x + 1),
+        hidden: false,
+        requires: [],
+      });
   }
 
   export namespace vscode {
