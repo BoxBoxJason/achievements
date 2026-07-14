@@ -38,6 +38,7 @@ export namespace logger {
   let logFilePath = path.join(__dirname, LOG_FILENAME);
   const maxFileSizeBytes = 15 * 1024 * 1024; // 15 MB
   const outputChannel = vscode.window.createOutputChannel("Achievements Logs");
+  let ensuredLogDir: string | undefined;
 
   /**
    * Sets the log level for the logger
@@ -68,6 +69,7 @@ export namespace logger {
   export function setLogDir(directory: string) {
     logFilePath = path.join(directory, LOG_FILENAME);
     fs.mkdirSync(directory, { recursive: true });
+    ensuredLogDir = directory;
   }
 
   /**
@@ -217,9 +219,18 @@ export namespace logger {
   function logToFile(message: string) {
     try {
       const logDir = path.dirname(logFilePath);
-      fs.mkdirSync(logDir, { recursive: true });
+      if (logDir !== ensuredLogDir) {
+        fs.mkdirSync(logDir, { recursive: true });
+        ensuredLogDir = logDir;
+      }
       rotateLogFile();
-      fs.appendFileSync(logFilePath, message + "\n");
+      fs.appendFile(logFilePath, message + "\n", (error) => {
+        if (error) {
+          outputChannel.appendLine(
+            `${LOG_LEVELS_SLUG.ERROR}: Failed to write log to file: ${error.message}`,
+          );
+        }
+      });
     } catch (error) {
       outputChannel.appendLine(
         `${LOG_LEVELS_SLUG.ERROR}: Failed to write log to file: ${
@@ -240,10 +251,12 @@ export namespace logger {
   function rotateLogFile() {
     if (!fs.existsSync(logFilePath)) {
       return;
-    } else if (!fs.statSync(logFilePath).isFile()) {
+    }
+    const stats = fs.statSync(logFilePath);
+    if (!stats.isFile()) {
       logger.error(`Failed to rotate log file: ${logFilePath} is not a file`);
       return;
-    } else if (fs.statSync(logFilePath).size < maxFileSizeBytes) {
+    } else if (stats.size < maxFileSizeBytes) {
       return;
     } else {
       const rotatedLogFilePath = logFilePath.replace(

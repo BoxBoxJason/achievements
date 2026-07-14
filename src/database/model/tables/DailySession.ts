@@ -48,11 +48,8 @@ export class DailySession {
       }
       await db_model.saveDB();
 
-      // Get the inserted ID. Note: In a concurrent environment this might be risky,
-      // but sql.js is single threaded and we are in a controlled environment.
-      // Better would be to use RETURNING clause if supported or a separate select.
-      // SQLite supports RETURNING since 3.35.0. sql.js is based on recent SQLite.
-      // Let's try to fetch it back by date which is unique.
+      // Fetch the inserted row back by its unique date, since sql.js's API
+      // does not expose the RETURNING clause.
       const newSession = db_model.get<DailySessionDict>(
         db,
         `SELECT * FROM daily_sessions WHERE date = ?`,

@@ -1,7 +1,7 @@
 /**
  * Debug events listeners for achievements extension
  *
- * @namespace debuglListeners
+ * @namespace debugListeners
  * @author BoxBoxJason
  */
 
