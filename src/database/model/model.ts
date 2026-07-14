@@ -232,13 +232,16 @@ export namespace db_model {
     params?: SqlValue[],
   ): T | null {
     const stmt = db.prepare(query);
-    stmt.bind(params);
-    let result: T | null = null;
-    if (stmt.step()) {
-      result = stmt.getAsObject() as T;
+    try {
+      stmt.bind(params);
+      let result: T | null = null;
+      if (stmt.step()) {
+        result = stmt.getAsObject() as T;
+      }
+      return result;
+    } finally {
+      stmt.free();
     }
-    stmt.free();
-    return result;
   }
 
   /**
@@ -255,12 +258,15 @@ export namespace db_model {
     params?: SqlValue[],
   ): T[] {
     const stmt = db.prepare(query);
-    stmt.bind(params);
-    const result: T[] = [];
-    while (stmt.step()) {
-      result.push(stmt.getAsObject() as T);
+    try {
+      stmt.bind(params);
+      const result: T[] = [];
+      while (stmt.step()) {
+        result.push(stmt.getAsObject() as T);
+      }
+      return result;
+    } finally {
+      stmt.free();
     }
-    stmt.free();
-    return result;
   }
 }

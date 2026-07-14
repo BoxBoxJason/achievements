@@ -395,10 +395,13 @@ class Achievement {
     db.run("BEGIN TRANSACTION");
     try {
       const achievementStmt = db.prepare(Achievement.ACHIEVEMENT_INSERT_QUERY);
-      achievementData.forEach((params) => {
-        achievementStmt.run(params);
-      });
-      achievementStmt.free();
+      try {
+        achievementData.forEach((params) => {
+          achievementStmt.run(params);
+        });
+      } finally {
+        achievementStmt.free();
+      }
 
       // Prepare requirements based on tier titles and insert labels
       for (let i = 0; i < tierTitles.length; i++) {
@@ -424,8 +427,11 @@ class Achievement {
         FROM achievements a
         WHERE a.title = ?
         ON CONFLICT(achievement_id, label) DO NOTHING`);
-      labelsData.forEach((params) => labelsStmt.run(params));
-      labelsStmt.free();
+      try {
+        labelsData.forEach((params) => labelsStmt.run(params));
+      } finally {
+        labelsStmt.free();
+      }
 
       // Insert requirements  by titles
       const requirementStmt = db.prepare(`
@@ -435,8 +441,11 @@ class Achievement {
         JOIN achievements r ON r.title = ?
         WHERE a.title = ?
         ON CONFLICT(achievement_id, requirement_id) DO NOTHING`);
-      requirementData.forEach((params) => requirementStmt.run(params));
-      requirementStmt.free();
+      try {
+        requirementData.forEach((params) => requirementStmt.run(params));
+      } finally {
+        requirementStmt.free();
+      }
 
       // Insert requirements by IDs
       const requirementByIdStmt = db.prepare(`
@@ -445,8 +454,13 @@ class Achievement {
         FROM achievements a
         WHERE a.title = ?
         ON CONFLICT(achievement_id, requirement_id) DO NOTHING`);
-      requirementByIdData.forEach((params) => requirementByIdStmt.run(params));
-      requirementByIdStmt.free();
+      try {
+        requirementByIdData.forEach((params) =>
+          requirementByIdStmt.run(params),
+        );
+      } finally {
+        requirementByIdStmt.free();
+      }
 
       // Insert criteria
       const criteriaStmt = db.prepare(`
@@ -460,8 +474,11 @@ class Achievement {
           "type" = excluded."type",
           comparison_operator = excluded.comparison_operator`);
 
-      criteriaData.forEach((params) => criteriaStmt.run(params));
-      criteriaStmt.free();
+      try {
+        criteriaData.forEach((params) => criteriaStmt.run(params));
+      } finally {
+        criteriaStmt.free();
+      }
 
       db.run("COMMIT");
       await db_model.saveDB();
@@ -525,12 +542,15 @@ class Achievement {
       throw new Error("Cannot update achievement without ID");
     }
     const statement = db.prepare(query);
-    statement.run([
-      achieved ? 1 : 0,
-      achieved ? new Date().toISOString() : null,
-      this.id,
-    ]);
-    statement.free();
+    try {
+      statement.run([
+        achieved ? 1 : 0,
+        achieved ? new Date().toISOString() : null,
+        this.id,
+      ]);
+    } finally {
+      statement.free();
+    }
     await db_model.saveDB();
   }
 
@@ -553,12 +573,15 @@ class Achievement {
 
     const db = await db_model.getDB();
     const statement = db.prepare(query);
-    statement.run([
-      achieved ? 1 : 0,
-      achieved ? new Date().toISOString() : null,
-      id,
-    ]);
-    statement.free();
+    try {
+      statement.run([
+        achieved ? 1 : 0,
+        achieved ? new Date().toISOString() : null,
+        id,
+      ]);
+    } finally {
+      statement.free();
+    }
     await db_model.saveDB();
   }
 

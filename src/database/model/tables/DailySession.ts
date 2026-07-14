@@ -41,8 +41,11 @@ export class DailySession {
       );
     } else {
       const statement = db.prepare(DailySession.INSERT_QUERY);
-      statement.run([dateStr, duration]);
-      statement.free();
+      try {
+        statement.run([dateStr, duration]);
+      } finally {
+        statement.free();
+      }
       await db_model.saveDB();
 
       // Get the inserted ID. Note: In a concurrent environment this might be risky,
@@ -82,8 +85,11 @@ export class DailySession {
 
     const db = await db_model.getDB();
     const statement = db.prepare(INCREASE_QUERY);
-    statement.run([duration, this.date]);
-    statement.free();
+    try {
+      statement.run([duration, this.date]);
+    } finally {
+      statement.free();
+    }
     await db_model.saveDB();
     this.duration += duration;
   }
