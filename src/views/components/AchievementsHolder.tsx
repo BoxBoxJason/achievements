@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Achievement from '../../database/model/tables/Achievement';
 import AchievementDisplay from './AchievementDisplay';
 import { PostMessage } from '../icons';
@@ -13,6 +13,7 @@ const AchievementHolder: React.FC<AchievementHolderProps> = ({ filters, limit })
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [offset, setOffset] = useState(0);
   const [maxCount, setMaxCount] = useState(0);
+  const latestRequestId = useRef(0);
 
   useEffect(() => {
     window.addEventListener('message', handleMessage);
@@ -22,10 +23,11 @@ const AchievementHolder: React.FC<AchievementHolderProps> = ({ filters, limit })
   }, []);
 
   useEffect(() => {
+    const requestId = ++latestRequestId.current;
     window.vscode.postMessage(
       JSON.stringify({
         command: webview.commands.RETRIEVE_ACHIEVEMENTS,
-        data: { count: true, offset, limit, ...filters },
+        data: { count: true, offset, limit, ...filters, requestId },
       })
     );
   }, [offset, filters, limit]);
@@ -35,7 +37,14 @@ const AchievementHolder: React.FC<AchievementHolderProps> = ({ filters, limit })
       const data: PostMessage = event.data;
 
       if (data.command === webview.commands.DISPLAY_ACHIEVEMENTS) {
-        const payload = data.data as { achievements: Achievement[]; count: number };
+        const payload = data.data as {
+          achievements: Achievement[];
+          count: number;
+          requestId?: number;
+        };
+        if (payload.requestId !== latestRequestId.current) {
+          return;
+        }
         setAchievements(payload.achievements);
         setMaxCount(payload.count);
       }

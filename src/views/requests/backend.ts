@@ -45,7 +45,7 @@ export namespace backendRequests {
       const achievements = await AchievementController.getAchievements(filters);
       panel.webview.postMessage({
         command: webview.commands.DISPLAY_ACHIEVEMENTS,
-        data: achievements,
+        data: { ...achievements, requestId: filters.requestId },
       });
     } else {
       return;

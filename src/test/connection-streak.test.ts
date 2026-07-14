@@ -19,6 +19,7 @@ suite("Connection Streak Test Suite", () => {
     context = getMockContext();
     dbPath = path.join(context.globalStorageUri.fsPath, "achievements.sqlite");
     db_lock._resetState();
+    db_model._resetState();
     await db_model.activate(context, dbPath);
     await db_init.activate(); // Initialize progressions
     originalDate = global.Date;

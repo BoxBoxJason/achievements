@@ -60,6 +60,9 @@ export interface AchievementSelectRequestFilters {
   sortCriteria?: string;
   sortDirection?: string;
   count?: boolean;
+  // Opaque id echoed back in the response so callers can discard stale,
+  // out-of-order responses to superseded requests.
+  requestId?: number;
 }
 // Achievement row, used to represent an achievement row from the database
 interface RawAchievementRow {

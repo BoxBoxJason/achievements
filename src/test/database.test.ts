@@ -15,6 +15,7 @@ suite("Database Model Test Suite", () => {
     dbPath = path.join(context.globalStorageUri.fsPath, "test.sqlite");
     // Reset lock state before each test
     db_lock._resetState();
+    db_model._resetState();
   });
 
   teardown(async () => {

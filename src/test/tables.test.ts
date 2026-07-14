@@ -18,6 +18,7 @@ suite("Tables Test Suite", () => {
     context = getMockContext();
     dbPath = path.join(context.globalStorageUri.fsPath, "test.sqlite");
     db_lock._resetState();
+    db_model._resetState();
     await db_model.activate(context, dbPath);
   });
 
