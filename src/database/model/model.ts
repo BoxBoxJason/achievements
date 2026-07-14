@@ -24,6 +24,10 @@ let DB: Database | null = null;
 let SQL: SqlJsStatic | null = null;
 // Flag to prevent database saves during initialization
 let isInitializing = false;
+// Debounce window for scheduleSave(): coalesces bursts of mutations
+// (e.g. keystrokes) into a single full-DB export/write.
+const SAVE_DEBOUNCE_MS = 2000;
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
 // ================== MODULE FUNCTIONS ==================
 
@@ -131,6 +135,43 @@ export namespace db_model {
   }
 
   /**
+   * Schedule a database save, coalescing calls that happen within the
+   * debounce window into a single saveDB() (a full DB export + file
+   * rewrite) instead of blocking the caller on it. Prefer this over
+   * calling saveDB() directly from mutation hot paths (e.g. per-keystroke
+   * progression updates); use saveDB() directly when the write must
+   * happen immediately and be awaited (init, tests).
+   *
+   * @returns {void}
+   */
+  export function scheduleSave(): void {
+    if (saveTimer) {
+      return;
+    }
+    saveTimer = setTimeout(() => {
+      saveTimer = null;
+      saveDB().catch((err: unknown) => {
+        logger.error(`Failed to run scheduled database save: ${err}`);
+      });
+    }, SAVE_DEBOUNCE_MS);
+  }
+
+  /**
+   * Cancel any pending debounced save and write the database immediately.
+   * Call this before the database connection is closed (e.g. deactivate())
+   * so a debounced mutation is never silently lost.
+   *
+   * @returns {Promise<void>}
+   */
+  export async function flushPendingSave(): Promise<void> {
+    if (saveTimer) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+    }
+    await saveDB();
+  }
+
+  /**
    * Activate the database module.
    * This function should be called when the extension is activated.
    * It will create the database file if it does not exist, and apply any necessary migrations.
@@ -192,6 +233,10 @@ export namespace db_model {
     // Reset initialization flag on deactivation
     isInitializing = false;
 
+    if (DB && !db_lock.isReadOnly()) {
+      await flushPendingSave();
+    }
+
     if (DB) {
       try {
         DB.close();
@@ -216,6 +261,10 @@ export namespace db_model {
     isInitializing = false;
     DB = null;
     SQL = null;
+    if (saveTimer) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+    }
   }
 
   /**

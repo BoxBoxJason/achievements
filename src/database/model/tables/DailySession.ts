@@ -46,7 +46,7 @@ export class DailySession {
       } finally {
         statement.free();
       }
-      await db_model.saveDB();
+      db_model.scheduleSave();
 
       // Fetch the inserted row back by its unique date, since sql.js's API
       // does not expose the RETURNING clause.
@@ -87,7 +87,7 @@ export class DailySession {
     } finally {
       statement.free();
     }
-    await db_model.saveDB();
+    db_model.scheduleSave();
     this.duration += duration;
   }
 
