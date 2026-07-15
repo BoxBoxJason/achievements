@@ -219,6 +219,7 @@ export namespace constants {
     EXTENSIONS: "extensions",
     FILES: "files",
     GIT: "git",
+    SHORTCUTS: "shortcuts",
     TABS: "tabs",
     TASKS: "tasks",
     TIME: "time",

@@ -14,6 +14,7 @@ import { tabListeners } from "./listeners/tabs";
 import { taskListeners } from "./listeners/tasks";
 import { extensionsListeners } from "./listeners/extensions";
 import { debugListeners } from "./listeners/debug";
+import { shortcutsListeners } from "./listeners/shortcuts";
 import logger from "./utils/logger";
 
 /**
@@ -136,6 +137,7 @@ export async function activate(context: vscode.ExtensionContext) {
     taskListeners.activate(context);
     extensionsListeners.activate(context);
     debugListeners.activate(context);
+    shortcutsListeners.activate(context);
   } else if (!hasWriteAccess) {
     // If we don't have write access, show a UI warning and keep listeners disabled
     showReadOnlyUI(context);
