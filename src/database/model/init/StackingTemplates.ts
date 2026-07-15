@@ -346,6 +346,43 @@ export namespace StackingTemplates {
         requires: [],
       });
 
+    export const numberOfSimultaneousEditorGroupsTemplate =
+      (): StackingAchievementTemplate => ({
+        title: "Split Personality %d",
+        icon: "SPLIT_PERSONALITY",
+        category: constants.category.PRODUCTIVITY,
+        group: "Number of Simultaneous Editor Groups",
+        labels: [
+          constants.category.PRODUCTIVITY,
+          constants.labels.EDITOR_GROUPS,
+        ],
+        criterias: [constants.criteria.NUMBER_OF_SIMULTANEOUS_EDITOR_GROUPS],
+        criteriasFunctions: [STANDARD_INFERNAL_CRITERIA_FUNCTION],
+        description: `Open ${constants.criteria.NUMBER_OF_SIMULTANEOUS_EDITOR_GROUPS} editor groups simultaneously`,
+        minTier: 0,
+        maxTier: 5,
+        expFunction: STANDARD_EXP_FUNCTION,
+        hidden: false,
+        requires: [],
+      });
+
+    export const multiCursorSessionsTemplate =
+      (): StackingAchievementTemplate => ({
+        title: "Hydra Editing %d",
+        icon: "MULTI_CURSOR",
+        category: constants.category.PRODUCTIVITY,
+        group: "Multi Cursor Sessions",
+        labels: [constants.category.PRODUCTIVITY, constants.labels.MULTI_CURSOR],
+        criterias: [constants.criteria.MULTI_CURSOR_SESSIONS],
+        criteriasFunctions: [STANDARD_HARD_CRITERIA_FUNCTION],
+        description: `Start multi-cursor editing ${constants.criteria.MULTI_CURSOR_SESSIONS} times`,
+        minTier: 0,
+        maxTier: 10,
+        expFunction: STANDARD_EXP_FUNCTION,
+        hidden: false,
+        requires: [],
+      });
+
     export const connectionStreakTemplate = (): StackingAchievementTemplate => ({
       title: "Connection Streak %d",
       icon: "CONNECTION_STREAK",
@@ -514,6 +551,22 @@ export namespace StackingTemplates {
         hidden: false,
         requires: [],
       });
+
+    export const terminalsOpenedTemplate = (): StackingAchievementTemplate => ({
+      title: "Portal Opener %d",
+      icon: "PORTAL_OPENER",
+      category: constants.category.VSCODE,
+      group: "Terminals Opened",
+      labels: [constants.category.VSCODE, constants.labels.TERMINAL],
+      criterias: [constants.criteria.TERMINALS_OPENED],
+      criteriasFunctions: [STANDARD_INFERNAL_CRITERIA_FUNCTION],
+      description: `Open ${constants.criteria.TERMINALS_OPENED} terminals`,
+      minTier: 0,
+      maxTier: 10,
+      expFunction: STANDARD_EXP_FUNCTION,
+      hidden: false,
+      requires: [],
+    });
 
     export const codeSnippetsTemplate = (): StackingAchievementTemplate => ({
       title: "Snippets Master %d",

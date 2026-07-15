@@ -167,6 +167,7 @@ export namespace webview {
           "success.jpg",
         ],
         TERMINAL_TASK_FAIL: ["icons", "achievements", "terminal", "fail.jpg"],
+        PORTAL_OPENER: ["icons", "achievements", "terminal", "portal.png"],
       } as const;
 
       export const file: { [key: string]: string[] } = {
@@ -222,6 +223,18 @@ export namespace webview {
           "comment.png",
         ],
         TAB_HOARDER: ["icons", "achievements", "productivity", "tab.png"],
+        SPLIT_PERSONALITY: [
+          "icons",
+          "achievements",
+          "productivity",
+          "split_personality.png",
+        ],
+        MULTI_CURSOR: [
+          "icons",
+          "achievements",
+          "productivity",
+          "multi_cursor.png",
+        ],
         ERROR_FIXER: ["icons", "achievements", "productivity", "fix.png"],
         SHOWER_AVOIDER: ["icons", "achievements", "productivity", "shower.png"],
         CONNECTION_STREAK: [

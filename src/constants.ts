@@ -56,6 +56,12 @@ export namespace constants {
     PUSHES = "pushesCount",
     // Opened tabs
     NUMBER_OF_SIMULTANEOUS_TABS = "simultaneousTabsCount",
+    // Opened editor groups (split editors)
+    NUMBER_OF_SIMULTANEOUS_EDITOR_GROUPS = "simultaneousEditorGroupsCount",
+    // Multi-cursor editing sessions
+    MULTI_CURSOR_SESSIONS = "multiCursorSessionsCount",
+    // Terminals opened
+    TERMINALS_OPENED = "terminalsOpenedCount",
     // Time spent (daily)
     DAILY_TIME_SPENT = "dailyTimeSpentCount",
     // Time spent (bi-monthly)
@@ -102,6 +108,8 @@ export namespace constants {
     AMENDS: "amends",
     PUSHES: "pushes",
     TABS: "tabs",
+    EDITOR_GROUPS: "editor groups",
+    MULTI_CURSOR: "multi-cursor",
     TIME: "time",
     EXTENSIONS: "extensions",
     THEMES: "themes",
