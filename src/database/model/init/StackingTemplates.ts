@@ -349,7 +349,7 @@ export namespace StackingTemplates {
     export const numberOfSimultaneousEditorGroupsTemplate =
       (): StackingAchievementTemplate => ({
         title: "Split Personality %d",
-        icon: "TAB_HOARDER",
+        icon: "SPLIT_PERSONALITY",
         category: constants.category.PRODUCTIVITY,
         group: "Number of Simultaneous Editor Groups",
         labels: [
@@ -369,7 +369,7 @@ export namespace StackingTemplates {
     export const multiCursorSessionsTemplate =
       (): StackingAchievementTemplate => ({
         title: "Hydra Editing %d",
-        icon: "CODE_MONKEY",
+        icon: "MULTI_CURSOR",
         category: constants.category.PRODUCTIVITY,
         group: "Multi Cursor Sessions",
         labels: [constants.category.PRODUCTIVITY, constants.labels.MULTI_CURSOR],
@@ -554,7 +554,7 @@ export namespace StackingTemplates {
 
     export const terminalsOpenedTemplate = (): StackingAchievementTemplate => ({
       title: "Portal Opener %d",
-      icon: "TERMINAL_TASK",
+      icon: "PORTAL_OPENER",
       category: constants.category.VSCODE,
       group: "Terminals Opened",
       labels: [constants.category.VSCODE, constants.labels.TERMINAL],
