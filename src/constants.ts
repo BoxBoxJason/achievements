@@ -66,6 +66,10 @@ export namespace constants {
     NIGHT_OWL_SESSIONS = "nightOwlSessionsCount",
     // Coding sessions started early in the morning (local time)
     EARLY_BIRD_SESSIONS = "earlyBirdSessionsCount",
+    // Opened workspace folders (multi-root workspaces)
+    NUMBER_OF_SIMULTANEOUS_WORKSPACE_FOLDERS = "simultaneousWorkspaceFoldersCount",
+    // Time spent connected to a remote / container development window
+    REMOTE_TIME_SPENT = "remoteTimeSpentCount",
     // Time spent (daily)
     DAILY_TIME_SPENT = "dailyTimeSpentCount",
     // Time spent (bi-monthly)
@@ -114,6 +118,8 @@ export namespace constants {
     TABS: "tabs",
     EDITOR_GROUPS: "editor groups",
     MULTI_CURSOR: "multi-cursor",
+    WORKSPACE_FOLDERS: "workspace folders",
+    REMOTE: "remote",
     TIME: "time",
     EXTENSIONS: "extensions",
     THEMES: "themes",

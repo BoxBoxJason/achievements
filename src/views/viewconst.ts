@@ -245,6 +245,18 @@ export namespace webview {
           "productivity",
           "streak.png",
         ],
+        REMOTE_WORKER: [
+          "icons",
+          "achievements",
+          "productivity",
+          "satellite.png",
+        ],
+        MULTI_TASKER: [
+          "icons",
+          "achievements",
+          "productivity",
+          "multitasker.png",
+        ],
       } as const;
     }
   }
