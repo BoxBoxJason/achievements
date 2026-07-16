@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-07-16
+
+### Added
+
+- Add Night Owl / Early Bird time-of-day achievements by @BoxBoxJason in [#96](https://github.com/BoxBoxJason/achievements/pull/96)
+
+### Changed
+
+- Track remote dev sessions and multi-root workspaces by @BoxBoxJason in [#97](https://github.com/BoxBoxJason/achievements/pull/97)
+- Track editor ergonomics (split editors, multi-cursor, terminals) by @BoxBoxJason in [#95](https://github.com/BoxBoxJason/achievements/pull/95)
+- Create copy ninja pastes listeners by @BoxBoxJason in [#94](https://github.com/BoxBoxJason/achievements/pull/94)
+- Pin dependencies by @renovate[bot] in [#91](https://github.com/BoxBoxJason/achievements/pull/91)
+- Configure renovate by @BoxBoxJason
+- Update changelog by @BoxBoxJason
+
+### Fixed
+
+- Only one early bird / nigh owl trigger per day by @BoxBoxJason in [#98](https://github.com/BoxBoxJason/achievements/pull/98)
+
+### New Contributors
+
+* @renovate[bot] made their first contribution in [#91](https://github.com/BoxBoxJason/achievements/pull/91)
+
 ## [0.5.1] - 2026-07-14
 
 ### Added
@@ -237,6 +260,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * @BoxBoxJason made their first contribution
 
+[0.6.0]: https://github.com/BoxBoxJason/achievements/compare/0.5.1...0.6.0
 [0.5.1]: https://github.com/BoxBoxJason/achievements/compare/0.5.0...0.5.1
 [0.5.0]: https://github.com/BoxBoxJason/achievements/compare/0.4.1...0.5.0
 [0.4.1]: https://github.com/BoxBoxJason/achievements/compare/0.4.0...0.4.1
