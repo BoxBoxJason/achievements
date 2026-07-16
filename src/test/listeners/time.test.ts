@@ -1,10 +1,32 @@
 import * as assert from "node:assert";
 import * as vscode from "vscode";
+import * as path from "node:path";
 import { timeListeners } from "../../listeners/time";
 import { ProgressionController } from "../../database/controller/progressions";
 import { constants } from "../../constants";
+import { db_model } from "../../database/model/model";
+import { db_lock } from "../../database/lock";
+import { db_init } from "../../database/model/init/init";
+import { getMockContext, cleanupMockContext } from "../utils";
 
 suite("Time Listeners Test Suite", () => {
+  let context: vscode.ExtensionContext;
+  let dbPath: string;
+
+  setup(async () => {
+    context = getMockContext();
+    dbPath = path.join(context.globalStorageUri.fsPath, "achievements.sqlite");
+    db_lock._resetState();
+    db_model._resetState();
+    await db_model.activate(context, dbPath);
+    await db_init.activate(); // Initialize progressions
+  });
+
+  teardown(async () => {
+    await db_model.deactivate();
+    cleanupMockContext(context);
+  });
+
   test("trackTimeOfDaySession should increase NIGHT_OWL_SESSIONS for late-night hours", async () => {
     const increasedCriteria: string[] = [];
     const originalIncrease = ProgressionController.increaseProgression;
