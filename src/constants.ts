@@ -64,8 +64,10 @@ export namespace constants {
     TERMINALS_OPENED = "terminalsOpenedCount",
     // Coding sessions started late at night (local time)
     NIGHT_OWL_SESSIONS = "nightOwlSessionsCount",
+    LAST_NIGHT_OWL_DATE = "lastNightOwlDate",
     // Coding sessions started early in the morning (local time)
     EARLY_BIRD_SESSIONS = "earlyBirdSessionsCount",
+    LAST_EARLY_BIRD_DATE = "lastEarlyBirdDate",
     // Opened workspace folders (multi-root workspaces)
     NUMBER_OF_SIMULTANEOUS_WORKSPACE_FOLDERS = "simultaneousWorkspaceFoldersCount",
     // Time spent connected to a remote / container development window
