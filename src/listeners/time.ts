@@ -10,6 +10,7 @@ import { DailySession } from "../database/model/tables/DailySession";
 import { TimeSpentController } from "../database/controller/timespent";
 import { db_model } from "../database/model/model";
 import { ProgressionController } from "../database/controller/progressions";
+import Progression from "../database/model/tables/Progression";
 import logger from "../utils/logger";
 import { config } from "../config/config";
 import { constants } from "../constants";
@@ -139,14 +140,52 @@ export namespace timeListeners {
   ): Promise<void> {
     const hour = sessionStartDate.getHours();
     if (hour >= NIGHT_OWL_START_HOUR && hour < NIGHT_OWL_END_HOUR) {
-      await ProgressionController.increaseProgression(
-        constants.criteria.NIGHT_OWL_SESSIONS
+      await trackTimeOfDaySessionOnce(
+        constants.criteria.LAST_NIGHT_OWL_DATE,
+        constants.criteria.NIGHT_OWL_SESSIONS,
+        sessionStartDate
       );
     } else if (hour >= EARLY_BIRD_START_HOUR && hour < EARLY_BIRD_END_HOUR) {
-      await ProgressionController.increaseProgression(
-        constants.criteria.EARLY_BIRD_SESSIONS
+      await trackTimeOfDaySessionOnce(
+        constants.criteria.LAST_EARLY_BIRD_DATE,
+        constants.criteria.EARLY_BIRD_SESSIONS,
+        sessionStartDate
       );
     }
+  }
+
+  /**
+   * Increase a time-of-day flavor achievement's progression at most once per
+   * calendar day, guarded by a persisted "last tracked date" progression.
+   * Prevents the achievement from being awarded multiple times when a window
+   * is focused/blurred repeatedly within the same night-owl/early-bird window.
+   *
+   * @param {string} lastDateCriteria - Criteria name storing the last tracked date
+   * @param {string} sessionsCriteria - Criteria name to increase
+   * @param {Date} sessionStartDate - The date/time the session started at
+   * @returns {Promise<void>}
+   */
+  async function trackTimeOfDaySessionOnce(
+    lastDateCriteria: string,
+    sessionsCriteria: string,
+    sessionStartDate: Date
+  ): Promise<void> {
+    const currentDateString = sessionStartDate.toISOString().split("T")[0];
+
+    const lastDateProgressions = await Progression.getProgressions({
+      name: lastDateCriteria,
+    });
+    const lastDateProgression = lastDateProgressions[0];
+
+    if (lastDateProgression?.value === currentDateString) {
+      return;
+    }
+
+    await ProgressionController.increaseProgression(sessionsCriteria);
+    await ProgressionController.updateProgression(
+      lastDateCriteria,
+      currentDateString
+    );
   }
 
   /**

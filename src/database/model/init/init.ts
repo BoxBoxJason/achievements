@@ -103,7 +103,9 @@ export namespace db_init {
       if (
         criteria !== constants.criteria.LINES_OF_CODE_LANGUAGE &&
         criteria !== constants.criteria.FILES_CREATED_LANGUAGE &&
-        criteria !== constants.criteria.LAST_STREAK_DATE
+        criteria !== constants.criteria.LAST_STREAK_DATE &&
+        criteria !== constants.criteria.LAST_NIGHT_OWL_DATE &&
+        criteria !== constants.criteria.LAST_EARLY_BIRD_DATE
       ) {
         const progression = new Progression({
           name: criteria,
@@ -111,7 +113,11 @@ export namespace db_init {
           value: 0,
         });
         progressions.push(progression);
-      } else if (criteria === constants.criteria.LAST_STREAK_DATE) {
+      } else if (
+        criteria === constants.criteria.LAST_STREAK_DATE ||
+        criteria === constants.criteria.LAST_NIGHT_OWL_DATE ||
+        criteria === constants.criteria.LAST_EARLY_BIRD_DATE
+      ) {
         const progression = new Progression({
           name: criteria,
           type: "string",
