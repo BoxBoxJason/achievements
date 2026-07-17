@@ -1,5 +1,7 @@
 # Achievements
 
+[![Open VSX Downloads](https://img.shields.io/open-vsx/dt/boxboxjason/achievements?style=for-the-badge&logo=vscodium&label=Users&labelColor=%23312c85&color=%23ffffff)](https://open-vsx.org/extension/BoxBoxJason/achievements)
+
 Achievements is a Visual Studio Code extension that allows you to track your progress in coding, and earn achievements for completing tasks.
 
 ![Extension Webview Illustration](./screenshot.jpg)

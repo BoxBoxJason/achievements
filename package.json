@@ -1,7 +1,16 @@
 {
+  "$schema": "https://raw.githubusercontent.com/wraith13/vscode-schemas/master/en/latest/schemas/vscode-extensions.json",
   "name": "achievements",
   "displayName": "Achievements",
   "description": "Add achievements to your coding experience, track and reward your coding journey",
+  "keywords": [
+    "gamification",
+    "productivity",
+    "streaks",
+    "motivation",
+    "coding stats",
+    "time tracking"
+  ],
   "publisher": "BoxBoxJason",
   "icon": "icon.png",
   "author": {
@@ -12,6 +21,7 @@
     "vscode": "^1.125.0"
   },
   "categories": [
+    "Visualization",
     "Other"
   ],
   "activationEvents": [
