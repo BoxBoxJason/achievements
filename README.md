@@ -4,7 +4,7 @@
 
 Achievements is a Visual Studio Code extension that allows you to track your progress in coding, and earn achievements for completing tasks.
 
-![Extension Webview Illustration](./screenshot.jpg)
+![Extension Webview Illustration](./docs/achievements.gif)
 
 > [!WARNING]
 > This extension is in beta, may contain bugs and database schema may change in future versions.
