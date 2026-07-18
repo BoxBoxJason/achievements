@@ -46,6 +46,69 @@
         "title": "Achievements: Show"
       }
     ],
+    "walkthroughs": [
+      {
+        "id": "achievements.gettingStarted",
+        "title": "Get Started with Achievements",
+        "description": "Track your coding journey and earn achievements as you work.",
+        "icon": "icon.png",
+        "steps": [
+          {
+            "id": "showcase",
+            "title": "Install Achievements and see what it can do",
+            "description": "A quick look at the Achievements panel.",
+            "media": {
+              "image": "docs/achievements.gif",
+              "altText": "Extension Webview Illustration"
+            },
+            "completionEvents": [
+              "extensionInstalled:boxboxjason.achievements"
+            ]
+          },
+          {
+            "id": "openPanel",
+            "title": "Open your Achievements panel",
+            "description": "See your progress, profile, and every achievement's requirements in one place.\n[Open Achievements](command:achievements.show)",
+            "media": {
+              "markdown": "docs/walkthroughs/getting-started/open-panel.md"
+            },
+            "completionEvents": [
+              "onCommand:achievements.show"
+            ]
+          },
+          {
+            "id": "setUsername",
+            "title": "Set your username",
+            "description": "Your username is shown on your profile in the Achievements panel.\n[Open Settings](command:achievements.settings)",
+            "media": {
+              "markdown": "docs/walkthroughs/getting-started/username.md"
+            },
+            "completionEvents": [
+              "onSettingChanged:achievements.username"
+            ]
+          },
+          {
+            "id": "configure",
+            "title": "Choose what gets tracked",
+            "description": "Every listener can be turned off individually: nothing here is all-or-nothing.\n[Open Settings](command:achievements.settings)",
+            "media": {
+              "markdown": "docs/walkthroughs/getting-started/configure.md"
+            },
+            "completionEvents": [
+              "onCommand:achievements.settings"
+            ]
+          },
+          {
+            "id": "firstAchievement",
+            "title": "Earn your first achievement",
+            "description": "Keep coding as usual: achievements unlock automatically and a notification will let you know.",
+            "media": {
+              "markdown": "docs/walkthroughs/getting-started/first-achievement.md"
+            }
+          }
+        ]
+      }
+    ],
     "configuration": [
       {
         "title": "achievements",
@@ -213,6 +276,7 @@
   "files": [
     "dist",
     "assets",
+    "docs",
     "README.md",
     "CHANGELOG.md",
     "LICENSE.md",
