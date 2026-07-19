@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-07-19
+
+### Added
+
+- Add status bar item & quickpick summary menu by @BoxBoxJason in [#104](https://github.com/BoxBoxJason/achievements/pull/104)
+- Add extension walkthrough by @BoxBoxJason in [#103](https://github.com/BoxBoxJason/achievements/pull/103)
+- Add achievements showcase gif by @BoxBoxJason in [#102](https://github.com/BoxBoxJason/achievements/pull/102)
+- Add keywords and users count by @BoxBoxJason
+
+### Changed
+
+- Update changelog by @BoxBoxJason
+
 ## [0.6.0] - 2026-07-16
 
 ### Added
@@ -260,6 +273,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * @BoxBoxJason made their first contribution
 
+[0.7.0]: https://github.com/BoxBoxJason/achievements/compare/0.6.0...0.7.0
 [0.6.0]: https://github.com/BoxBoxJason/achievements/compare/0.5.1...0.6.0
 [0.5.1]: https://github.com/BoxBoxJason/achievements/compare/0.5.0...0.5.1
 [0.5.0]: https://github.com/BoxBoxJason/achievements/compare/0.4.1...0.5.0
