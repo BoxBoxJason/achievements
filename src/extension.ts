@@ -128,7 +128,11 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(showAchievementsCommand);
 
   // Status bar quick menu
-  registerAchievementsStatusBar(context);
+  // Skipped in test mode: the test suite registers it directly against a
+  // mock context, which would collide with this real registration.
+  if (context.extensionMode !== vscode.ExtensionMode.Test) {
+    registerAchievementsStatusBar(context);
+  }
 
   // ==================== LISTENERS ====================
   // Only activate listeners if we have write access (not in readonly mode)
