@@ -7,6 +7,7 @@ import * as vscode from "vscode";
 import { db_model } from "./database/model/model";
 import { config } from "./config/config";
 import { AchievementsWebview } from "./views/management";
+import { registerAchievementsStatusBar } from "./views/statusbar";
 import { fileListeners } from "./listeners/files";
 import { gitListeners } from "./listeners/git";
 import { timeListeners } from "./listeners/time";
@@ -125,6 +126,9 @@ export async function activate(context: vscode.ExtensionContext) {
     },
   );
   context.subscriptions.push(showAchievementsCommand);
+
+  // Status bar quick menu
+  registerAchievementsStatusBar(context);
 
   // ==================== LISTENERS ====================
   // Only activate listeners if we have write access (not in readonly mode)

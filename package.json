@@ -44,6 +44,10 @@
       {
         "command": "achievements.show",
         "title": "Achievements: Show"
+      },
+      {
+        "command": "achievements.statusBarMenu",
+        "title": "Achievements: Quick Menu"
       }
     ],
     "walkthroughs": [
