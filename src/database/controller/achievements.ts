@@ -10,6 +10,7 @@ import Achievement, {
   AchievementRow,
   AchievementSelectRequestFilters,
 } from "../model/tables/Achievement";
+import { ProgressionController, ProgressionDict } from "./progressions";
 
 // ==================== MODULE FUNCTIONS ====================
 /**
@@ -20,6 +21,9 @@ import Achievement, {
  * @function getAchievements - Retrieve achievements in a raw format given a set of filters
  * @function getJsonAchievements - Retrieve achievements in a raw format given a set of filters
  * @function getJsonFilters - Retrieve the categories, groups, and labels of all achievements
+ * @function getClosestAchievableAchievement - Retrieve the unlocked achievement closest to completion, if any
+ * @function getLatestAchievedAchievement - Retrieve the most recently unlocked, non-hidden achievement, if any
+ * @function computeCompletionRatio - Compute how close an achievement's criteria are to being met
  * @function parseFilters - Parse the filters and set default values if necessary
  */
 export namespace AchievementController {
@@ -108,6 +112,109 @@ export namespace AchievementController {
       groups: await Achievement.getGroups(),
       labels: await Achievement.getLabels(),
     };
+  }
+
+  /**
+   * Compute how close an achievement's criteria are to being met, as a
+   * ratio between 0 (untouched) and 1 (met). An achievement requires every
+   * criterion to be met, so the ratio is the bottleneck (minimum) across
+   * all of its criteria rather than an average.
+   *
+   * @memberof achievements
+   * @function computeCompletionRatio
+   *
+   * @param {Object} criteria - The achievement's criteria, keyed by progression name
+   * @param {ProgressionDict} progressions - The current progression values, keyed by name
+   * @returns {number} - The completion ratio, between 0 and 1
+   */
+  export function computeCompletionRatio(
+    criteria: { [key: string]: unknown },
+    progressions: ProgressionDict,
+  ): number {
+    const requirements = Object.entries(criteria);
+    if (requirements.length === 0) {
+      return 0;
+    }
+
+    let ratio = 1;
+    for (const [progressionName, requiredValue] of requirements) {
+      const currentValue = progressions[progressionName];
+      let criterionRatio: number;
+      if (typeof requiredValue === "number") {
+        const current = typeof currentValue === "number" ? currentValue : 0;
+        criterionRatio =
+          requiredValue <= 0 ? 1 : Math.min(1, Math.max(0, current / requiredValue));
+      } else {
+        // Non-numeric criteria (booleans, dates, strings) are treated as
+        // binary: either the current value satisfies it or it doesn't.
+        criterionRatio = currentValue === requiredValue ? 1 : 0;
+      }
+      ratio = Math.min(ratio, criterionRatio);
+    }
+    return ratio;
+  }
+
+  /**
+   * Retrieve the not-yet-achieved, non-hidden achievement whose criteria
+   * are closest to being met among those the user can currently work
+   * towards (prerequisites already unlocked). Ties are broken randomly.
+   *
+   * @memberof achievements
+   * @function getClosestAchievableAchievement
+   *
+   * @returns {Promise<{ achievement: Achievement; ratio: number } | undefined>} - The closest achievement and its completion ratio, if any
+   */
+  export async function getClosestAchievableAchievement(): Promise<
+    { achievement: Achievement; ratio: number } | undefined
+  > {
+    const { achievements } = await getAchievements({
+      achieved: false,
+      hidden: false,
+      achievable: true,
+      limit: 1000,
+    });
+    if (achievements.length === 0) {
+      return undefined;
+    }
+
+    const progressions = await ProgressionController.getProgressions();
+
+    let bestRatio = -1;
+    let bestAchievements: Achievement[] = [];
+    for (const achievement of achievements) {
+      const ratio = computeCompletionRatio(achievement.criteria, progressions);
+      if (ratio > bestRatio) {
+        bestRatio = ratio;
+        bestAchievements = [achievement];
+      } else if (ratio === bestRatio) {
+        bestAchievements.push(achievement);
+      }
+    }
+
+    const picked =
+      bestAchievements[Math.floor(Math.random() * bestAchievements.length)];
+    return { achievement: picked, ratio: bestRatio };
+  }
+
+  /**
+   * Retrieve the most recently unlocked, non-hidden achievement.
+   *
+   * @memberof achievements
+   * @function getLatestAchievedAchievement
+   *
+   * @returns {Promise<Achievement | undefined>} - The most recently unlocked achievement, if any
+   */
+  export async function getLatestAchievedAchievement(): Promise<
+    Achievement | undefined
+  > {
+    const { achievements } = await getAchievements({
+      achieved: true,
+      hidden: false,
+      sortCriteria: "achievedAt",
+      sortDirection: "DESC",
+      limit: 1,
+    });
+    return achievements[0];
   }
 
   /**

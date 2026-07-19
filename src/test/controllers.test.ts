@@ -121,6 +121,82 @@ suite("Controllers Test Suite", () => {
     assert.ok(result7.achievements.length > 0);
   });
 
+  test("AchievementController.computeCompletionRatio should compute the bottleneck ratio across criteria", () => {
+    const progressions = { a: 5, b: 2, c: "done" };
+
+    // No criteria at all
+    assert.strictEqual(
+      AchievementController.computeCompletionRatio({}, progressions),
+      0,
+    );
+
+    // Single numeric criterion, partially met
+    assert.strictEqual(
+      AchievementController.computeCompletionRatio({ a: 10 }, progressions),
+      0.5,
+    );
+
+    // Multiple numeric criteria: the least-complete one wins
+    assert.strictEqual(
+      AchievementController.computeCompletionRatio(
+        { a: 10, b: 10 },
+        progressions,
+      ),
+      0.2,
+    );
+
+    // A non-positive requirement is trivially satisfied
+    assert.strictEqual(
+      AchievementController.computeCompletionRatio({ a: 0 }, progressions),
+      1,
+    );
+
+    // Non-numeric criteria are all-or-nothing
+    assert.strictEqual(
+      AchievementController.computeCompletionRatio({ c: "done" }, progressions),
+      1,
+    );
+    assert.strictEqual(
+      AchievementController.computeCompletionRatio({ c: "nope" }, progressions),
+      0,
+    );
+
+    // A progression with no recorded value yet counts as 0
+    assert.strictEqual(
+      AchievementController.computeCompletionRatio(
+        { missing: 10 },
+        progressions,
+      ),
+      0,
+    );
+  });
+
+  test("AchievementController.getClosestAchievableAchievement should return the achievement closest to completion", async () => {
+    // On a fresh database every achievable achievement sits at ratio 0
+    await ProgressionController.updateProgression(
+      constants.criteria.FILES_CREATED,
+      1,
+    );
+
+    const result = await AchievementController.getClosestAchievableAchievement();
+    assert.ok(result);
+    assert.strictEqual(result?.achievement.title, "Creator 1");
+    assert.strictEqual(result?.ratio, 0.5);
+  });
+
+  test("AchievementController.getLatestAchievedAchievement should return the most recently unlocked achievement", async () => {
+    const beforeAny = await AchievementController.getLatestAchievedAchievement();
+    assert.strictEqual(beforeAny, undefined);
+
+    await ProgressionController.updateProgression(
+      constants.criteria.LINES_OF_CODE,
+      1,
+    );
+
+    const latest = await AchievementController.getLatestAchievedAchievement();
+    assert.strictEqual(latest?.title, "Code Monkey 1");
+  });
+
   test("TimeSpentController.updateTimeSpentFromSessions should update progressions", async () => {
     // Insert a daily session
     const today = new Date().toISOString().split("T")[0];
