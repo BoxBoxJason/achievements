@@ -70,16 +70,16 @@ export namespace db_lock {
     databasePath = dbPath;
     const lockPath = getLockFilePath(dbPath);
 
-    // Ensure the lock file directory exists
-    const lockDir = path.dirname(lockPath);
-    await fs.promises.mkdir(lockDir, { recursive: true });
-
-    // Create the lock file if it doesn't exist (proper-lockfile needs a file to lock)
-    if (!fs.existsSync(lockPath)) {
-      await fs.promises.writeFile(lockPath, "", { flag: "w" });
-    }
-
     try {
+      // Ensure the lock file directory exists
+      const lockDir = path.dirname(lockPath);
+      await fs.promises.mkdir(lockDir, { recursive: true });
+
+      // Create the lock file if it doesn't exist (proper-lockfile needs a file to lock)
+      if (!fs.existsSync(lockPath)) {
+        await fs.promises.writeFile(lockPath, "", { flag: "w" });
+      }
+
       logger.debug(`Attempting to acquire database lock at: ${lockPath}`);
 
       lockRelease = await lockfile.lock(lockPath, {

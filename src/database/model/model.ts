@@ -65,6 +65,70 @@ export namespace db_model {
   }
 
   /**
+   * Open an existing database file, falling back to a fresh database if the
+   * file on disk is unusable.
+   *
+   * sql.js accepts any buffer in its `Database` constructor and only reports
+   * a damaged file on the first read, so the image is probed here rather than
+   * left to blow up later in the migrations (which would fail activation and
+   * take every command and listener down with it).
+   *
+   * @param {SqlJsStatic} sql The sql.js runtime
+   * @param {Buffer} buffer The database file contents
+   * @returns {Promise<Database>} The database connection object
+   */
+  async function loadExistingDatabase(
+    sql: SqlJsStatic,
+    buffer: Buffer,
+  ): Promise<Database> {
+    let db: Database | null = null;
+    try {
+      db = new sql.Database(buffer);
+      const result = db.exec("PRAGMA quick_check");
+      const status = result[0]?.values[0]?.[0];
+      if (status !== "ok") {
+        throw new Error(`integrity check returned: ${String(status)}`);
+      }
+      return db;
+    } catch (err) {
+      try {
+        db?.close();
+      } catch {
+        // The database is already unusable, nothing to salvage here
+      }
+      await quarantineDatabase((err as Error).message);
+      return new sql.Database();
+    }
+  }
+
+  /**
+   * Move a damaged database file aside so the extension can start over with a
+   * fresh one instead of failing on every activation.
+   *
+   * @param {string} reason The failure that made the database unusable
+   * @returns {Promise<void>}
+   */
+  async function quarantineDatabase(reason: string): Promise<void> {
+    const backupPath = `${DATABASE_PATH}.corrupted-${Date.now()}`;
+    let backedUp = false;
+    try {
+      await fs.promises.rename(DATABASE_PATH, backupPath);
+      backedUp = true;
+    } catch (err) {
+      logger.error(
+        `Failed to move the corrupted database aside: ${(err as Error).message}`,
+      );
+    }
+
+    logger.showError(
+      `Achievements: the database was damaged (${reason}) and has been reset. ` +
+        (backedUp
+          ? `The previous file was kept at ${backupPath}.`
+          : "The previous file could not be kept."),
+    );
+  }
+
+  /**
    * Initialize the database.
    *
    * @param {vscode.ExtensionContext} context The extension context object
@@ -90,8 +154,8 @@ export namespace db_model {
         buffer = await fs.promises.readFile(DATABASE_PATH);
       }
 
-      if (buffer) {
-        DB = new SQL.Database(buffer);
+      if (buffer && buffer.length > 0) {
+        DB = await loadExistingDatabase(SQL, buffer);
       } else {
         logger.debug("Creating new database");
         DB = new SQL.Database();
@@ -129,12 +193,25 @@ export namespace db_model {
     }
 
     if (DB) {
+      // Write to a sibling temporary file and rename over the database: a
+      // plain writeFile() truncates the real file first, so a crash or a
+      // shutdown mid-write would leave a damaged database behind. rename() is
+      // atomic within a directory, so the database on disk is always either
+      // the previous save or this one.
+      const tempPath = `${DATABASE_PATH}.tmp`;
       try {
         const data = DB.export();
         const buffer = Buffer.from(data);
-        await fs.promises.writeFile(DATABASE_PATH, buffer);
+        await fs.promises.writeFile(tempPath, buffer);
+        await fs.promises.rename(tempPath, DATABASE_PATH);
       } catch (err) {
         logger.error(`Failed to save database: ${(err as Error).message}`);
+        try {
+          await fs.promises.rm(tempPath, { force: true });
+        } catch {
+          // Leaving the temporary file behind is harmless, it is overwritten
+          // by the next save
+        }
       }
     }
   }

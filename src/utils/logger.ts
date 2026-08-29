@@ -67,9 +67,20 @@ export namespace logger {
    * @returns void
    */
   export function setLogDir(directory: string) {
-    logFilePath = path.join(directory, LOG_FILENAME);
-    fs.mkdirSync(directory, { recursive: true });
-    ensuredLogDir = directory;
+    try {
+      fs.mkdirSync(directory, { recursive: true });
+      logFilePath = path.join(directory, LOG_FILENAME);
+      ensuredLogDir = directory;
+    } catch (error) {
+      // Called during activation, before any command is registered: an
+      // unwritable directory must not take the whole extension down, file
+      // logging simply stays where it was and the output channel still works.
+      outputChannel.appendLine(
+        `${LOG_LEVELS_SLUG.ERROR}: Failed to use log directory ${directory}: ${
+          (error as Error).message
+        }`,
+      );
+    }
   }
 
   /**

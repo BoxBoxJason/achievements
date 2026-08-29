@@ -69,6 +69,52 @@ suite("Database Model Test Suite", () => {
     assert.strictEqual(one.name, "test1");
   });
 
+  test("activate should recover from a corrupted database file", async () => {
+    // Build a valid database, then truncate it the way an interrupted write
+    // would (the extension used to fail activation forever afterwards, taking
+    // every command and listener down with it)
+    await db_model.activate(context, dbPath);
+    await db_model.deactivate();
+    db_lock._resetState();
+    db_model._resetState();
+
+    const originalSize = fs.statSync(dbPath).size;
+    fs.truncateSync(dbPath, Math.floor(originalSize / 2));
+
+    const hasWriteAccess = await db_model.activate(context, dbPath);
+
+    assert.strictEqual(hasWriteAccess, true, "Should have write access");
+    const db = await db_model.getDB();
+    assert.strictEqual(
+      db_model.getAll<{ quick_check: string }>(db, "PRAGMA quick_check")[0]
+        .quick_check,
+      "ok",
+      "Rebuilt database should be readable",
+    );
+
+    const backups = fs
+      .readdirSync(path.dirname(dbPath))
+      .filter((name) => name.startsWith(`${path.basename(dbPath)}.corrupted-`));
+    assert.strictEqual(
+      backups.length,
+      1,
+      "Corrupted database should have been kept aside",
+    );
+  });
+
+  test("saveDB should not leave a partial database behind on failure", async () => {
+    await db_model.activate(context, dbPath);
+    await db_model.saveDB();
+
+    const saved = fs.readFileSync(dbPath);
+    assert.ok(saved.length > 0, "Database file should not be empty");
+    assert.strictEqual(
+      fs.existsSync(`${dbPath}.tmp`),
+      false,
+      "Temporary save file should have been renamed away",
+    );
+  });
+
   test("deactivate should close database and release lock", async () => {
     await db_model.activate(context, dbPath);
     await db_model.deactivate();

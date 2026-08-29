@@ -68,16 +68,49 @@ export async function activate(context: vscode.ExtensionContext) {
   config.activate(context);
   const configuration = config.getConfig();
 
+  // ==================== COMMANDS ====================
+  // Registered before any asynchronous work: a command registered later would
+  // be missing entirely ("command 'achievements.show' not found") if anything
+  // below it threw, so nothing that can fail may run first.
+  registerCommands(context);
+
   // ==================== DATABASE ====================
   // hasWriteAccess will be false if another instance has the lock
   let hasWriteAccess = false;
   if (configuration.enabled) {
-    hasWriteAccess = await db_model.activate(context);
+    try {
+      hasWriteAccess = await db_model.activate(context);
+    } catch (err) {
+      // The database is unusable, but the commands stay registered so the
+      // user can still reach the settings and see what went wrong.
+      logger.showError(
+        `Achievements: Failed to start the database, achievements will not be tracked: ${
+          (err as Error).message
+        }`,
+      );
+      return;
+    }
   }
 
-  // ==================== COMMANDS ====================
-  // Warning, do not forget to add each command to the package.json file AND to the subscriptions array
+  // ==================== LISTENERS ====================
+  // Only activate listeners if we have write access (not in readonly mode)
+  // and we're not in test mode
+  if (context.extensionMode !== vscode.ExtensionMode.Test && hasWriteAccess) {
+    await activateListeners(context);
+  } else if (!hasWriteAccess) {
+    // If we don't have write access, show a UI warning and keep listeners disabled
+    showReadOnlyUI(context);
+  }
+}
 
+/**
+ * Register every command contributed in package.json, plus the status bar
+ * entry. Synchronous and free of failure paths on purpose: see activate().
+ *
+ * Warning, do not forget to add each command to the package.json file AND to
+ * the subscriptions array
+ */
+function registerCommands(context: vscode.ExtensionContext): void {
   // Enable command
   const enableCommand = vscode.commands.registerCommand(
     "achievements.enable",
@@ -133,22 +166,35 @@ export async function activate(context: vscode.ExtensionContext) {
   if (context.extensionMode !== vscode.ExtensionMode.Test) {
     registerAchievementsStatusBar(context);
   }
+}
 
-  // ==================== LISTENERS ====================
-  // Only activate listeners if we have write access (not in readonly mode)
-  // and we're not in test mode
-  if (context.extensionMode !== vscode.ExtensionMode.Test && hasWriteAccess) {
-    fileListeners.activate(context);
-    gitListeners.activate(context);
-    await timeListeners.activate(context);
-    tabListeners.activate(context);
-    taskListeners.activate(context);
-    extensionsListeners.activate(context);
-    debugListeners.activate(context);
-    shortcutsListeners.activate(context);
-  } else if (!hasWriteAccess) {
-    // If we don't have write access, show a UI warning and keep listeners disabled
-    showReadOnlyUI(context);
+/**
+ * Activate every event listener. Each one is isolated: a listener that throws
+ * (a VS Code API it relies on being unavailable, for instance) is reported and
+ * skipped instead of taking the remaining listeners down with it.
+ */
+async function activateListeners(
+  context: vscode.ExtensionContext,
+): Promise<void> {
+  const listeners: [string, () => void | Promise<void>][] = [
+    ["files", () => fileListeners.activate(context)],
+    ["git", () => gitListeners.activate(context)],
+    ["time", () => timeListeners.activate(context)],
+    ["tabs", () => tabListeners.activate(context)],
+    ["tasks", () => taskListeners.activate(context)],
+    ["extensions", () => extensionsListeners.activate(context)],
+    ["debug", () => debugListeners.activate(context)],
+    ["shortcuts", () => shortcutsListeners.activate(context)],
+  ];
+
+  for (const [name, activateListener] of listeners) {
+    try {
+      await activateListener();
+    } catch (err) {
+      logger.error(
+        `Failed to activate ${name} listeners: ${(err as Error).message}`,
+      );
+    }
   }
 }
 
