@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2026-08-29
+
+### Added
+
+- Add devcontainer db sharing guide by @BoxBoxJason in [#105](https://github.com/BoxBoxJason/achievements/pull/105)
+
+### Changed
+
+- Bump the npm_and_yarn group across 1 directory with 2 updates by @dependabot[bot] in [#106](https://github.com/BoxBoxJason/achievements/pull/106)
+- Update all dependencies by @renovate[bot] in [#93](https://github.com/BoxBoxJason/achievements/pull/93)
+- Update changelog to 0.7.0 by @BoxBoxJason
+
+### Fixed
+
+- Database init corruption events
+
 ## [0.7.0] - 2026-07-19
 
 ### Added
@@ -273,6 +289,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * @BoxBoxJason made their first contribution
 
+[0.7.1]: https://github.com/BoxBoxJason/achievements/compare/0.7.0...0.7.1
 [0.7.0]: https://github.com/BoxBoxJason/achievements/compare/0.6.0...0.7.0
 [0.6.0]: https://github.com/BoxBoxJason/achievements/compare/0.5.1...0.6.0
 [0.5.1]: https://github.com/BoxBoxJason/achievements/compare/0.5.0...0.5.1
