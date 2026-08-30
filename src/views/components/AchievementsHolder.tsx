@@ -13,7 +13,7 @@ const AchievementHolder: React.FC<AchievementHolderProps> = ({ filters, limit })
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [offset, setOffset] = useState(0);
   const [maxCount, setMaxCount] = useState(0);
-  const latestRequestId = useRef(0);
+  const latestRequestIdRef = useRef(0);
 
   useEffect(() => {
     window.addEventListener('message', handleMessage);
@@ -23,7 +23,7 @@ const AchievementHolder: React.FC<AchievementHolderProps> = ({ filters, limit })
   }, []);
 
   useEffect(() => {
-    const requestId = ++latestRequestId.current;
+    const requestId = ++latestRequestIdRef.current;
     window.vscode.postMessage(
       JSON.stringify({
         command: webview.commands.RETRIEVE_ACHIEVEMENTS,
@@ -42,7 +42,7 @@ const AchievementHolder: React.FC<AchievementHolderProps> = ({ filters, limit })
           count: number;
           requestId?: number;
         };
-        if (payload.requestId !== latestRequestId.current) {
+        if (payload.requestId !== latestRequestIdRef.current) {
           return;
         }
         setAchievements(payload.achievements);
