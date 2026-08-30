@@ -8,7 +8,8 @@
  * @author BoxBoxJason
  */
 
-import * as lockfile from "proper-lockfile";
+import { lock as acquireFileLock, LockError } from "cross-process-lock";
+import type { UnlockFunction } from "cross-process-lock";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
@@ -16,22 +17,29 @@ import * as vscode from "vscode";
 import logger from "../utils/logger";
 
 // ================== MODULE VARIABLES ==================
-let lockRelease: (() => Promise<void>) | null = null;
+let lockRelease: UnlockFunction | null = null;
 let isReadOnlyMode = false;
 let databasePath: string | null = null;
+let refreshTimer: ReturnType<typeof setInterval> | null = null;
 
 // Lock configuration
-const LOCK_OPTIONS: lockfile.LockOptions = {
-  // Stale threshold: if lock file mtime is older than this, consider it stale
-  // This handles ungraceful shutdowns where the lock wasn't released
-  stale: 15000, // 15 seconds
-  // How often to update the lock file mtime to prevent staleness
-  update: 5000, // 5 seconds
-  // Number of retries when acquiring lock
-  retries: 0, // Don't retry, just go to readonly mode
-  // Use realpath to resolve symlinks
-  realpath: false, // Database file may not exist yet
-};
+// A lock whose timestamp has not been refreshed within this window is treated as
+// abandoned (e.g. left behind by an ungraceful shutdown) and can be taken over.
+const LOCK_STALE_THRESHOLD_MS = 15000; // 15 seconds
+// How often we rewrite our own lock timestamp so a live lock is never seen as
+// stale, and re-check that we still own it (compromised-lock detection).
+const LOCK_REFRESH_INTERVAL_MS = 5000; // 5 seconds
+// cross-process-lock retries every 500ms until this budget elapses. Keeping it
+// below one retry interval means a single acquisition attempt: if another
+// instance holds the lock we fall straight through to read-only mode.
+const LOCK_ACQUIRE_TIMEOUT_MS = 250;
+
+// Shape of the metadata cross-process-lock writes into its lock file. We rewrite
+// it ourselves on every refresh so the format has to stay in sync.
+interface LockMetadata {
+  pID: number;
+  lockTime: number;
+}
 
 /**
  * Database lock manager namespace
@@ -44,19 +52,114 @@ const LOCK_OPTIONS: lockfile.LockOptions = {
  */
 export namespace db_lock {
   /**
+   * Get the path of the file cross-process-lock guards for a given database.
+   * This file only needs to exist; the actual lock marker is created next to it
+   * with a ".lock" suffix (see getLockFilePath).
+   *
+   * @param dbPath - The database file path
+   * @returns The lock target path
+   */
+  function getLockTargetPath(dbPath: string): string {
+    // Use os.tmpdir() which works on all platforms (Linux, Windows, macOS)
+    // and handles readOnlyRootFs scenarios better
+    const tmpDir = os.tmpdir();
+    // Create a unique but deterministic name based on the database path
+    const dbPathHash = Buffer.from(dbPath).toString("base64url");
+    return path.join(tmpDir, `achievements-db-${dbPathHash}`);
+  }
+
+  /**
    * Get the lock file path for a given database path.
-   * Uses a cross-platform temporary directory approach for reliability.
+   * This is the marker file cross-process-lock creates while the lock is held.
    *
    * @param dbPath - The database file path
    * @returns The lock file path
    */
   export function getLockFilePath(dbPath: string): string {
-    // Use os.tmpdir() which works on all platforms (Linux, Windows, macOS)
-    // and handles readOnlyRootFs scenarios better
-    const tmpDir = os.tmpdir();
-    // Create a unique but deterministic lock file name based on the database path
-    const dbPathHash = Buffer.from(dbPath).toString("base64url");
-    return path.join(tmpDir, `achievements-db-${dbPathHash}.lock`);
+    return `${getLockTargetPath(dbPath)}.lock`;
+  }
+
+  /**
+   * Read and parse the lock marker for a database path.
+   *
+   * @param dbPath - The database file path
+   * @returns The parsed metadata, or null if it is missing or unreadable
+   */
+  function readLockMetadata(dbPath: string): LockMetadata | null {
+    try {
+      const raw = fs.readFileSync(getLockFilePath(dbPath), "utf8");
+      const parsed = JSON.parse(raw) as Partial<LockMetadata>;
+      if (
+        typeof parsed?.pID === "number" &&
+        typeof parsed?.lockTime === "number"
+      ) {
+        return { pID: parsed.pID, lockTime: parsed.lockTime };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Stop the periodic lock refresh timer, if it is running.
+   */
+  function stopLockRefresh(): void {
+    if (refreshTimer) {
+      clearInterval(refreshTimer);
+      refreshTimer = null;
+    }
+  }
+
+  /**
+   * Handle the lock being compromised (removed or taken over by another
+   * process). Switches the extension to read-only mode.
+   *
+   * @param reason - Human readable description of what went wrong
+   */
+  function handleLockCompromised(reason: string): void {
+    logger.error(`Database lock was compromised: ${reason}`);
+    isReadOnlyMode = true;
+    lockRelease = null;
+    stopLockRefresh();
+    vscode.window.showWarningMessage(
+      "Achievements: Database lock was lost. Switching to read-only mode."
+    );
+  }
+
+  /**
+   * Start the periodic task that keeps our lock alive: it refreshes the lock
+   * timestamp so a live lock is never mistaken for a stale one, and verifies
+   * that we still own the marker (cross-process-lock has no onCompromised hook).
+   *
+   * @param dbPath - The database file path
+   */
+  function startLockRefresh(dbPath: string): void {
+    stopLockRefresh();
+    const markerPath = getLockFilePath(dbPath);
+    refreshTimer = setInterval(() => {
+      const metadata = readLockMetadata(dbPath);
+      if (!metadata) {
+        handleLockCompromised("lock file is missing or unreadable");
+        return;
+      }
+      if (metadata.pID !== process.pid) {
+        handleLockCompromised("lock file was taken over by another process");
+        return;
+      }
+      try {
+        fs.writeFileSync(
+          markerPath,
+          JSON.stringify({ pID: process.pid, lockTime: Date.now() })
+        );
+      } catch (err) {
+        logger.warn(
+          `Failed to refresh database lock timestamp: ${(err as Error).message}`
+        );
+      }
+    }, LOCK_REFRESH_INTERVAL_MS);
+    // Don't keep the extension host event loop alive just for this timer.
+    refreshTimer.unref();
   }
 
   /**
@@ -68,32 +171,27 @@ export namespace db_lock {
    */
   export async function acquireLock(dbPath: string): Promise<boolean> {
     databasePath = dbPath;
-    const lockPath = getLockFilePath(dbPath);
+    const targetPath = getLockTargetPath(dbPath);
 
     try {
-      // Ensure the lock file directory exists
-      const lockDir = path.dirname(lockPath);
-      await fs.promises.mkdir(lockDir, { recursive: true });
+      // Ensure the lock directory exists
+      await fs.promises.mkdir(path.dirname(targetPath), { recursive: true });
 
-      // Create the lock file if it doesn't exist (proper-lockfile needs a file to lock)
-      if (!fs.existsSync(lockPath)) {
-        await fs.promises.writeFile(lockPath, "", { flag: "w" });
+      // cross-process-lock requires the target file to exist before locking it
+      if (!fs.existsSync(targetPath)) {
+        await fs.promises.writeFile(targetPath, "", { flag: "w" });
       }
 
-      logger.debug(`Attempting to acquire database lock at: ${lockPath}`);
+      logger.debug(`Attempting to acquire database lock at: ${targetPath}`);
 
-      lockRelease = await lockfile.lock(lockPath, {
-        ...LOCK_OPTIONS,
-        onCompromised: (err) => {
-          // Lock was compromised (e.g., another process removed it)
-          logger.error(`Database lock was compromised: ${err.message}`);
-          isReadOnlyMode = true;
-          lockRelease = null;
-          vscode.window.showWarningMessage(
-            "Achievements: Database lock was lost. Switching to read-only mode."
-          );
-        },
+      lockRelease = await acquireFileLock(targetPath, {
+        // A lock older than this is considered stale and can be stolen
+        lockTimeout: LOCK_STALE_THRESHOLD_MS,
+        // Effectively a single attempt before falling back to read-only mode
+        waitTimeout: LOCK_ACQUIRE_TIMEOUT_MS,
       });
+
+      startLockRefresh(dbPath);
 
       isReadOnlyMode = false;
       logger.info(
@@ -101,9 +199,10 @@ export namespace db_lock {
       );
       return true;
     } catch (err) {
+      stopLockRefresh();
       const error = err as Error;
 
-      if (error.message.includes("ELOCKED")) {
+      if (error instanceof LockError) {
         // Another instance has the lock
         logger.warn(
           "Another VS Code instance has the database lock - running in read-only mode"
@@ -133,6 +232,8 @@ export namespace db_lock {
    * @returns Promise<void>
    */
   export async function releaseLock(): Promise<void> {
+    stopLockRefresh();
+
     if (lockRelease) {
       try {
         await lockRelease();
@@ -146,21 +247,25 @@ export namespace db_lock {
       }
     }
 
-    // Clean up the lock file
+    // Clean up the lock files
     if (databasePath) {
-      const lockPath = getLockFilePath(databasePath);
-      try {
-        if (fs.existsSync(lockPath)) {
-          await fs.promises.unlink(lockPath);
-          logger.debug(`Lock file removed: ${lockPath}`);
+      for (const filePath of [
+        getLockFilePath(databasePath),
+        getLockTargetPath(databasePath),
+      ]) {
+        try {
+          if (fs.existsSync(filePath)) {
+            await fs.promises.unlink(filePath);
+            logger.debug(`Lock file removed: ${filePath}`);
+          }
+        } catch (err) {
+          // Ignore cleanup errors - the file might already be removed
+          logger.debug(
+            `Could not remove lock file (may already be removed): ${
+              (err as Error).message
+            }`
+          );
         }
-      } catch (err) {
-        // Ignore cleanup errors - the file might already be removed
-        logger.debug(
-          `Could not remove lock file (may already be removed): ${
-            (err as Error).message
-          }`
-        );
       }
     }
 
@@ -190,20 +295,12 @@ export namespace db_lock {
    * @returns Promise<boolean> - true if locked
    */
   export async function checkLock(dbPath: string): Promise<boolean> {
-    const lockPath = getLockFilePath(dbPath);
-
-    if (!fs.existsSync(lockPath)) {
+    const metadata = readLockMetadata(dbPath);
+    if (!metadata) {
       return false;
     }
-
-    try {
-      return await lockfile.check(lockPath, {
-        stale: LOCK_OPTIONS.stale,
-        realpath: LOCK_OPTIONS.realpath,
-      });
-    } catch {
-      return false;
-    }
+    // A lock whose timestamp is older than the stale threshold is not live
+    return Date.now() - metadata.lockTime <= LOCK_STALE_THRESHOLD_MS;
   }
 
   /**
@@ -211,6 +308,7 @@ export namespace db_lock {
    * @internal
    */
   export function _resetState(): void {
+    stopLockRefresh();
     lockRelease = null;
     isReadOnlyMode = false;
     databasePath = null;

@@ -2,7 +2,6 @@ import * as assert from "node:assert";
 import * as path from "node:path";
 import * as fs from "node:fs";
 import * as os from "node:os";
-import * as lockfile from "proper-lockfile";
 import { db_lock } from "../database/lock";
 
 suite("Database Lock Test Suite", () => {
@@ -127,34 +126,19 @@ suite("Database Lock Test Suite", () => {
   });
 
   test("second lock attempt should fail and set readonly mode", async () => {
-    // Acquire lock with first "instance"
     const lockPath = db_lock.getLockFilePath(testDbPath);
 
-    // Ensure lock file directory exists
+    // Simulate another live instance holding the lock
     fs.mkdirSync(path.dirname(lockPath), { recursive: true });
-    if (!fs.existsSync(lockPath)) {
-      fs.writeFileSync(lockPath, "");
-    }
+    fs.writeFileSync(
+      lockPath,
+      JSON.stringify({ pID: process.pid + 1, lockTime: Date.now() })
+    );
 
-    // Manually acquire lock using proper-lockfile directly
-    const release = await lockfile.lock(lockPath, {
-      stale: 15000,
-      update: 5000,
-      realpath: false,
-    });
-
-    try {
-      // Try to acquire with db_lock (simulating second instance)
-      const result = await db_lock.acquireLock(testDbPath);
-      assert.strictEqual(result, false, "Second lock attempt should fail");
-      assert.strictEqual(
-        db_lock.isReadOnly(),
-        true,
-        "Should be in readonly mode"
-      );
-    } finally {
-      await release();
-    }
+    // Try to acquire with db_lock (simulating second instance)
+    const result = await db_lock.acquireLock(testDbPath);
+    assert.strictEqual(result, false, "Second lock attempt should fail");
+    assert.strictEqual(db_lock.isReadOnly(), true, "Should be in readonly mode");
   });
 
   test("_resetState should reset all internal state", async () => {
@@ -167,22 +151,15 @@ suite("Database Lock Test Suite", () => {
     );
   });
 
-  test("stale lock should be automatically recovered", async function () {
-    // This test takes longer due to stale timeout
-    this.timeout(20000);
-
+  test("stale lock should be automatically recovered", async () => {
     const lockPath = db_lock.getLockFilePath(testDbPath);
 
-    // Create a stale lock file manually
+    // A lock left behind by a dead instance: timestamp older than the threshold
     fs.mkdirSync(path.dirname(lockPath), { recursive: true });
-    fs.writeFileSync(lockPath, "");
-    // Create stale lock directory (proper-lockfile uses .lock dir)
-    const staleLockDir = lockPath + ".lock";
-    fs.mkdirSync(staleLockDir, { recursive: true });
-
-    // Set mtime to past (older than stale threshold)
-    const pastTime = new Date(Date.now() - 20000); // 20 seconds ago
-    fs.utimesSync(staleLockDir, pastTime, pastTime);
+    fs.writeFileSync(
+      lockPath,
+      JSON.stringify({ pID: process.pid + 1, lockTime: Date.now() - 60000 })
+    );
 
     // Should be able to acquire the lock because the existing one is stale
     const result = await db_lock.acquireLock(testDbPath);

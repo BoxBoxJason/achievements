@@ -2,8 +2,11 @@ import eslint from "@eslint/js";
 import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 import promisePlugin from "eslint-plugin-promise";
-import reactPlugin from "eslint-plugin-react";
+import reactPlugin from "@eslint-react/eslint-plugin";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
+
+// @eslint-react ships a single flat-config object (plugins + rules + settings)
+const reactRecommended = reactPlugin.configs["recommended-typescript"];
 
 export default [
   // Ignore patterns
@@ -21,14 +24,12 @@ export default [
     plugins: {
       "@typescript-eslint": typescriptEslint,
       promise: promisePlugin,
-      react: reactPlugin,
+      ...reactRecommended.plugins,
       "react-hooks": reactHooksPlugin,
     },
 
     settings: {
-      react: {
-        version: "19.2",
-      },
+      ...reactRecommended.settings,
     },
 
     languageOptions: {
@@ -82,6 +83,8 @@ export default [
     },
 
     rules: {
+      ...reactRecommended.rules,
+
       "no-unused-vars": "off",
 
       // TypeScript ESLint recommended rules (non-type-checked)
@@ -141,11 +144,11 @@ export default [
       "prefer-arrow-callback": "warn",
       "no-empty-function": "warn",
 
-      // React rules
-      "react/react-in-jsx-scope": "off",
-      "react/prop-types": "off", // Using TypeScript for prop validation
-      "react/no-unescaped-entities": "warn",
-      "react/display-name": "warn",
+      // React rules (@eslint-react). Hooks linting stays with
+      // eslint-plugin-react-hooks, so its @eslint-react duplicates are disabled.
+      "@eslint-react/rules-of-hooks": "off",
+      "@eslint-react/exhaustive-deps": "off",
+      "@eslint-react/no-missing-component-display-name": "warn",
       "react-hooks/rules-of-hooks": "warn",
       "react-hooks/exhaustive-deps": "warn",
     },
