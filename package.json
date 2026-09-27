@@ -268,7 +268,7 @@
     "nyc": "18.0.0",
     "ovsx": "1.2.0",
     "ts-node": "10.9.2",
-    "typescript": "7.0.2"
+    "typescript": "6.0.3"
   },
   "dependencies": {
     "cross-process-lock": "2.2.0",
