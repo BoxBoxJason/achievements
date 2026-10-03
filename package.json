@@ -247,17 +247,17 @@
     "changelog": "git-cliff -c cliff.toml -o CHANGELOG.md"
   },
   "devDependencies": {
-    "@eslint-react/eslint-plugin": "5.20.8",
+    "@eslint-react/eslint-plugin": "5.23.3",
     "@eslint/js": "10.0.1",
     "@tailwindcss/cli": "4.3.3",
     "@types/mocha": "10.0.10",
-    "@types/node": "26.6.2",
+    "@types/node": "26.6.3",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@types/sql.js": "1.4.11",
     "@types/vscode": "1.138.0",
-    "@typescript-eslint/eslint-plugin": "8.70.1",
-    "@typescript-eslint/parser": "8.70.1",
+    "@typescript-eslint/eslint-plugin": "8.71.0",
+    "@typescript-eslint/parser": "8.71.0",
     "@vscode/test-cli": "0.0.15",
     "@vscode/test-electron": "3.1.0",
     "@vscode/vsce": "4.0.0",
@@ -268,7 +268,7 @@
     "nyc": "18.0.0",
     "ovsx": "1.2.0",
     "ts-node": "10.9.2",
-    "typescript": "6.0.3"
+    "typescript": "7.0.2"
   },
   "dependencies": {
     "cross-process-lock": "2.2.0",
