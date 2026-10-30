@@ -127,6 +127,16 @@ These are the most useful scripts from [package.json](package.json):
    - Reference the issue number (e.g. `Fixes #123`).
    - Describe what changed and how it was tested.
 
+## Documentation
+
+The documentation lives in the [`docs`](docs) directory, as Markdown rendered by [Hugo](https://gohugo.io/) (extended edition) with the shared [hugo-theme](https://github.com/boxboxjason/hugo-theme), and is published to <https://boxboxjason.github.io/achievements/> from `main`.
+
+- Change the documentation in the same pull request as the code it describes.
+- The [commands](docs/content/docs/commands.md), [settings](docs/content/docs/settings.md) and [achievements](docs/content/docs/achievements.md) pages are generated from `package.json` and the achievement templates: run `npm run docs:generate` after changing them, and commit the result. CI runs `npm run docs:check`, which fails when a generated page is stale.
+- The getting started walkthrough shown in VS Code ([docs/walkthroughs](docs/walkthroughs)) is also rendered on the site: edit it in one place.
+- `hugo server --source docs` serves the site locally with live reload, `hugo --source docs` builds it into `docs/public`.
+- Look and feel (colors, footer, ...) belong to the shared theme, do not restyle a single site.
+
 ## Coding guidelines
 
 - Keep changes scoped to the issue.
