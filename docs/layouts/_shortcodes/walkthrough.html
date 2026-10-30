@@ -1,0 +1,11 @@
+{{- /*
+  Renders a step of the VS Code getting started walkthrough (docs/walkthroughs/<path>.md),
+  so the extension and the site share one source. Its top level heading is demoted to fit
+  under the page title: {{< walkthrough "getting-started/open-panel" >}}
+*/ -}}
+{{- $path := printf "walkthroughs/%s.md" (.Get 0) -}}
+{{- with resources.Get $path -}}
+  {{- .Content | replaceRE `(?m)^# ` "## " | $.Page.RenderString -}}
+{{- else -}}
+  {{- errorf "walkthrough %q not found (%s)" $path $.Position -}}
+{{- end -}}

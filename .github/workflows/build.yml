@@ -32,6 +32,9 @@ jobs:
       - name: Type Check
         run: npm run check-types
 
+      - name: Documentation up to date
+        run: npm run docs:check
+
       - name: Lint
         run: npm run lint
 

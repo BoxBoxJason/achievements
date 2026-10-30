@@ -244,7 +244,9 @@
     "test:coverage": "npm run clean && rm -rf .nyc_output dist-cov && npx tsc && npx nyc instrument dist dist-cov --include=\"**/*.js\" --exclude=\"**/test/**\" && cp -r dist-cov/* dist/ && node dist/test/runTest.js && npx nyc report --reporter=text-summary --reporter=text",
     "clean": "rm -rf dist dist-cov .nyc_output",
     "tailwind": "npx tailwindcss -i ./src/views/style/main.css -o ./dist/style/main.css --minify",
-    "changelog": "git-cliff -c cliff.toml -o CHANGELOG.md"
+    "changelog": "git-cliff -c cliff.toml -o CHANGELOG.md",
+    "docs:generate": "ts-node scripts/generate-docs.ts",
+    "docs:check": "ts-node scripts/generate-docs.ts --check"
   },
   "devDependencies": {
     "@eslint-react/eslint-plugin": "5.20.8",
@@ -279,7 +281,8 @@
   "files": [
     "dist",
     "assets",
-    "docs",
+    "docs/achievements.gif",
+    "docs/walkthroughs",
     "README.md",
     "CHANGELOG.md",
     "LICENSE.md",

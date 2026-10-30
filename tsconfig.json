@@ -15,6 +15,7 @@
 		"strict": true // Enable all strict type-checking options
 	},
 	"exclude": [
-		"esbuild.ts"
+		"esbuild.ts",
+		"scripts"
 	],
 }
