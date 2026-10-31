@@ -1,6 +1,7 @@
 ---
 title: Achievements
 layout: hextra-home
+description: "Achievements is a free VS Code extension that turns your coding activity into achievements, levels and experience, tracked locally and privately."
 ---
 
 {{< hextra/hero-headline >}}

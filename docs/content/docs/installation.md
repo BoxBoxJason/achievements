@@ -1,6 +1,7 @@
 ---
 title: Installation
 weight: 10
+description: "Install the Achievements extension for VS Code from the Open VSX registry, or download the VSIX from the GitHub releases and install it by hand."
 ---
 
 ## From Open VSX
