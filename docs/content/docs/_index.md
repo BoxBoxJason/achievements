@@ -1,6 +1,7 @@
 ---
 title: Documentation
 weight: 1
+description: "Documentation of the Achievements extension for VS Code: install it, earn achievements as you code, and configure what it tracks."
 ---
 
 Achievements is a Visual Studio Code extension that allows you to track your progress in coding, and earn achievements for completing tasks.

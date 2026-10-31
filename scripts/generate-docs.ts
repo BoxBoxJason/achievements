@@ -49,8 +49,8 @@ function code(value: string): string {
   return "`" + value + "`";
 }
 
-function page(title: string, weight: number, intro: string, body: string): string {
-  return `---\ntitle: ${title}\nweight: ${weight}\n---\n\n${GENERATED_NOTICE}\n\n${intro}\n\n${body.trimEnd()}\n`;
+function page(title: string, weight: number, description: string, intro: string, body: string): string {
+  return `---\ntitle: ${title}\nweight: ${weight}\ndescription: ${JSON.stringify(description)}\n---\n\n${GENERATED_NOTICE}\n\n${intro}\n\n${body.trimEnd()}\n`;
 }
 
 function commandsPage(pkg: PackageJson): string {
@@ -61,6 +61,7 @@ function commandsPage(pkg: PackageJson): string {
   return page(
     "Commands",
     50,
+    "Every command of the Achievements extension for VS Code, with its identifier, to run from the Command Palette or bind to a shortcut.",
     "Run these commands from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`), or bind them to keyboard shortcuts.",
     ["| Command | Identifier |", "| ------- | ---------- |", ...rows].join("\n"),
   );
@@ -90,6 +91,7 @@ function settingsPage(pkg: PackageJson): string {
   return page(
     "Settings",
     60,
+    "Every setting of the Achievements extension for VS Code: type, default value and effect, from tracked events to logging and the status bar.",
     'Open **File > Preferences > Settings** and search for "Achievements", or run **Achievements: Settings**.',
     ["| Setting | Type | Default | Description |", "| ------- | ---- | ------- | ----------- |", ...rows].join("\n"),
   );
@@ -181,7 +183,13 @@ function achievementsPage(): string {
     `Rows with \`<language>\` exist once per tracked language: ${[...languages].sort().map(code).join(", ")}.`,
   ].join("\n");
 
-  return page("Achievements", 40, intro, sections.join("\n\n"));
+  return page(
+    "Achievements",
+    40,
+    "The full catalogue of achievements you can unlock in VS Code, with their tiers, requirements and the values needed for each tier.",
+    intro,
+    sections.join("\n\n"),
+  );
 }
 
 function main(): void {

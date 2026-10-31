@@ -1,6 +1,7 @@
 ---
 title: How it works
 weight: 30
+description: "How the Achievements VS Code extension tracks your activity: local SQLite storage, no server, read-only mode, devcontainers and network access."
 ---
 
 - The extension activates on `onStartupFinished` and listens to VS Code and Git events (based on your settings).

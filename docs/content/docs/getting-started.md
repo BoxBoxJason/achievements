@@ -1,6 +1,7 @@
 ---
 title: Getting started
 weight: 20
+description: "Get started with the Achievements extension in VS Code: open the panel, unlock your first achievements and follow your level and experience."
 ---
 
 These are the steps of the **Get Started with Achievements** walkthrough, also available inside VS Code from **Help > Welcome**.
