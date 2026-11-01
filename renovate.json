@@ -29,7 +29,8 @@
   ],
   "minimumReleaseAgeBehaviour": "timestamp-optional",
   "lockFileMaintenance": {
-    "enabled": true
+    "enabled": true,
+    "automerge": true
   },
   "updateInternalDeps": true,
   "dependencyDashboardAutoclose": true,
@@ -40,5 +41,15 @@
   "postUpdateOptions": [
     "npmDedupe",
     "npmInstallTwice"
-  ]
+  ],
+  "packageRules": [
+    {
+      "description": "TypeScript 7 doesn't work with this project's toolchain yet; stay on 6.x. Drop this rule once it does.",
+      "matchPackageNames": [
+        "typescript"
+      ],
+      "allowedVersions": "<7"
+    }
+  ],
+  "automerge": true
 }
