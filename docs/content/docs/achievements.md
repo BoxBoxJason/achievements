@@ -18,6 +18,7 @@ Rows with `<language>` exist once per tracked language: `ada`, `assembly`, `c`, 
 | `<language>` Speaker 1 … `<language>` Speaker 16 | Lines of Code | Write N lines of `<language>` code | 2 → 100,000,000 (16 tiers) |
 | Outstanding Commentator 1 … Outstanding Commentator 16 | Lines of Comments | Write N lines of comments | 2 → 100,000,000 (16 tiers) |
 | Copy Ninja 1 … Copy Ninja 16 | Number of Pastes | Paste N times | 1 → 50,000,000 (16 tiers) |
+| Shadow Clone Jutsu 1 … Shadow Clone Jutsu 11 | Multi Cursor Pastes | Paste into multiple cursors at once N times | 1 → 50,000 (11 tiers) |
 | I can fix her 1 … I can fix her 16 | Errors Fixed | Fix N errors | 1 → 50,000,000 (16 tiers) |
 | Shower Avoider 1 … Shower Avoider 14 | time spent | Spend N hours coding | 1 → 1,000,000 (14 tiers) |
 | Tab Hoarder 1 … Tab Hoarder 6 | Number of Simultaneous Tabs | Open N tabs simultaneously | 1 → 100 (6 tiers) |

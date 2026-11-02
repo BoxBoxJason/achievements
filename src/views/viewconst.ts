@@ -190,6 +190,7 @@ export namespace webview {
 
       export const shortcut: { [key: string]: string[] } = {
         COPY_NINJA: ["icons", "achievements", "shortcut", "copy_ninja.png"],
+        SHADOW_CLONE: ["icons", "achievements", "shortcut", "copy_ninja.png"],
       } as const;
 
       export const extension: { [key: string]: string[] } = {

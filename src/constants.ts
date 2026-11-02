@@ -30,6 +30,8 @@ export namespace constants {
     LINES_OF_COMMENTS = "linesOfCommentsCount",
     // Number of pastes
     NUMBER_OF_PASTES = "pastesCount",
+    // Pastes into several cursors at once
+    MULTI_CURSOR_PASTES = "multiCursorPastesCount",
     // Errors fixed
     ERRORS_FIXED = "errorsFixedCount",
     // Directory created

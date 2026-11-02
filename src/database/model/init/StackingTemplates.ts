@@ -314,6 +314,27 @@ export namespace StackingTemplates {
       requires: [],
     });
 
+    export const multiCursorPastesTemplate =
+      (): StackingAchievementTemplate => ({
+        title: "Shadow Clone Jutsu %d",
+        icon: "SHADOW_CLONE",
+        category: constants.category.PRODUCTIVITY,
+        group: "Multi Cursor Pastes",
+        labels: [
+          constants.category.PRODUCTIVITY,
+          constants.labels.NUMBER_OF_PASTES,
+          constants.labels.MULTI_CURSOR,
+        ],
+        criterias: [constants.criteria.MULTI_CURSOR_PASTES],
+        criteriasFunctions: [STANDARD_INFERNAL_CRITERIA_FUNCTION],
+        description: `Paste into multiple cursors at once ${constants.criteria.MULTI_CURSOR_PASTES} times`,
+        minTier: 0,
+        maxTier: 10,
+        expFunction: STANDARD_EXP_FUNCTION,
+        hidden: false,
+        requires: [],
+      });
+
     export const errorsFixedTemplate = (): StackingAchievementTemplate => ({
       title: "I can fix her %d",
       icon: "ERROR_FIXER",
