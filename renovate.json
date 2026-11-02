@@ -42,6 +42,21 @@
     "npmDedupe",
     "npmInstallTwice"
   ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Keep engines.vscode in lockstep with @types/vscode (vsce rejects @types/vscode newer than engines.vscode).",
+      "managerFilePatterns": [
+        "/(^|/)package\\.json$/"
+      ],
+      "matchStrings": [
+        "\"engines\"\\s*:\\s*\\{[^}]*?\"vscode\"\\s*:\\s*\"\\^(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "depNameTemplate": "@types/vscode",
+      "datasourceTemplate": "npm",
+      "versioningTemplate": "npm"
+    }
+  ],
   "packageRules": [
     {
       "description": "TypeScript 7 doesn't work with this project's toolchain yet; stay on 6.x. Drop this rule once it does.",
