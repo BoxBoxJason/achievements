@@ -16,6 +16,7 @@ import { StackingTemplates } from "./StackingTemplates";
 import Progression from "../tables/Progression";
 import { constants } from "../../../constants";
 import logger from "../../../utils/logger";
+import { db_model } from "../model";
 
 /**
  * Database init module functions
@@ -23,10 +24,101 @@ import logger from "../../../utils/logger";
  * @namespace db_init
  *
  * @function activate - Initializes the database with default achievements and progressions
+ * @function removeObsoleteAchievements - Deletes the achievements that cannot be tracked anymore
  * @function createAchievementsFromStackingTemplates - Creates achievements from the stacking templates
  * @function createIntegerProgressions - Creates integer progressions
  */
 export namespace db_init {
+  /**
+   * Progressions no listener can track anymore. They are deleted on every
+   * startup along with the achievements based on them: a database shared
+   * with an older version of the extension (devcontainers) gets them back
+   * each time that version starts.
+   *
+   * @memberof db_init
+   */
+  export const OBSOLETE_PROGRESSIONS: readonly string[] = [
+    // "Snippets Master": no stable VS Code API reports snippet insertions
+    "codeSnippetsCount",
+  ];
+
+  /**
+   * Deletes the obsolete progressions and every achievement based on them.
+   * Foreign keys are not enforced, so dependent rows are deleted explicitly.
+   *
+   * @memberof db_init
+   *
+   * @returns {Promise<void>}
+   */
+  export async function removeObsoleteAchievements(): Promise<void> {
+    const names = [...OBSOLETE_PROGRESSIONS];
+    if (names.length === 0) {
+      return;
+    }
+    const db = await db_model.getDB();
+    const namePlaceholders = names.map(() => "?").join(", ");
+
+    const progressions = db.exec(
+      `SELECT id FROM progressions WHERE name IN (${namePlaceholders})`,
+      names,
+    );
+    if (progressions.length === 0) {
+      return; // Nothing to remove, the usual case
+    }
+    logger.info(`Removing obsolete progressions: ${names.join(", ")}`);
+
+    db.run("BEGIN TRANSACTION");
+    try {
+      const result = db.exec(
+        `SELECT DISTINCT c.achievement_id FROM achievement_criterias c
+         JOIN progressions p ON p.id = c.progression_id
+         WHERE p.name IN (${namePlaceholders})`,
+        names,
+      );
+      const achievementIds = (result[0]?.values ?? []).map((row) =>
+        Number(row[0]),
+      );
+
+      if (achievementIds.length > 0) {
+        const idPlaceholders = achievementIds.map(() => "?").join(", ");
+        db.run(
+          `DELETE FROM achievement_labels WHERE achievement_id IN (${idPlaceholders})`,
+          achievementIds,
+        );
+        db.run(
+          `DELETE FROM achievement_requirements
+           WHERE achievement_id IN (${idPlaceholders})
+              OR requirement_id IN (${idPlaceholders})`,
+          [...achievementIds, ...achievementIds],
+        );
+        db.run(
+          `DELETE FROM achievement_criterias WHERE achievement_id IN (${idPlaceholders})`,
+          achievementIds,
+        );
+        db.run(
+          `DELETE FROM achievements WHERE id IN (${idPlaceholders})`,
+          achievementIds,
+        );
+      }
+
+      db.run(
+        `DELETE FROM achievement_criterias WHERE progression_id IN (
+           SELECT id FROM progressions WHERE name IN (${namePlaceholders})
+         )`,
+        names,
+      );
+      db.run(
+        `DELETE FROM progressions WHERE name IN (${namePlaceholders})`,
+        names,
+      );
+      db.run("COMMIT");
+      db_model.scheduleSave();
+    } catch (error) {
+      db.run("ROLLBACK");
+      throw error;
+    }
+  }
+
   /**
    * Creates default achievements from the stacking templates
    *
@@ -158,6 +250,7 @@ export namespace db_init {
     logger.info(
       "Populating database with default achievements and progressions"
     );
+    await removeObsoleteAchievements();
     await createIntegerProgressions();
     await createAchievementsFromStackingTemplates();
     logger.info("Database populated successfully");

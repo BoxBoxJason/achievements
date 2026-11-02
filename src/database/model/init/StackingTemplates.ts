@@ -641,21 +641,5 @@ export namespace StackingTemplates {
       hidden: false,
       requires: [],
     });
-
-    export const codeSnippetsTemplate = (): StackingAchievementTemplate => ({
-      title: "Snippets Master %d",
-      icon: "CODE_SNIPPETS",
-      category: constants.category.PRODUCTIVITY,
-      group: "Code Snippets",
-      labels: [constants.category.PRODUCTIVITY, constants.labels.SNIPPETS],
-      criterias: [constants.criteria.CODE_SNIPPETS],
-      criteriasFunctions: [STANDARD_INFERNAL_CRITERIA_FUNCTION],
-      description: `Use ${constants.criteria.CODE_SNIPPETS} code snippets`,
-      minTier: 0,
-      maxTier: 10,
-      expFunction: STANDARD_EXP_FUNCTION,
-      hidden: false,
-      requires: [],
-    });
   }
 }

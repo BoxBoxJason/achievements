@@ -53,7 +53,6 @@ Rows with `<language>` exist once per tracked language: `ada`, `assembly`, `c`, 
 | Failure achiever 1 … Failure achiever 11 | tasks | Run N failing vscode tasks or terminal command | 1 → 50,000 (11 tiers) |
 | Works on my Machine 1 … Works on my Machine 11 | tasks | Run N successful vscode tasks or terminal command | 1 → 50,000 (11 tiers) |
 | Portal Opener 1 … Portal Opener 11 | Terminals Opened | Open N terminals | 1 → 50,000 (11 tiers) |
-| Snippets Master 1 … Snippets Master 11 | Code Snippets | Use N code snippets | 1 → 50,000 (11 tiers) |
 
 ## Files
 

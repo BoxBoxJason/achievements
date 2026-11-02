@@ -100,7 +100,6 @@ export namespace constants {
     FAILED_TERMINAL_TASKS = "failedTaskCommandsCount",
     // VSCode tasks commands successful (exit code == 0)
     SUCCESSFUL_TERMINAL_TASKS = "successfulTaskCommandsCount",
-    CODE_SNIPPETS = "codeSnippetsCount",
     EXP = "expCount",
   }
 
@@ -127,7 +126,6 @@ export namespace constants {
     THEMES: "themes",
     DEBUGGER: "debugger",
     TERMINAL: "terminal",
-    SNIPPETS: "snippets",
     LANGUAGES: {
       JAVA: "java",
       PYTHON: "python",
