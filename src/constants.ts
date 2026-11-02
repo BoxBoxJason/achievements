@@ -47,7 +47,6 @@ export namespace constants {
     BRANCHES_CREATED = "branchesCreatedCount",
     MERGES_AND_REBASES = "mergesAndRebasesCount",
     AMENDS = "amendsCount",
-    FORCED_PUSHES = "forcedPushesCount",
 
     // Connection streak
     CURRENT_CONNECTION_STREAK = "currentConnectionStreak",

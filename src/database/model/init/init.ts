@@ -40,6 +40,8 @@ export namespace db_init {
   export const OBSOLETE_PROGRESSIONS: readonly string[] = [
     // "Snippets Master": no stable VS Code API reports snippet insertions
     "codeSnippetsCount",
+    // Never used: the git extension API does not report forced pushes
+    "forcedPushesCount",
   ];
 
   /**
