@@ -5,6 +5,7 @@
  * @author: BoxBoxJason
  */
 
+import * as crypto from "node:crypto";
 import * as path from "node:path";
 import * as fs from "node:fs";
 import logger from "../../utils/logger";
@@ -28,6 +29,17 @@ let isInitializing = false;
 // (e.g. keystrokes) into a single full-DB export/write.
 const SAVE_DEBOUNCE_MS = 2000;
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
+// Tail of the queue of database saves, so that they never overlap
+let saveChain: Promise<void> = Promise.resolve();
+// Suffix of the temporary files database saves are written to
+const TEMP_SUFFIX = ".tmp";
+// Age after which a temporary save file is known to be abandoned
+const TEMP_FILE_MAX_AGE_MS = 60000;
+// Errors with which Windows refuses to replace a file another process (an
+// antivirus, an indexer, another window reading it) has open. They are
+// transient, so the rename is retried a few times before giving up.
+const TRANSIENT_RENAME_ERRORS = new Set(["EPERM", "EACCES", "EBUSY"]);
+const RENAME_RETRY_DELAYS_MS = [50, 100, 200, 400, 800];
 
 // ================== MODULE FUNCTIONS ==================
 
@@ -73,13 +85,18 @@ export namespace db_model {
    * left to blow up later in the migrations (which would fail activation and
    * take every command and listener down with it).
    *
+   * Only the instance holding the lock may move the file aside: a read-only
+   * instance could otherwise move away a file the writer just saved.
+   *
    * @param {SqlJsStatic} sql The sql.js runtime
    * @param {Buffer} buffer The database file contents
+   * @param {boolean} writable Whether this instance holds the database lock
    * @returns {Promise<Database>} The database connection object
    */
   async function loadExistingDatabase(
     sql: SqlJsStatic,
     buffer: Buffer,
+    writable: boolean,
   ): Promise<Database> {
     let db: Database | null = null;
     try {
@@ -96,7 +113,15 @@ export namespace db_model {
       } catch {
         // The database is already unusable, nothing to salvage here
       }
-      await quarantineDatabase((err as Error).message);
+      if (writable) {
+        await quarantineDatabase((err as Error).message);
+      } else {
+        // The file is left for the instance holding the lock to deal with
+        logger.warn(
+          `Could not read the database (${(err as Error).message}), ` +
+            "showing an empty one in this read-only window",
+        );
+      }
       return new sql.Database();
     }
   }
@@ -132,9 +157,13 @@ export namespace db_model {
    * Initialize the database.
    *
    * @param {vscode.ExtensionContext} context The extension context object
+   * @param {boolean} writable Whether this instance holds the database lock
    * @returns {Promise<void>}
    */
-  async function init(context: vscode.ExtensionContext): Promise<void> {
+  async function init(
+    context: vscode.ExtensionContext,
+    writable: boolean,
+  ): Promise<void> {
     try {
       const wasmPath = path.join(
         context.extensionPath,
@@ -155,7 +184,7 @@ export namespace db_model {
       }
 
       if (buffer && buffer.length > 0) {
-        DB = await loadExistingDatabase(SQL, buffer);
+        DB = await loadExistingDatabase(SQL, buffer, writable);
       } else {
         logger.debug("Creating new database");
         DB = new SQL.Database();
@@ -180,7 +209,21 @@ export namespace db_model {
    *
    * @returns {Promise<void>}
    */
-  export async function saveDB(): Promise<void> {
+  export function saveDB(): Promise<void> {
+    // Saves are chained so two of them (e.g. a debounced save still in flight
+    // when deactivate() flushes) never write the file at the same time.
+    const run = saveChain.then(writeDatabaseFile, writeDatabaseFile);
+    saveChain = run;
+    return run;
+  }
+
+  /**
+   * Export the in-memory database and atomically replace the file on disk.
+   * Only ever called through saveDB(), one at a time.
+   *
+   * @returns {Promise<void>}
+   */
+  async function writeDatabaseFile(): Promise<void> {
     // Prevent saves during database initialization to avoid partial/corrupted state
     if (isInitializing) {
       logger.debug("Skipping database save - database is still initializing");
@@ -192,27 +235,107 @@ export namespace db_model {
       return;
     }
 
-    if (DB) {
-      // Write to a sibling temporary file and rename over the database: a
-      // plain writeFile() truncates the real file first, so a crash or a
-      // shutdown mid-write would leave a damaged database behind. rename() is
-      // atomic within a directory, so the database on disk is always either
-      // the previous save or this one.
-      const tempPath = `${DATABASE_PATH}.tmp`;
+    if (!DB) {
+      return;
+    }
+
+    // Never write without owning the lock: another instance holds its own
+    // copy of the database in memory, and two writers corrupt the file.
+    if (!db_lock.holdsLock()) {
+      logger.warn("Skipping database save - database lock is not held");
+      return;
+    }
+
+    // Write to a sibling temporary file and rename over the database: a
+    // plain writeFile() truncates the real file first, so a crash or a
+    // shutdown mid-write would leave a damaged database behind. rename() is
+    // atomic within a directory, so the database on disk is always either
+    // the previous save or this one. The temporary name is unique so that no
+    // other save, even from another process, can ever write into it.
+    const tempPath = `${DATABASE_PATH}.${process.pid}-${crypto
+      .randomBytes(6)
+      .toString("hex")}${TEMP_SUFFIX}`;
+    try {
+      const buffer = Buffer.from(DB.export());
+      const handle = await fs.promises.open(tempPath, "wx");
       try {
-        const data = DB.export();
-        const buffer = Buffer.from(data);
-        await fs.promises.writeFile(tempPath, buffer);
+        await handle.writeFile(buffer);
+        // Flush to disk before the rename, otherwise a power loss can leave
+        // the renamed file empty or partially written
+        await handle.sync();
+      } finally {
+        await handle.close();
+      }
+      await replaceDatabaseFile(tempPath);
+    } catch (err) {
+      logger.error(`Failed to save database: ${(err as Error).message}`);
+      try {
+        await fs.promises.rm(tempPath, { force: true });
+      } catch {
+        // Cleaned up by removeLeftoverTempFiles() on next activation
+      }
+    }
+  }
+
+  /**
+   * Move a fully written temporary save over the database file.
+   *
+   * The lock is checked again right before the rename: the export and the
+   * flush above are asynchronous, and the lock may have been lost (and
+   * another instance may have loaded the file) in the meantime.
+   *
+   * @param {string} tempPath The temporary file holding the new database
+   * @returns {Promise<void>}
+   */
+  async function replaceDatabaseFile(tempPath: string): Promise<void> {
+    for (let attempt = 0; ; attempt++) {
+      if (!db_lock.holdsLock()) {
+        throw new Error("the database lock was lost during the save");
+      }
+      try {
         await fs.promises.rename(tempPath, DATABASE_PATH);
+        return;
       } catch (err) {
-        logger.error(`Failed to save database: ${(err as Error).message}`);
-        try {
-          await fs.promises.rm(tempPath, { force: true });
-        } catch {
-          // Leaving the temporary file behind is harmless, it is overwritten
-          // by the next save
+        const code = (err as { code?: string }).code;
+        if (
+          attempt >= RENAME_RETRY_DELAYS_MS.length ||
+          !code ||
+          !TRANSIENT_RENAME_ERRORS.has(code)
+        ) {
+          throw err;
+        }
+        await new Promise((resolve) =>
+          setTimeout(resolve, RENAME_RETRY_DELAYS_MS[attempt]),
+        );
+      }
+    }
+  }
+
+  /**
+   * Remove temporary save files left behind by saves that were interrupted
+   * (e.g. an extension host killed mid-write). Only called while holding the
+   * lock, and only removes files old enough not to belong to a live save.
+   *
+   * @returns {Promise<void>}
+   */
+  async function removeLeftoverTempFiles(): Promise<void> {
+    const dir = path.dirname(DATABASE_PATH);
+    const prefix = `${path.basename(DATABASE_PATH)}.`;
+    try {
+      for (const name of await fs.promises.readdir(dir)) {
+        if (!name.startsWith(prefix) || !name.endsWith(TEMP_SUFFIX)) {
+          continue;
+        }
+        const filePath = path.join(dir, name);
+        const { mtimeMs } = await fs.promises.stat(filePath);
+        if (Date.now() - mtimeMs > TEMP_FILE_MAX_AGE_MS) {
+          await fs.promises.rm(filePath, { force: true });
         }
       }
+    } catch (err) {
+      logger.debug(
+        `Could not clean up temporary database files: ${(err as Error).message}`,
+      );
     }
   }
 
@@ -272,6 +395,7 @@ export namespace db_model {
     // Set flag to prevent saves during initialization
     isInitializing = true;
     let hasLock = false;
+    let succeeded = false;
 
     try {
       const databaseDir = context.globalStorageUri.fsPath;
@@ -281,19 +405,29 @@ export namespace db_model {
       // Try to acquire the database lock
       hasLock = await db_lock.acquireLock(DATABASE_PATH);
 
-      await init(context);
+      await init(context, hasLock);
 
       if (DB) {
         // Only apply migrations and init data if we have write access
         if (hasLock) {
+          await removeLeftoverTempFiles();
           await applyMigration(DB, -1);
           await db_init.activate();
         }
       }
+      succeeded = true;
+    } catch (err) {
+      // Nothing will ever write the database from this window: release the
+      // lock so another window can take it instead of starting read-only
+      if (hasLock) {
+        hasLock = false;
+        await db_lock.releaseLock();
+      }
+      throw err;
     } finally {
       // Mark database as ready and perform final save if we have write access
       isInitializing = false;
-      if (hasLock && DB && !db_lock.isReadOnly()) {
+      if (succeeded && hasLock && DB && !db_lock.isReadOnly()) {
         await saveDB();
       }
     }
@@ -343,6 +477,7 @@ export namespace db_model {
     isInitializing = false;
     DB = null;
     SQL = null;
+    saveChain = Promise.resolve();
     if (saveTimer) {
       clearTimeout(saveTimer);
       saveTimer = null;

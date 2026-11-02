@@ -273,7 +273,6 @@
     "typescript": "6.0.3"
   },
   "dependencies": {
-    "cross-process-lock": "2.2.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "sql.js": "1.15.2"
