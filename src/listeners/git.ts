@@ -93,6 +93,16 @@ export namespace gitListeners {
   const knownBranches = new Map<string, Set<string>>();
 
   /**
+   * Linked worktrees already counted, as `<repository key>\n<name>`. The name
+   * is the worktree's directory under `<common dir>/worktrees`, which is
+   * unique per repository and kept by `git worktree move`. A worktree is seen
+   * by its main checkout and by the other worktrees opened as repositories,
+   * so it is only counted once. Entries are never removed: removing a
+   * worktree and adding it back under the same name does not count twice.
+   */
+  const countedWorktrees = new Set<string>();
+
+  /**
    * Create git related events listeners
    *
    * @param {vscode.ExtensionContext} context - Extension context
@@ -336,6 +346,56 @@ export namespace gitListeners {
   }
 
   /**
+   * Count the worktrees that were not counted before, then remember them.
+   *
+   * @param {Set<string>} counted - Worktrees already counted, updated in place
+   * @param {string[]} ids - Worktrees newly seen by a tracker
+   * @returns {number} Number of worktrees created
+   */
+  export function collectCreatedWorktrees(
+    counted: Set<string>,
+    ids: string[],
+  ): number {
+    let created = 0;
+    for (const id of new Set(ids)) {
+      if (!counted.has(id)) {
+        counted.add(id);
+        created++;
+      }
+    }
+    return created;
+  }
+
+  /**
+   * List the names of the linked worktrees of a repository, the way the git
+   * extension does: one directory per worktree under `<common dir>/worktrees`.
+   *
+   * @param {vscode.Uri} commonDir - Repository common directory
+   * @returns {Promise<string[]>} Worktree names
+   */
+  export async function listWorktreeNames(
+    commonDir: vscode.Uri,
+  ): Promise<string[]> {
+    const worktreesDir = nodePath.join(commonDir.fsPath, "worktrees");
+    let entries: fs.Dirent[];
+    try {
+      entries = await fs.promises.readdir(worktreesDir, { withFileTypes: true });
+    } catch {
+      return []; // No linked worktree
+    }
+    const names: string[] = [];
+    for (const entry of entries) {
+      if (
+        entry.isDirectory() &&
+        fs.existsSync(nodePath.join(worktreesDir, entry.name, "gitdir"))
+      ) {
+        names.push(entry.name);
+      }
+    }
+    return names;
+  }
+
+  /**
    * Summarize the local branch refs of a repository, so that branches are
    * only listed (with `git for-each-ref`, which shows a progress indicator in
    * the Source Control view) when one may have been created.
@@ -437,6 +497,9 @@ export namespace gitListeners {
     private reflogOffset: number | undefined;
     /** Branch refs at the last branch inspection, see branchRefsFingerprint */
     private branchesFingerprint: string | undefined;
+    /** Worktrees this tracker saw, undefined until the baseline */
+    private seenWorktrees: Set<string> | undefined;
+    private watchingCommonDir = false;
     private disposed = false;
 
     constructor(
@@ -490,9 +553,77 @@ export namespace gitListeners {
       }
       this.key ??= repositoryKey(directories.commonDir);
       const key = await this.key;
+      if (this.disposed) {
+        return;
+      }
+      this.watchCommonDir(directories);
 
       await this.inspectBranches(directories.commonDir, key);
       await this.inspectReflog(directories.gitDir);
+      await this.inspectWorktrees(directories.commonDir, key);
+    }
+
+    /**
+     * The git extension only watches the git directory of the worktree a
+     * repository was opened from. When that is a linked worktree, branches
+     * and worktrees created from a terminal (they live in the common
+     * directory) would go unnoticed until an unrelated status refresh.
+     */
+    private watchCommonDir(directories: GitDirectories): void {
+      if (
+        this.watchingCommonDir ||
+        directories.gitDir.toString() === directories.commonDir.toString()
+      ) {
+        return;
+      }
+      this.watchingCommonDir = true;
+      const watcher = vscode.workspace.createFileSystemWatcher(
+        new vscode.RelativePattern(
+          directories.commonDir,
+          // `git worktree add` writes worktrees/<name>/gitdir right after
+          // creating its directory, and the watcher often misses that file:
+          // the directory itself is reported reliably
+          "{worktrees/*,worktrees/*/gitdir,refs/heads/**,packed-refs}",
+        ),
+      );
+      this.disposables.push(
+        watcher,
+        watcher.onDidCreate(() => this.schedule()),
+        watcher.onDidChange(() => this.schedule()),
+        watcher.onDidDelete(() => this.schedule()),
+      );
+    }
+
+    /**
+     * Count the linked worktrees that appeared since the first inspection.
+     * Each tracker keeps its own baseline: a worktree opened as a repository
+     * lists itself at its first inspection, which must not keep the main
+     * checkout from counting it.
+     */
+    private async inspectWorktrees(
+      commonDir: vscode.Uri,
+      key: string,
+    ): Promise<void> {
+      const ids = (await listWorktreeNames(commonDir)).map(
+        (name) => `${key}\n${name}`,
+      );
+
+      if (!this.seenWorktrees) {
+        this.seenWorktrees = new Set(ids);
+        return;
+      }
+
+      const newlySeen = ids.filter((id) => !this.seenWorktrees?.has(id));
+      for (const id of newlySeen) {
+        this.seenWorktrees.add(id);
+      }
+      const created = collectCreatedWorktrees(countedWorktrees, newlySeen);
+      if (created > 0) {
+        await ProgressionController.increaseProgression(
+          constants.criteria.WORKTREES_CREATED,
+          created,
+        );
+      }
     }
 
     /**
@@ -621,10 +752,11 @@ export namespace gitListeners {
   }
 
   /**
-   * Forget every known branch. Only meant for tests.
+   * Forget every known branch and worktree. Only meant for tests.
    */
   export function _resetState(): void {
     knownBranches.clear();
+    countedWorktrees.clear();
   }
 
   /**

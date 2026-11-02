@@ -156,6 +156,7 @@ export namespace webview {
         GIT_COMMIT: ["icons", "achievements", "git", "commit.png"],
         GIT_MERGE: ["icons", "achievements", "git", "merge.png"],
         GIT_PUSH: ["icons", "achievements", "git", "push.png"],
+        GIT_WORKTREE: ["icons", "achievements", "git", "branch.png"],
       } as const;
 
       export const terminal: { [key: string]: string[] } = {

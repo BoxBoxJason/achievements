@@ -47,6 +47,7 @@ export namespace constants {
     BRANCHES_CREATED = "branchesCreatedCount",
     MERGES_AND_REBASES = "mergesAndRebasesCount",
     AMENDS = "amendsCount",
+    WORKTREES_CREATED = "worktreesCreatedCount",
 
     // Connection streak
     CURRENT_CONNECTION_STREAK = "currentConnectionStreak",
@@ -112,6 +113,7 @@ export namespace constants {
     RESOURCE_DELETED: "resource deleted",
     COMMITS: "commits",
     BRANCHES: "branches",
+    WORKTREES: "worktrees",
     MERGES_AND_REBASES: "merges and rebases",
     AMENDS: "amends",
     PUSHES: "pushes",

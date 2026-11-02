@@ -37,6 +37,7 @@ Rows with `<language>` exist once per tracked language: `ada`, `assembly`, `c`, 
 | Friend of the Trees 1 … Friend of the Trees 11 | Branches Created | Create N branches | 1 → 50,000 (11 tiers) |
 | Merger 1 … Merger 11 | Merges and Rebases | Merge or rebase N times | 1 → 50,000 (11 tiers) |
 | Amender 1 … Amender 11 | Amends | Amend N times | 1 → 50,000 (11 tiers) |
+| Parallel Universes 1 … Parallel Universes 9 | Worktrees Created | Create N git worktrees | 1 → 5,000 (9 tiers) |
 | Product Shipping 1 … Product Shipping 11 | Pushes | Push N times | 1 → 50,000 (11 tiers) |
 
 ## VS Code

@@ -196,6 +196,23 @@ export namespace StackingTemplates {
       requires: [],
     });
 
+    export const worktreesCreatedTemplate =
+      (): StackingAchievementTemplate => ({
+        title: "Parallel Universes %d",
+        icon: "GIT_WORKTREE",
+        category: constants.category.GIT,
+        group: "Worktrees Created",
+        labels: [constants.category.GIT, constants.labels.WORKTREES],
+        criterias: [constants.criteria.WORKTREES_CREATED],
+        criteriasFunctions: [STANDARD_INFERNAL_CRITERIA_FUNCTION],
+        description: `Create ${constants.criteria.WORKTREES_CREATED} git worktrees`,
+        minTier: 0,
+        maxTier: 8,
+        expFunction: STANDARD_EXP_FUNCTION,
+        hidden: false,
+        requires: [],
+      });
+
     export const pushesTemplate = (): StackingAchievementTemplate => ({
       title: "Product Shipping %d",
       icon: "GIT_PUSH",

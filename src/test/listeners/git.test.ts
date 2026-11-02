@@ -669,4 +669,116 @@ suite("Git Listeners Test Suite", () => {
       }
     });
   });
+
+  suite("collectCreatedWorktrees", () => {
+    test("should count unknown worktrees once and remember them", () => {
+      const counted = new Set(["repo\nwt1"]);
+      const created = gitListeners.collectCreatedWorktrees(counted, [
+        "repo\nwt1",
+        "repo\nwt2",
+        "repo\nwt2",
+        "repo\nwt3",
+      ]);
+      assert.strictEqual(created, 2);
+      assert.strictEqual(
+        gitListeners.collectCreatedWorktrees(counted, ["repo\nwt2", "repo\nwt3"]),
+        0,
+      );
+    });
+  });
+
+  suite("RepositoryTracker worktrees", () => {
+    test("should count linked worktrees created after the baseline", async () => {
+      const root = createCheckout();
+      addWorktree(root, "existing");
+      const tracker = new gitListeners.RepositoryTracker(
+        new FakeRepository(root),
+        60_000,
+      );
+      try {
+        await tracker.refresh(); // baseline
+        assert.strictEqual(total(constants.criteria.WORKTREES_CREATED), 0);
+
+        addWorktree(root, "agent-1");
+        addWorktree(root, "agent-2");
+        await tracker.refresh();
+        assert.strictEqual(total(constants.criteria.WORKTREES_CREATED), 2);
+
+        // Removing a worktree is not counted, and neither is adding it back
+        fs.rmSync(path.join(root.fsPath, ".git", "worktrees", "agent-1"), {
+          recursive: true,
+        });
+        await tracker.refresh();
+        addWorktree(root, "agent-1");
+        await tracker.refresh();
+        assert.strictEqual(total(constants.criteria.WORKTREES_CREATED), 2);
+      } finally {
+        tracker.dispose();
+      }
+    });
+
+    test("should not count a moved worktree again", async () => {
+      const root = createCheckout();
+      const tracker = new gitListeners.RepositoryTracker(
+        new FakeRepository(root),
+        60_000,
+      );
+      try {
+        await tracker.refresh(); // baseline
+        addWorktree(root, "wt", path.join(tempDir, "before"));
+        await tracker.refresh();
+        // `git worktree move` keeps the name, only the path changes
+        addWorktree(root, "wt", path.join(tempDir, "after"));
+        await tracker.refresh();
+        assert.strictEqual(total(constants.criteria.WORKTREES_CREATED), 1);
+      } finally {
+        tracker.dispose();
+      }
+    });
+
+    test("should count a worktree once when its checkout and worktrees see it", async () => {
+      const main = createCheckout("main");
+      const other = addWorktree(main, "other");
+      const repositories = [
+        new FakeRepository(main),
+        new FakeRepository(other, path.join(main.fsPath, ".git")),
+      ];
+      const trackers = repositories.map(
+        (repository) => new gitListeners.RepositoryTracker(repository, 60_000),
+      );
+      try {
+        await Promise.all(trackers.map((tracker) => tracker.refresh()));
+        addWorktree(main, "shared");
+        await Promise.all(trackers.map((tracker) => tracker.refresh()));
+        assert.strictEqual(total(constants.criteria.WORKTREES_CREATED), 1);
+      } finally {
+        trackers.forEach((tracker) => tracker.dispose());
+      }
+    });
+
+    test("should count a worktree that is opened before the checkout notices it", async () => {
+      const main = createCheckout("main");
+      const mainTracker = new gitListeners.RepositoryTracker(
+        new FakeRepository(main),
+        60_000,
+      );
+      let newTracker: gitListeners.RepositoryTracker | undefined;
+      try {
+        await mainTracker.refresh(); // baseline
+        // git.detectWorktrees opens the new worktree as a repository, and
+        // its tracker records its baseline (listing itself) first
+        const created = addWorktree(main, "feat");
+        newTracker = new gitListeners.RepositoryTracker(
+          new FakeRepository(created, path.join(main.fsPath, ".git")),
+          60_000,
+        );
+        await newTracker.refresh();
+        await mainTracker.refresh();
+        assert.strictEqual(total(constants.criteria.WORKTREES_CREATED), 1);
+      } finally {
+        mainTracker.dispose();
+        newTracker?.dispose();
+      }
+    });
+  });
 });
