@@ -45,11 +45,10 @@ export interface GitRepositoryState {
 export interface GitRepository {
   readonly rootUri: vscode.Uri;
   readonly state: GitRepositoryState;
-  readonly onDidCommit: vscode.Event<void>;
   getBranches(query: { remote?: boolean }): Promise<GitRef[]>;
 }
 
-interface GitAPI {
+export interface GitAPI {
   readonly repositories: GitRepository[];
   readonly onDidOpenRepository: vscode.Event<GitRepository>;
   readonly onDidCloseRepository: vscode.Event<GitRepository>;
@@ -57,7 +56,7 @@ interface GitAPI {
 }
 
 /** Kind of HEAD update recorded in the reflog that progresses an achievement */
-export type ReflogAction = "amend" | "merge" | "rebase";
+export type ReflogAction = "amend" | "commit" | "merge" | "rebase";
 
 /**
  * How a local branch came to be, according to its own reflog: "created" by
@@ -65,6 +64,9 @@ export type ReflogAction = "amend" | "merge" | "rebase";
  * another branch, or "unknown" when it has no reflog (reflogs disabled).
  */
 export type BranchOrigin = "created" | "checkout" | "renamed" | "unknown";
+
+/** Counts of tracked HEAD reflog actions */
+export type ReflogCounts = Record<ReflogAction, number>;
 
 /** Location of a repository's git directories */
 export interface GitDirectories {
@@ -83,6 +85,12 @@ export interface GitDirectories {
 export namespace gitListeners {
   /** Delay before inspecting a repository once its state stops changing */
   const REFRESH_DEBOUNCE_MS = 1000;
+
+  /** Entries starting a rebase, during which commits are replayed, not made */
+  const REBASE_START = /^(?:pull --rebase|rebase(?: -i)?) \(start\): /;
+  /** Entries ending a rebase (an interrupted `rebase --quit` writes none) */
+  const REBASE_END =
+    /^(?:pull --rebase|rebase(?: -i)?) (?:\((?:finish|abort)\)|finished): /;
 
   /**
    * Local branch names already seen, per repository common directory.
@@ -121,53 +129,63 @@ export namespace gitListeners {
         return;
       }
 
-      const gitAPI: GitAPI = gitExtension.getAPI(1);
-      const trackers = new Map<GitRepository, RepositoryTracker>();
-
-      const trackRepository = (repository: GitRepository) => {
-        if (trackers.has(repository)) {
-          return;
-        }
-        repository.onDidCommit(handleCommit, null, context.subscriptions);
-        trackers.set(repository, new RepositoryTracker(repository));
-      };
-
-      // Handle current workspace repositories
-      for (const repository of gitAPI.repositories) {
-        trackRepository(repository);
-      }
-
-      // Handle new repositories
-      gitAPI.onDidOpenRepository(trackRepository, null, context.subscriptions);
-      gitAPI.onDidCloseRepository(
-        (repository: GitRepository) => {
-          trackers.get(repository)?.dispose();
-          trackers.delete(repository);
-        },
-        null,
-        context.subscriptions,
-      );
-
-      // Handle push event
-      gitAPI.onDidPublish(handlePublish, null, context.subscriptions);
-
-      context.subscriptions.push({
-        dispose: () => {
-          for (const tracker of trackers.values()) {
-            tracker.dispose();
-          }
-          trackers.clear();
-        },
-      });
-
+      watchRepositories(gitExtension.getAPI(1), context.subscriptions);
       logger.debug("Git listeners activated");
     } else {
       logger.info("Git listeners are disabled");
     }
   }
 
-  export async function handleCommit() {
-    await ProgressionController.increaseProgression(constants.criteria.COMMITS);
+  /**
+   * Track every repository of the git extension, including the ones opened
+   * later, until they are closed or the subscriptions are disposed.
+   *
+   * @param {GitAPI} gitAPI - The git extension API
+   * @param {vscode.Disposable[]} subscriptions - Where to register the listeners
+   * @param {number} debounceMs - Delay before inspecting a changed repository
+   * @returns {void}
+   */
+  export function watchRepositories(
+    gitAPI: GitAPI,
+    subscriptions: vscode.Disposable[],
+    debounceMs = REFRESH_DEBOUNCE_MS,
+  ): void {
+    const trackers = new Map<GitRepository, RepositoryTracker>();
+
+    const trackRepository = (repository: GitRepository) => {
+      if (trackers.has(repository)) {
+        return;
+      }
+      trackers.set(repository, new RepositoryTracker(repository, debounceMs));
+    };
+
+    // Handle current workspace repositories
+    for (const repository of gitAPI.repositories) {
+      trackRepository(repository);
+    }
+
+    // Handle new repositories
+    gitAPI.onDidOpenRepository(trackRepository, null, subscriptions);
+    gitAPI.onDidCloseRepository(
+      (repository: GitRepository) => {
+        trackers.get(repository)?.dispose();
+        trackers.delete(repository);
+      },
+      null,
+      subscriptions,
+    );
+
+    // Handle push event
+    gitAPI.onDidPublish(handlePublish, null, subscriptions);
+
+    subscriptions.push({
+      dispose: () => {
+        for (const tracker of trackers.values()) {
+          tracker.dispose();
+        }
+        trackers.clear();
+      },
+    });
   }
 
   export async function handlePublish() {
@@ -441,29 +459,80 @@ export namespace gitListeners {
    * Classify a HEAD reflog entry message (the part after the tab), as written
    * by git whether the operation ran from VS Code or from a terminal.
    * Pulls are deliberately ignored: integrating upstream changes is routine
-   * syncing, not a merge or rebase made by the user.
+   * syncing, not a merge or rebase made by the user. Concluding a conflicted
+   * operation counts the same as the operation going through cleanly.
    *
    * @param {string} message - Reflog entry message
-   * @returns {ReflogAction | undefined} undefined when the entry is not tracked
+   * @returns {ReflogAction[]} Tracked actions of the entry, empty when none
    */
-  export function classifyReflogMessage(
-    message: string,
-  ): ReflogAction | undefined {
-    // "commit (amend): message"
+  export function classifyReflogMessage(message: string): ReflogAction[] {
+    // "commit (amend): message" rewrites a commit, it does not add one
     if (message.startsWith("commit (amend):")) {
-      return "amend";
+      return ["amend"];
+    }
+    // Every other `git commit`: "commit: message", "commit (initial): ...",
+    // or concluding a conflicted operation. The message is empty (and git
+    // drops the space: "commit:") for a commit without a message.
+    const commit = /^commit(?: \(([a-z-]+)\))?:(?: (.*))?$/.exec(message);
+    if (commit) {
+      const [, kind, subject = ""] = commit;
+      switch (kind) {
+        case "cherry-pick":
+          // A clean cherry-pick ("cherry-pick: ...") is not a commit either
+          return [];
+        case "merge":
+          // A conflicted pull: git names the merge after the fetched URL
+          // ("Merge branch 'main' of github.com:me/repo")
+          return /^Merge (?:branch|branches|tag) .+ of /.test(subject)
+            ? []
+            : ["commit", "merge"];
+        case undefined:
+          // A conflicted revert (a clean one writes "revert: ...")
+          return /^Revert "/.test(subject) ? [] : ["commit"];
+        default:
+          return ["commit"];
+      }
     }
     // "merge feature: Merge made by the 'ort' strategy." / "merge x: Fast-forward"
-    // "commit (merge): Merge branch 'x'" (merge concluded after conflicts)
-    if (/^merge\s/.test(message) || message.startsWith("commit (merge):")) {
-      return "merge";
+    if (/^merge\s/.test(message)) {
+      return ["merge"];
     }
     // "rebase (finish): returning to refs/heads/x", "rebase -i (finish): ..."
     // or "rebase finished: returning to ..." (older apply backend)
     if (/^rebase(?: -i)? (?:\(finish\)|finished): /.test(message)) {
-      return "rebase";
+      return ["rebase"];
     }
-    return undefined;
+    return [];
+  }
+
+  /**
+   * Count the tracked actions of consecutive HEAD reflog entries. Commits
+   * made while a rebase is stopped (e.g. `git commit` after resolving a
+   * conflict, before `git rebase --continue`) replay existing commits, so
+   * they are not counted.
+   *
+   * @param {string[]} messages - Reflog entry messages, oldest first
+   * @param {boolean} inRebase - Whether a rebase was in progress before them
+   * @returns {{ counts: ReflogCounts, inRebase: boolean }} The counts, and whether a rebase is still in progress after them
+   */
+  export function tallyReflog(
+    messages: string[],
+    inRebase: boolean,
+  ): { counts: ReflogCounts; inRebase: boolean } {
+    const counts: ReflogCounts = { amend: 0, commit: 0, merge: 0, rebase: 0 };
+    for (const message of messages) {
+      for (const action of classifyReflogMessage(message)) {
+        if (!inRebase || action === "amend" || action === "rebase") {
+          counts[action]++;
+        }
+      }
+      if (REBASE_START.test(message)) {
+        inRebase = true;
+      } else if (REBASE_END.test(message)) {
+        inRebase = false;
+      }
+    }
+    return { counts, inRebase };
   }
 
   /**
@@ -497,6 +566,10 @@ export namespace gitListeners {
     private reflogOffset: number | undefined;
     /** Branch refs at the last branch inspection, see branchRefsFingerprint */
     private branchesFingerprint: string | undefined;
+    /** Last processed line of the HEAD reflog, to find it back if rewritten */
+    private reflogLastLine: Buffer | undefined;
+    /** Whether a rebase was in progress at the last processed reflog entry */
+    private inRebase = false;
     /** Worktrees this tracker saw, undefined until the baseline */
     private seenWorktrees: Set<string> | undefined;
     private watchingCommonDir = false;
@@ -558,9 +631,21 @@ export namespace gitListeners {
       }
       this.watchCommonDir(directories);
 
-      await this.inspectBranches(directories.commonDir, key);
-      await this.inspectReflog(directories.gitDir);
-      await this.inspectWorktrees(directories.commonDir, key);
+      // Independent steps: one failing must not keep the others from running
+      const steps: [string, () => Promise<void>][] = [
+        ["branches", () => this.inspectBranches(directories.commonDir, key)],
+        ["reflog", () => this.inspectReflog(directories.gitDir)],
+        ["worktrees", () => this.inspectWorktrees(directories.commonDir, key)],
+      ];
+      for (const [name, step] of steps) {
+        try {
+          await step();
+        } catch (error) {
+          logger.error(
+            `Failed to inspect the ${name} of git repository ${this.repository.rootUri.fsPath}: ${String(error)}`,
+          );
+        }
+      }
     }
 
     /**
@@ -628,50 +713,71 @@ export namespace gitListeners {
 
     /**
      * Read the HEAD reflog entries appended since the last inspection.
-     * The first inspection only records the current size, so past history is
-     * never counted.
+     * The first inspection only records where the reflog ends, so past
+     * history is never counted.
      */
     private async inspectReflog(gitDir: vscode.Uri): Promise<void> {
-      const reflogUri = vscode.Uri.joinPath(gitDir, "logs", "HEAD");
-      let size: number;
+      const reflogPath = nodePath.join(gitDir.fsPath, "logs", "HEAD");
+      let content: Buffer;
       try {
-        size = (await vscode.workspace.fs.stat(reflogUri)).size;
+        const { size } = await fs.promises.stat(reflogPath);
+        if (size === this.reflogOffset) {
+          return;
+        }
+        content = await fs.promises.readFile(reflogPath);
       } catch {
         // No reflog yet (fresh repository): count everything once it appears
-        this.reflogOffset ??= 0;
+        if (this.reflogOffset === undefined) {
+          this.reflogOffset = 0;
+          this.inRebase = rebaseInProgress(gitDir);
+        }
         return;
       }
 
-      if (this.reflogOffset === undefined || size < this.reflogOffset) {
-        // Baseline, or the reflog was rewritten (expired / deleted entries)
-        this.reflogOffset = size;
-        return;
-      }
-      if (size === this.reflogOffset) {
+      if (this.reflogOffset === undefined) {
+        this.setReflogBaseline(content);
+        this.inRebase = rebaseInProgress(gitDir);
         return;
       }
 
-      const content = await vscode.workspace.fs.readFile(reflogUri);
-      const appended = content.subarray(this.reflogOffset);
+      let start = this.reflogOffset;
+      const lastLine = this.reflogLastLine;
+      if (
+        lastLine &&
+        !content.subarray(start - lastLine.length, start).equals(lastLine)
+      ) {
+        // Rewritten (`git gc` expiring old entries, possibly right after
+        // appending new ones): resume after the last line we processed
+        const at = content.lastIndexOf(lastLine);
+        if (at < 0) {
+          this.setReflogBaseline(content);
+          return;
+        }
+        start = at + lastLine.length;
+      }
+
+      const appended = content.subarray(start);
       // Keep a partially written last line for the next inspection
       const end = appended.lastIndexOf(0x0a) + 1;
+      this.reflogOffset = start + end;
       if (end === 0) {
         return;
       }
-      this.reflogOffset += end;
+      this.reflogLastLine = lastLineEndingAt(content, start + end);
 
-      const counts: Record<ReflogAction, number> = {
-        amend: 0,
-        merge: 0,
-        rebase: 0,
-      };
-      for (const message of parseReflogMessages(
-        new TextDecoder().decode(appended.subarray(0, end)),
-      )) {
-        const action = classifyReflogMessage(message);
-        if (action) {
-          counts[action]++;
-        }
+      const tally = tallyReflog(
+        parseReflogMessages(new TextDecoder().decode(appended.subarray(0, end))),
+        this.inRebase,
+      );
+      // A rebase stopped with `git rebase --quit` writes no end entry
+      this.inRebase = tally.inRebase && rebaseInProgress(gitDir);
+      const { counts } = tally;
+
+      if (counts.commit > 0) {
+        await ProgressionController.increaseProgression(
+          constants.criteria.COMMITS,
+          counts.commit,
+        );
       }
 
       const mergesAndRebases = counts.merge + counts.rebase;
@@ -687,6 +793,13 @@ export namespace gitListeners {
           counts.amend,
         );
       }
+    }
+
+    /** Record where the HEAD reflog currently ends, without counting anything */
+    private setReflogBaseline(content: Buffer): void {
+      const end = content.lastIndexOf(0x0a) + 1;
+      this.reflogOffset = end;
+      this.reflogLastLine = end > 0 ? lastLineEndingAt(content, end) : undefined;
     }
 
     private async inspectBranches(
@@ -790,6 +903,20 @@ export namespace gitListeners {
     } catch {
       return [];
     }
+  }
+
+  /** Whether a rebase is stopped in a worktree (for a conflict, an edit...) */
+  function rebaseInProgress(gitDir: vscode.Uri): boolean {
+    return ["rebase-merge", "rebase-apply"].some((name) =>
+      fs.existsSync(nodePath.join(gitDir.fsPath, name)),
+    );
+  }
+
+  /** Copy of the complete line of `content` ending (newline included) at `end` */
+  function lastLineEndingAt(content: Buffer, end: number): Buffer {
+    // (a negative offset would make lastIndexOf search from the end)
+    const start = end >= 2 ? content.lastIndexOf(0x0a, end - 2) + 1 : 0;
+    return Buffer.from(content.subarray(start, end));
   }
 
   async function readText(uri: vscode.Uri): Promise<string> {

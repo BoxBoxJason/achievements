@@ -57,17 +57,6 @@ suite("Listeners Test Suite", () => {
     assert.strictEqual(p.value, 1);
   });
 
-  test("handleCommit should increase COMMITS progression", async () => {
-    await gitListeners.handleCommit();
-
-    const progressions = await Progression.getProgressions({
-      name: constants.criteria.COMMITS,
-    });
-    const p = progressions[0];
-    assert.ok(p);
-    assert.strictEqual(p.value, 1);
-  });
-
   test("handlePublish should increase PUSHES progression", async () => {
     await gitListeners.handlePublish();
 
