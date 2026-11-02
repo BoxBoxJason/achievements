@@ -56,6 +56,9 @@ interface GitAPI {
   readonly onDidPublish: vscode.Event<unknown>;
 }
 
+/** Kind of HEAD update recorded in the reflog that progresses an achievement */
+export type ReflogAction = "merge" | "rebase";
+
 /**
  * How a local branch came to be, according to its own reflog: "created" by
  * the user, "checkout" of a remote branch (or a clone/fetch), "renamed" from
@@ -375,6 +378,31 @@ export namespace gitListeners {
   }
 
   /**
+   * Classify a HEAD reflog entry message (the part after the tab), as written
+   * by git whether the operation ran from VS Code or from a terminal.
+   * Pulls are deliberately ignored: integrating upstream changes is routine
+   * syncing, not a merge or rebase made by the user.
+   *
+   * @param {string} message - Reflog entry message
+   * @returns {ReflogAction | undefined} undefined when the entry is not tracked
+   */
+  export function classifyReflogMessage(
+    message: string,
+  ): ReflogAction | undefined {
+    // "merge feature: Merge made by the 'ort' strategy." / "merge x: Fast-forward"
+    // "commit (merge): Merge branch 'x'" (merge concluded after conflicts)
+    if (/^merge\s/.test(message) || message.startsWith("commit (merge):")) {
+      return "merge";
+    }
+    // "rebase (finish): returning to refs/heads/x", "rebase -i (finish): ..."
+    // or "rebase finished: returning to ..." (older apply backend)
+    if (/^rebase(?: -i)? (?:\(finish\)|finished): /.test(message)) {
+      return "rebase";
+    }
+    return undefined;
+  }
+
+  /**
    * Extract the messages of complete reflog lines.
    * Line format: `<old> <new> <name> <<email>> <timestamp> <tz>\t<message>`
    *
@@ -401,6 +429,8 @@ export namespace gitListeners {
     private directories: Promise<GitDirectories | undefined> | undefined;
     /** Key of the repository shared by its worktrees (resolved common dir) */
     private key: Promise<string> | undefined;
+    /** Bytes of the HEAD reflog already processed, undefined until the baseline */
+    private reflogOffset: number | undefined;
     /** Branch refs at the last branch inspection, see branchRefsFingerprint */
     private branchesFingerprint: string | undefined;
     private disposed = false;
@@ -458,6 +488,60 @@ export namespace gitListeners {
       const key = await this.key;
 
       await this.inspectBranches(directories.commonDir, key);
+      await this.inspectReflog(directories.gitDir);
+    }
+
+    /**
+     * Read the HEAD reflog entries appended since the last inspection.
+     * The first inspection only records the current size, so past history is
+     * never counted.
+     */
+    private async inspectReflog(gitDir: vscode.Uri): Promise<void> {
+      const reflogUri = vscode.Uri.joinPath(gitDir, "logs", "HEAD");
+      let size: number;
+      try {
+        size = (await vscode.workspace.fs.stat(reflogUri)).size;
+      } catch {
+        // No reflog yet (fresh repository): count everything once it appears
+        this.reflogOffset ??= 0;
+        return;
+      }
+
+      if (this.reflogOffset === undefined || size < this.reflogOffset) {
+        // Baseline, or the reflog was rewritten (expired / deleted entries)
+        this.reflogOffset = size;
+        return;
+      }
+      if (size === this.reflogOffset) {
+        return;
+      }
+
+      const content = await vscode.workspace.fs.readFile(reflogUri);
+      const appended = content.subarray(this.reflogOffset);
+      // Keep a partially written last line for the next inspection
+      const end = appended.lastIndexOf(0x0a) + 1;
+      if (end === 0) {
+        return;
+      }
+      this.reflogOffset += end;
+
+      const counts: Record<ReflogAction, number> = { merge: 0, rebase: 0 };
+      for (const message of parseReflogMessages(
+        new TextDecoder().decode(appended.subarray(0, end)),
+      )) {
+        const action = classifyReflogMessage(message);
+        if (action) {
+          counts[action]++;
+        }
+      }
+
+      const mergesAndRebases = counts.merge + counts.rebase;
+      if (mergesAndRebases > 0) {
+        await ProgressionController.increaseProgression(
+          constants.criteria.MERGES_AND_REBASES,
+          mergesAndRebases,
+        );
+      }
     }
 
     private async inspectBranches(

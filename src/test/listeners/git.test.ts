@@ -8,6 +8,7 @@ import {
   GitRef,
   GitRefType,
   GitRepository,
+  ReflogAction,
 } from "../../listeners/git";
 import { ProgressionController } from "../../database/controller/progressions";
 import { constants } from "../../constants";
@@ -485,6 +486,157 @@ suite("Git Listeners Test Suite", () => {
         await waitFor(
           () => total(constants.criteria.BRANCHES_CREATED) === 1,
         );
+      } finally {
+        tracker.dispose();
+      }
+    });
+  });
+
+  suite("classifyReflogMessage", () => {
+    // Messages as written by git 2.56
+    const cases: [string, ReflogAction | undefined][] = [
+      ["merge feat: Merge made by the 'ort' strategy.", "merge"],
+      ["merge ff: Fast-forward", "merge"],
+      ["commit (merge): Merge branch 'conflict'", "merge"],
+      ["rebase (finish): returning to refs/heads/main", "rebase"],
+      ["rebase -i (finish): returning to refs/heads/rb", "rebase"],
+      ["rebase finished: returning to refs/heads/rb", "rebase"],
+      ["rebase (start): checkout main", undefined],
+      ["rebase (pick): some commit", undefined],
+      ["rebase (abort): returning to refs/heads/rb", undefined],
+      ["pull --no-rebase --no-edit: Merge made by the 'ort' strategy.", undefined],
+      ["pull: Fast-forward", undefined],
+      ["pull --rebase (finish): returning to refs/heads/main", undefined],
+      ["commit: merge the docs", undefined],
+      ["commit: c", undefined],
+      ["checkout: moving from main to feat", undefined],
+      ["clone: from /tmp/up", undefined],
+    ];
+    for (const [message, expected] of cases) {
+      test(`"${message}" should be ${expected ?? "ignored"}`, () => {
+        assert.strictEqual(gitListeners.classifyReflogMessage(message), expected);
+      });
+    }
+  });
+
+  suite("parseReflogMessages", () => {
+    test("should extract the message after the tab of each line", () => {
+      const text =
+        "0000 1111 t <t@t> 1700000000 +0100\tcommit (initial): init\n" +
+        "1111 2222 t <t@t> 1700000001 +0100\tmerge feat: Fast-forward\n";
+      assert.deepStrictEqual(gitListeners.parseReflogMessages(text), [
+        "commit (initial): init",
+        "merge feat: Fast-forward",
+      ]);
+    });
+  });
+
+  suite("RepositoryTracker reflog", () => {
+    function reflogLine(message: string): string {
+      return `${"a".repeat(40)} ${"b".repeat(40)} t <t@t> 1700000000 +0100\t${message}\n`;
+    }
+
+    function reflogPath(root: vscode.Uri): string {
+      return path.join(root.fsPath, ".git", "logs", "HEAD");
+    }
+
+    test("should count merges and rebases appended after the baseline", async () => {
+      const root = createCheckout();
+      fs.writeFileSync(
+        reflogPath(root),
+        reflogLine("merge old: Fast-forward"), // history, not counted
+      );
+      const tracker = new gitListeners.RepositoryTracker(
+        new FakeRepository(root),
+        60_000,
+      );
+      try {
+        await tracker.refresh(); // baseline
+        fs.appendFileSync(
+          reflogPath(root),
+          reflogLine("merge feat: Merge made by the 'ort' strategy.") +
+            reflogLine("rebase (start): checkout main") +
+            reflogLine("rebase (pick): e") +
+            reflogLine("rebase (finish): returning to refs/heads/rb") +
+            reflogLine("pull: Merge made by the 'ort' strategy.") +
+            reflogLine("commit: c"),
+        );
+        await tracker.refresh();
+        assert.strictEqual(total(constants.criteria.MERGES_AND_REBASES), 2);
+
+        await tracker.refresh();
+        assert.strictEqual(
+          total(constants.criteria.MERGES_AND_REBASES),
+          2,
+          "Entries are only read once",
+        );
+      } finally {
+        tracker.dispose();
+      }
+    });
+
+    test("should wait for a partially written line to be complete", async () => {
+      const root = createCheckout();
+      fs.writeFileSync(reflogPath(root), "");
+      const tracker = new gitListeners.RepositoryTracker(
+        new FakeRepository(root),
+        60_000,
+      );
+      try {
+        await tracker.refresh(); // baseline
+        const line = reflogLine("merge feat: Fast-forward");
+        fs.appendFileSync(reflogPath(root), line.slice(0, 50));
+        await tracker.refresh();
+        assert.strictEqual(total(constants.criteria.MERGES_AND_REBASES), 0);
+
+        fs.appendFileSync(reflogPath(root), line.slice(50));
+        await tracker.refresh();
+        assert.strictEqual(total(constants.criteria.MERGES_AND_REBASES), 1);
+      } finally {
+        tracker.dispose();
+      }
+    });
+
+    test("should not count anything when the reflog is rewritten", async () => {
+      const root = createCheckout();
+      fs.writeFileSync(
+        reflogPath(root),
+        reflogLine("commit: a") + reflogLine("commit: b"),
+      );
+      const tracker = new gitListeners.RepositoryTracker(
+        new FakeRepository(root),
+        60_000,
+      );
+      try {
+        await tracker.refresh(); // baseline
+        // Expired entries: the file shrinks and keeps old merges
+        fs.writeFileSync(reflogPath(root), reflogLine("merge x: Fast-forward"));
+        await tracker.refresh();
+        assert.strictEqual(total(constants.criteria.MERGES_AND_REBASES), 0);
+
+        fs.appendFileSync(reflogPath(root), reflogLine("merge y: Fast-forward"));
+        await tracker.refresh();
+        assert.strictEqual(total(constants.criteria.MERGES_AND_REBASES), 1);
+      } finally {
+        tracker.dispose();
+      }
+    });
+
+    test("should count entries of a reflog created after the baseline", async () => {
+      const root = createCheckout(); // no logs/HEAD yet
+      const tracker = new gitListeners.RepositoryTracker(
+        new FakeRepository(root),
+        60_000,
+      );
+      try {
+        await tracker.refresh(); // baseline
+        fs.writeFileSync(
+          reflogPath(root),
+          reflogLine("commit (initial): init") +
+            reflogLine("merge feat: Fast-forward"),
+        );
+        await tracker.refresh();
+        assert.strictEqual(total(constants.criteria.MERGES_AND_REBASES), 1);
       } finally {
         tracker.dispose();
       }
