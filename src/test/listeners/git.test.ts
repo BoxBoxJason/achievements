@@ -507,6 +507,9 @@ suite("Git Listeners Test Suite", () => {
       ["pull --no-rebase --no-edit: Merge made by the 'ort' strategy.", undefined],
       ["pull: Fast-forward", undefined],
       ["pull --rebase (finish): returning to refs/heads/main", undefined],
+      ["commit (amend): g", "amend"],
+      ["commit (amend): merge the docs", "amend"],
+      ["commit: amend the docs", undefined],
       ["commit: merge the docs", undefined],
       ["commit: c", undefined],
       ["checkout: moving from main to feat", undefined],
@@ -636,6 +639,30 @@ suite("Git Listeners Test Suite", () => {
             reflogLine("merge feat: Fast-forward"),
         );
         await tracker.refresh();
+        assert.strictEqual(total(constants.criteria.MERGES_AND_REBASES), 1);
+      } finally {
+        tracker.dispose();
+      }
+    });
+
+    test("should count amends separately from merges and rebases", async () => {
+      const root = createCheckout();
+      fs.writeFileSync(reflogPath(root), reflogLine("commit (amend): old"));
+      const tracker = new gitListeners.RepositoryTracker(
+        new FakeRepository(root),
+        60_000,
+      );
+      try {
+        await tracker.refresh(); // baseline
+        fs.appendFileSync(
+          reflogPath(root),
+          reflogLine("commit: g") +
+            reflogLine("commit (amend): g") +
+            reflogLine("commit (amend): g again") +
+            reflogLine("merge feat: Fast-forward"),
+        );
+        await tracker.refresh();
+        assert.strictEqual(total(constants.criteria.AMENDS), 2);
         assert.strictEqual(total(constants.criteria.MERGES_AND_REBASES), 1);
       } finally {
         tracker.dispose();

@@ -57,7 +57,7 @@ interface GitAPI {
 }
 
 /** Kind of HEAD update recorded in the reflog that progresses an achievement */
-export type ReflogAction = "merge" | "rebase";
+export type ReflogAction = "amend" | "merge" | "rebase";
 
 /**
  * How a local branch came to be, according to its own reflog: "created" by
@@ -389,6 +389,10 @@ export namespace gitListeners {
   export function classifyReflogMessage(
     message: string,
   ): ReflogAction | undefined {
+    // "commit (amend): message"
+    if (message.startsWith("commit (amend):")) {
+      return "amend";
+    }
     // "merge feature: Merge made by the 'ort' strategy." / "merge x: Fast-forward"
     // "commit (merge): Merge branch 'x'" (merge concluded after conflicts)
     if (/^merge\s/.test(message) || message.startsWith("commit (merge):")) {
@@ -525,7 +529,11 @@ export namespace gitListeners {
       }
       this.reflogOffset += end;
 
-      const counts: Record<ReflogAction, number> = { merge: 0, rebase: 0 };
+      const counts: Record<ReflogAction, number> = {
+        amend: 0,
+        merge: 0,
+        rebase: 0,
+      };
       for (const message of parseReflogMessages(
         new TextDecoder().decode(appended.subarray(0, end)),
       )) {
@@ -540,6 +548,12 @@ export namespace gitListeners {
         await ProgressionController.increaseProgression(
           constants.criteria.MERGES_AND_REBASES,
           mergesAndRebases,
+        );
+      }
+      if (counts.amend > 0) {
+        await ProgressionController.increaseProgression(
+          constants.criteria.AMENDS,
+          counts.amend,
         );
       }
     }
