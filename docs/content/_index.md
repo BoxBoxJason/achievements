@@ -32,3 +32,7 @@ description: "Achievements is a free VS Code extension that turns your coding ac
     subtitle="Follow your completion percentage, the time spent coding, and the progress towards every achievement in one panel."
   >}}
 {{< /hextra/feature-grid >}}
+
+{{< spacer "3rem" >}}
+
+{{< video "videos/discover.mp4" >}}
