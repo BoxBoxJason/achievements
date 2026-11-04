@@ -33,8 +33,7 @@ suite("Migrations Test Suite", () => {
     const lastRow = rows[rows.length - 1];
     const version = lastRow[1]; // version column is 2nd (index 1)
 
-    // Currently max version is 1 (since we merged migration 2 into 1)
-    assert.strictEqual(version, 1, "Database should be at version 1");
+    assert.strictEqual(version, 2, "Database should be at version 2");
 
     // Verify indexes exist
     const indexes = db.exec(
@@ -49,10 +48,44 @@ suite("Migrations Test Suite", () => {
       "idx_achievements_achieved",
       "idx_achievement_labels_label",
       "idx_achievement_requirements_requirement_id",
+      "idx_achievements_chain_key",
     ];
 
     for (const index of expectedIndexes) {
       assert.ok(indexNames.includes(index), `Index ${index} should exist`);
     }
+  });
+
+  const achievementColumns = (): string[] => {
+    const res = db.exec("PRAGMA table_info(achievements)");
+    return res[0].values.map((row) => String(row[1]));
+  };
+
+  test("migration 2 should add the chain column and be reversible", async () => {
+    await applyMigration(db);
+    assert.ok(achievementColumns().includes("chain"));
+
+    await applyMigration(db, 1);
+    assert.ok(!achievementColumns().includes("chain"));
+    const indexes = db.exec(
+      "SELECT name FROM sqlite_master WHERE type='index' AND name = 'idx_achievements_chain_key'"
+    );
+    assert.strictEqual(indexes.length, 0);
+
+    await applyMigration(db);
+    assert.ok(achievementColumns().includes("chain"));
+  });
+
+  test("migration 2 should be re-applicable after an older version dropped its schema_version row", async () => {
+    await applyMigration(db);
+    // An older extension version sharing the database (devcontainers) only
+    // knows migration 1: it "downgrades" by deleting the version row while
+    // leaving the column in place
+    db.run("DELETE FROM schema_version WHERE version = 2");
+
+    await applyMigration(db);
+    assert.ok(achievementColumns().includes("chain"));
+    const res = db.exec("SELECT MAX(version) FROM schema_version");
+    assert.strictEqual(res[0].values[0][0], 2);
   });
 });

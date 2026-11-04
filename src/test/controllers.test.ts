@@ -7,6 +7,7 @@ import { ProgressionController } from "../database/controller/progressions";
 import { getMockContext, cleanupMockContext } from "./utils";
 import { DailySession } from "../database/model/tables/DailySession";
 import Progression from "../database/model/tables/Progression";
+import Achievement from "../database/model/tables/Achievement";
 import { constants } from "../constants";
 import { db_model } from "../database/model/model";
 import { db_lock } from "../database/lock";
@@ -119,6 +120,51 @@ suite("Controllers Test Suite", () => {
       labels: ["  ", ""],
     });
     assert.ok(result7.achievements.length > 0);
+  });
+
+  test("AchievementController.getJsonAchievementChains should report the progress of the current tier", async () => {
+    await Progression.toDB([
+      new Progression({ name: "chain_ctrl_progression", value: 15, type: "number" }),
+    ]);
+    await Achievement.fromStackingTemplateToDB({
+      title: "Chain Controller %d",
+      icon: "test-icon",
+      category: "chain-category",
+      group: "chain-ctrl-group",
+      labels: [],
+      criterias: ["chain_ctrl_progression"],
+      criteriasFunctions: [(tier: number) => tier * 10],
+      description: "Reach chain_ctrl_progression",
+      minTier: 1,
+      maxTier: 2,
+      expFunction: (tier: number) => tier * 100,
+      hidden: false,
+      requires: [],
+    });
+    const tiers = await AchievementController.getJsonChainTiers("Chain Controller %d");
+    assert.strictEqual(tiers.length, 2);
+    await Achievement.updateAchievedFromId(tiers[0].id);
+
+    const result = await AchievementController.getJsonAchievementChains({
+      group: "chain-ctrl-group",
+      count: true,
+    });
+    assert.strictEqual(result.count, 1);
+    // Current tier requires 20, the progression is at 15
+    assert.strictEqual(result.chains[0].current.title, "Chain Controller 2");
+    assert.strictEqual(result.chains[0].progress, 0.75);
+
+    await Achievement.updateAchievedFromId(tiers[1].id);
+    const completed = await AchievementController.getJsonAchievementChains({
+      group: "chain-ctrl-group",
+    });
+    assert.strictEqual(completed.chains[0].progress, null);
+
+    await assert.rejects(
+      AchievementController.getJsonAchievementChains({
+        status: "invalid" as "completed",
+      }),
+    );
   });
 
   test("AchievementController.computeCompletionRatio should compute the bottleneck ratio across criteria", () => {

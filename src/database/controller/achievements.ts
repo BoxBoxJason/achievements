@@ -7,6 +7,8 @@
 
 import { queries } from "../../views/viewconst";
 import Achievement, {
+  AchievementChainRow,
+  AchievementChainSelectRequestFilters,
   AchievementRow,
   AchievementSelectRequestFilters,
 } from "../model/tables/Achievement";
@@ -20,6 +22,8 @@ import { ProgressionController, ProgressionDict } from "./progressions";
  * @function getAchievableAchievementsByCriterias - Retrieve all achievements that are achievable by the given criterias
  * @function getAchievements - Retrieve achievements in a raw format given a set of filters
  * @function getJsonAchievements - Retrieve achievements in a raw format given a set of filters
+ * @function getJsonAchievementChains - Retrieve tier chains and the progress of their current tier given a set of filters
+ * @function getJsonChainTiers - Retrieve every tier of a chain
  * @function getJsonFilters - Retrieve the categories, groups, and labels of all achievements
  * @function getClosestAchievableAchievement - Retrieve the unlocked achievement closest to completion, if any
  * @function getLatestAchievedAchievement - Retrieve the most recently unlocked, non-hidden achievement, if any
@@ -92,6 +96,65 @@ export namespace AchievementController {
   ): Promise<{ count: number | null; achievements: AchievementRow[] }> {
     filters = parseFilters(filters);
     return Achievement.getAchievementsRawFormat(filters);
+  }
+
+  /**
+   * Retrieve tier chains given a set of filters, along with the completion
+   * ratio of the tier each chain is currently at (null once completed)
+   *
+   * @memberof achievements
+   * @function getJsonAchievementChains
+   *
+   * @param {AchievementChainSelectRequestFilters} filters - The filters to apply
+   * @returns {Promise<{ count: number | null; chains: (AchievementChainRow & { progress: number | null })[] }>} - The list of chains
+   * @throws {Error} - If the filters are invalid
+   */
+  export async function getJsonAchievementChains(
+    filters: AchievementChainSelectRequestFilters
+  ): Promise<{
+    count: number | null;
+    chains: (AchievementChainRow & { progress: number | null })[];
+  }> {
+    filters = parseFilters(filters);
+    if (
+      filters.status !== undefined &&
+      !queries.VALID_CHAIN_STATUSES.includes(filters.status)
+    ) {
+      throw new Error(`Invalid status: ${String(filters.status)}`);
+    }
+    const { count, chains } =
+      await Achievement.getAchievementChainsRawFormat(filters);
+    const progressions = await ProgressionController.getProgressions();
+    return {
+      count,
+      chains: chains.map((chain) => ({
+        ...chain,
+        progress:
+          chain.achievedCount >= chain.tierCount
+            ? null
+            : computeCompletionRatio(
+                Achievement.fromRow(chain.current).criteria,
+                progressions,
+              ),
+      })),
+    };
+  }
+
+  /**
+   * Retrieve every tier of a chain, lowest tier first
+   *
+   * @memberof achievements
+   * @function getJsonChainTiers
+   *
+   * @param {string} chain - The chain key
+   * @param {boolean} [hidden] - Same hidden filter as the chains request
+   * @returns {Promise<AchievementRow[]>} - The tiers of the chain
+   */
+  export async function getJsonChainTiers(
+    chain: string,
+    hidden?: boolean
+  ): Promise<AchievementRow[]> {
+    return Achievement.getChainTiersRawFormat(chain, hidden);
   }
 
   /**
@@ -230,9 +293,9 @@ export namespace AchievementController {
    * @throws {Error} - If the limit is negative
    * @throws {Error} - If the offset is negative
    */
-  function parseFilters(
-    filters: AchievementSelectRequestFilters
-  ): AchievementSelectRequestFilters {
+  function parseFilters<T extends AchievementChainSelectRequestFilters>(
+    filters: T
+  ): T {
     // Set default values for filters
     // If the hidden filter is not provided, set it to false
     filters.hidden ??= false;

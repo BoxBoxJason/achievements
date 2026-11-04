@@ -13,6 +13,11 @@
     @apply bg-filter-gray text-text-gray p-1.5 border-none rounded-sm break-normal;
   }
 
+  .tier-list {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-text-gray) transparent;
+  }
+
   .page-switch-button {
     @apply flex items-center text-5xl border-none bg-none rounded-md h-fit px-1.5;
   }

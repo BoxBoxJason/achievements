@@ -7,7 +7,8 @@
 
 import { db_model } from "../model";
 import { parseValue } from "../../../utils/types";
-import { SqlValue } from "sql.js";
+import { Database, SqlValue } from "sql.js";
+import { hasColumn } from "../migrations";
 
 // ==================== TYPES ====================
 
@@ -31,6 +32,8 @@ export interface StackingAchievementTemplate {
 export interface AchievementDict {
   id?: number;
   title: string;
+  // Key shared by every tier of a stacking template, defaults to the title
+  chain?: string;
   icon: string;
   category: string;
   group: string;
@@ -64,10 +67,22 @@ export interface AchievementSelectRequestFilters {
   // out-of-order responses to superseded requests.
   requestId?: number;
 }
+// Status filter of a tier chain:
+// - unlocked: at least one tier achieved
+// - remaining: at least one tier left to achieve
+// - completed: every tier achieved
+export type AchievementChainStatus = "unlocked" | "remaining" | "completed";
+// Achievement chain select request filters, used to filter tier chains.
+// The tier-level achieved / achievable filters are replaced by status.
+export interface AchievementChainSelectRequestFilters
+  extends Omit<AchievementSelectRequestFilters, "achieved" | "achievable"> {
+  status?: AchievementChainStatus;
+}
 // Achievement row, used to represent an achievement row from the database
 interface RawAchievementRow {
   id: number;
   title: string;
+  chain: string | null;
   icon: string;
   category: string;
   group: string;
@@ -86,6 +101,7 @@ interface RawAchievementRow {
 export interface AchievementRow {
   id: number;
   title: string;
+  chain: string | null;
   icon: string;
   category: string;
   group: string;
@@ -105,6 +121,24 @@ export interface AchievementRow {
   }>;
 }
 
+// A tier chain: every tier of a stacking template, summarized by the tier
+// currently worked on (the lowest one not achieved yet, or the top tier once
+// the chain is completed)
+export interface AchievementChainRow {
+  chain: string;
+  tierCount: number;
+  achievedCount: number;
+  lastAchievedAt: string | null;
+  current: AchievementRow;
+}
+// Raw tier chain row: the current tier row plus the chain aggregates
+interface RawAchievementChainRow extends RawAchievementRow {
+  chain_key: string;
+  tierCount: number;
+  achievedCount: number;
+  lastAchievedAt: string | null;
+}
+
 // Allow-list mapping an accepted sortCriteria value to the fixed, known-safe
 // column expression it may be interpolated as in ORDER BY. SQL identifiers
 // can't be bound as query parameters, so this validation lives here, in the
@@ -120,6 +154,89 @@ const VALID_SORT_COLUMNS: Record<string, string> = {
   exp: "a.exp",
 };
 
+// Same allow-list for tier chains, sorting on the chain aggregates (c) or on
+// the current tier (r).
+const VALID_CHAIN_SORT_COLUMNS: Record<string, string> = {
+  achieved: "CAST(c.achievedCount AS REAL) / c.tierCount",
+  title: "r.title",
+  category: "r.category",
+  '"group"': 'r."group"',
+  achievedAt: "c.lastAchievedAt",
+  tier: "c.achievedCount",
+  exp: "r.exp",
+};
+
+/**
+ * Builds the labels, requirements and criteria JSON columns of an achievement
+ * row as correlated subqueries, so no join multiplies the rows.
+ *
+ * @param {string} alias - The alias of the achievements table in the query
+ * @returns {string} - The select columns
+ */
+function achievementDetailsColumns(alias: string): string {
+  return `
+    (SELECT COALESCE(json_group_array(al.label), '[]')
+      FROM achievement_labels al WHERE al.achievement_id = ${alias}.id) AS labels,
+    (SELECT COALESCE(json_group_array(ar.requirement_id), '[]')
+      FROM achievement_requirements ar WHERE ar.achievement_id = ${alias}.id) AS requirements,
+    (SELECT COALESCE(
+        json_group_array(
+          json_object(
+            'progression_name', p.name,
+            'required_value', ac.required_value,
+            'type', ac."type"
+          )
+        ),
+        '[]'
+      )
+      FROM achievement_criterias ac
+      JOIN progressions p ON p.id = ac.progression_id
+      WHERE ac.achievement_id = ${alias}.id) AS criteria`;
+}
+
+/**
+ * SQL expression of the chain key of an achievement row (aliased `alias`).
+ * A read-only window can open a database that the window holding the lock
+ * has not migrated yet (it only reads the file once): without the chain
+ * column, every tier is its own chain, as before chains existed.
+ *
+ * @param {Database} db - The database
+ * @param {string} alias - Alias of the achievements table in the query
+ * @returns {string} - The SQL expression
+ */
+function chainKeyExpression(db: Database, alias: string): string {
+  return hasColumn(db, "achievements", "chain")
+    ? `COALESCE(${alias}.chain, ${alias}.title)`
+    : `${alias}.title`;
+}
+
+/**
+ * Parses the JSON columns of a raw achievement row
+ *
+ * @param {RawAchievementRow} row - The raw row
+ * @returns {AchievementRow} - The parsed row
+ */
+function parseRawRow(row: RawAchievementRow): AchievementRow {
+  return {
+    id: row.id,
+    title: row.title,
+    chain: row.chain ?? null,
+    icon: row.icon,
+    category: row.category,
+    group: row.group,
+    description: row.description,
+    tier: row.tier,
+    exp: row.exp,
+    hidden: row.hidden,
+    achieved: row.achieved,
+    achievedAt: row.achievedAt,
+    repeatable: row.repeatable,
+    requirements: JSON.parse(row.requirements),
+    criteria: JSON.parse(row.criteria),
+    labels: JSON.parse(row.labels),
+  };
+}
+
 /**
  * Achievement class, contains the information of an achievement and its processing methods
  *
@@ -127,6 +244,7 @@ const VALID_SORT_COLUMNS: Record<string, string> = {
  *
  * @property {number} id - The unique identifier of the achievement
  * @property {string} title - The title of the achievement
+ * @property {string} chain - The key shared by every tier of the achievement
  * @property {string} icon - The path to the icon of the achievement
  * @property {string} category - The category of the achievement
  * @property {string} group - The group of the achievement
@@ -150,9 +268,10 @@ const VALID_SORT_COLUMNS: Record<string, string> = {
 class Achievement {
   // ==================== CLASS VARIABLES ====================
   public static readonly ACHIEVEMENT_INSERT_QUERY = `INSERT INTO achievements
-    (title, icon, category, "group", description, tier, exp, hidden, repeatable, achieved, achievedAt)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    (title, chain, icon, category, "group", description, tier, exp, hidden, repeatable, achieved, achievedAt)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(title) DO UPDATE SET
+      chain = excluded.chain,
       icon = excluded.icon,
       category = excluded.category,
       "group" = excluded."group",
@@ -207,6 +326,7 @@ class Achievement {
   // ==================== PROPERTIES ====================
   public id?: number;
   public title: string;
+  public chain: string;
   public icon: string;
   public category: string;
   public group: string;
@@ -235,6 +355,7 @@ class Achievement {
     const {
       id,
       title: rawTitle,
+      chain: rawChain,
       icon: rawIcon,
       category: rawCategory,
       group: rawGroup,
@@ -297,6 +418,7 @@ class Achievement {
 
     // Assigning properties
     this.title = title;
+    this.chain = rawChain?.trim() || title;
     this.icon = icon;
     this.category = category;
     this.group = group;
@@ -354,6 +476,7 @@ class Achievement {
         string,
         string,
         string,
+        string,
         number,
         number,
         number,
@@ -390,6 +513,7 @@ class Achievement {
       // Prepare the data for achievements insert
       achievementData.push([
         currentTitle,
+        title, // Chain: the title template, shared by every tier
         icon,
         category,
         group,
@@ -520,6 +644,7 @@ class Achievement {
     return new Achievement({
       id: row.id,
       title: row.title,
+      chain: row.chain ?? undefined,
       icon: row.icon,
       category: row.category,
       group: row.group,
@@ -793,6 +918,273 @@ class Achievement {
       count,
       achievements: achievements.map(Achievement.fromRow),
     };
+  }
+
+  /**
+   * Retrieves tier chains based off (optional) filters. Every tier of a
+   * stacking template shares a chain, so a chain is paginated, counted and
+   * sorted as a single entry.
+   *
+   * @static
+   * @memberof Achievement
+   * @method getAchievementChainsRawFormat
+   *
+   * @param {AchievementChainSelectRequestFilters} filters - The filters to apply
+   * @returns {Promise<{ count: number | null; chains: AchievementChainRow[] }>} - The list of chains
+   */
+  static async getAchievementChainsRawFormat(
+    filters: AchievementChainSelectRequestFilters,
+  ): Promise<{
+    count: number | null;
+    chains: AchievementChainRow[];
+  }> {
+    const db = await db_model.getDB();
+
+    // Tier-level filters. Every tier of a chain shares them (they come from
+    // the template), so they keep or drop whole chains.
+    const conditions: string[] = [];
+    const values: SqlValue[] = [];
+    if (filters.category) {
+      conditions.push("a.category = ?");
+      values.push(filters.category);
+    }
+    if (filters.group) {
+      conditions.push('a."group" = ?');
+      values.push(filters.group);
+    }
+    if (filters.labels && filters.labels.length > 0) {
+      for (const label of filters.labels) {
+        conditions.push(
+          "EXISTS (SELECT 1 FROM achievement_labels al WHERE al.achievement_id = a.id AND al.label = ?)",
+        );
+        values.push(label);
+      }
+    }
+    if (filters.criterias && filters.criterias.length > 0) {
+      conditions.push(`EXISTS (
+        SELECT 1 FROM achievement_criterias ac
+        JOIN progressions p ON ac.progression_id = p.id
+        WHERE ac.achievement_id = a.id AND p.name IN (${filters.criterias
+          .map(() => "?")
+          .join(", ")})
+      )`);
+      values.push(...filters.criterias);
+    }
+    if (filters.hidden !== undefined) {
+      conditions.push("a.hidden = ?");
+      values.push(filters.hidden ? 1 : 0);
+    }
+
+    // Chain-level filters, applied on the aggregates
+    const chainConditions: string[] = [];
+    if (filters.title) {
+      // A chain matches when any of its tiers does
+      chainConditions.push("SUM(LOWER(title) LIKE ?) > 0");
+      values.push(`%${filters.title.toLowerCase()}%`);
+    }
+    switch (filters.status) {
+      case undefined:
+        break;
+      case "unlocked":
+        chainConditions.push("SUM(achieved) > 0");
+        break;
+      case "remaining":
+        chainConditions.push("SUM(achieved) < COUNT(*)");
+        break;
+      case "completed":
+        chainConditions.push("SUM(achieved) = COUNT(*)");
+        break;
+      default:
+        throw new Error(`Invalid status: ${String(filters.status)}`);
+    }
+
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const havingClause =
+      chainConditions.length > 0
+        ? `HAVING ${chainConditions.join(" AND ")}`
+        : "";
+
+    const chainsCte = `
+      WITH filtered AS (
+        SELECT a.*, ${chainKeyExpression(db, "a")} AS chain_key
+        FROM achievements a
+        ${whereClause}
+      ),
+      chains AS (
+        SELECT
+          chain_key,
+          COUNT(*) AS tierCount,
+          SUM(achieved) AS achievedCount,
+          MAX(achievedAt) AS lastAchievedAt
+        FROM filtered
+        GROUP BY chain_key
+        ${havingClause}
+      )`;
+
+    let count: number | null = null;
+    if (filters.count) {
+      const countRow = db_model.get<{ total: number }>(
+        db,
+        `${chainsCte} SELECT COUNT(*) AS total FROM chains`,
+        values,
+      );
+      count = countRow?.total ?? 0;
+    }
+
+    // The current tier of a chain is its lowest tier not achieved yet, or
+    // its top tier once every tier is achieved
+    let chainsQuery = `${chainsCte},
+      ranked AS (
+        SELECT f.*, ROW_NUMBER() OVER (
+          PARTITION BY f.chain_key
+          ORDER BY f.achieved ASC,
+            CASE WHEN f.achieved = 0 THEN f.tier ELSE -f.tier END ASC
+        ) AS rn
+        FROM filtered f
+      )
+      SELECT
+        r.*,
+        c.tierCount,
+        c.achievedCount,
+        c.lastAchievedAt,
+        ${achievementDetailsColumns("r")}
+      FROM ranked r
+      JOIN chains c ON c.chain_key = r.chain_key
+      WHERE r.rn = 1
+    `;
+
+    const orderBy: string[] = [];
+    if (filters.sortCriteria) {
+      const sortColumn = VALID_CHAIN_SORT_COLUMNS[filters.sortCriteria];
+      if (!sortColumn) {
+        throw new Error(`Invalid sort criteria: ${filters.sortCriteria}`);
+      }
+      let sortDirection = "";
+      if (filters.sortDirection) {
+        sortDirection = filters.sortDirection.toUpperCase();
+        if (sortDirection !== "ASC" && sortDirection !== "DESC") {
+          throw new Error(`Invalid sort direction: ${filters.sortDirection}`);
+        }
+      }
+      orderBy.push(`${sortColumn} ${sortDirection}`.trim());
+    }
+    // Tie-breaker, keeps the pagination stable
+    orderBy.push("r.chain_key ASC");
+    chainsQuery += ` ORDER BY ${orderBy.join(", ")}`;
+
+    // SQLite needs a LIMIT for an OFFSET, -1 means no limit
+    chainsQuery += " LIMIT ? OFFSET ?";
+    const pageValues: SqlValue[] = [
+      ...values,
+      filters.limit ?? -1,
+      filters.offset ?? 0,
+    ];
+
+    const rows = db_model.getAll<RawAchievementChainRow>(
+      db,
+      chainsQuery,
+      pageValues,
+    );
+
+    const chains = rows.map((row) => ({
+      chain: row.chain_key,
+      tierCount: row.tierCount,
+      achievedCount: row.achievedCount,
+      lastAchievedAt: row.lastAchievedAt,
+      current: parseRawRow(row),
+    }));
+
+    return { count, chains };
+  }
+
+  /**
+   * Retrieves every tier of a chain, lowest tier first
+   *
+   * @static
+   * @memberof Achievement
+   * @method getChainTiersRawFormat
+   *
+   * @param {string} chain - The chain key
+   * @param {boolean} [hidden] - Only return hidden (true) or visible (false) tiers, like the chains filter
+   * @returns {Promise<AchievementRow[]>} - The tiers of the chain
+   */
+  static async getChainTiersRawFormat(
+    chain: string,
+    hidden?: boolean,
+  ): Promise<AchievementRow[]> {
+    const db = await db_model.getDB();
+    const values: SqlValue[] = [chain];
+    let hiddenCondition = "";
+    if (hidden !== undefined) {
+      hiddenCondition = "AND a.hidden = ?";
+      values.push(hidden ? 1 : 0);
+    }
+    const rows = db_model.getAll<RawAchievementRow>(
+      db,
+      `SELECT a.*, ${achievementDetailsColumns("a")}
+      FROM achievements a
+      WHERE ${chainKeyExpression(db, "a")} = ? ${hiddenCondition}
+      ORDER BY a.tier ASC`,
+      values,
+    );
+    return rows.map(parseRawRow);
+  }
+
+  /**
+   * Give a chain to the achievements left without one: rows from before the
+   * chain column existed that no current template re-inserted (e.g. tiers
+   * past the end of a template whose tier range shrank). A tier title is its
+   * template title with a number in place of `%d`, so the template is found
+   * back by putting `%d` back in place of a number of the title. Otherwise
+   * every tier would show as its own chain.
+   *
+   * @static
+   * @memberof Achievement
+   * @method assignMissingChains
+   *
+   * @returns {Promise<number>} - The number of achievements given a chain
+   */
+  static async assignMissingChains(): Promise<number> {
+    const db = await db_model.getDB();
+    const orphans = db_model.getAll<{ id: number; title: string }>(
+      db,
+      "SELECT id, title FROM achievements WHERE chain IS NULL",
+    );
+    if (orphans.length === 0) {
+      return 0;
+    }
+    const chains = new Set(
+      db_model
+        .getAll<{ chain: string }>(
+          db,
+          "SELECT DISTINCT chain FROM achievements WHERE chain IS NOT NULL",
+        )
+        .map((row) => row.chain),
+    );
+    const statement = db.prepare("UPDATE achievements SET chain = ? WHERE id = ?");
+    try {
+      for (const { id, title } of orphans) {
+        // Candidate templates, replacing the last number first
+        const candidates = [...title.matchAll(/\d+/g)]
+          .reverse()
+          .map(
+            (match) =>
+              title.slice(0, match.index) +
+              "%d" +
+              title.slice(match.index + match[0].length),
+          );
+        const chain =
+          candidates.find((candidate) => chains.has(candidate)) ??
+          // Template gone: still group its tiers together
+          candidates[0] ??
+          title;
+        statement.run([chain, id]);
+      }
+    } finally {
+      statement.free();
+    }
+    return orphans.length;
   }
 
   /**

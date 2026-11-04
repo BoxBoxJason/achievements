@@ -1,12 +1,14 @@
 export namespace webview {
   export enum commands {
     // Responses sent from the extension to the webview
-    DISPLAY_ACHIEVEMENTS = "achievements-display",
+    DISPLAY_ACHIEVEMENT_CHAINS = "achievement-chains-display",
+    DISPLAY_ACHIEVEMENT_CHAIN_TIERS = "achievement-chain-tiers-display",
     DISPLAY_ACHIEVEMENTS_FILTERS = "achievements-set-filters",
     SET_PROGRESSIONS = "progressions-set",
     SET_PROFILE = "profile-set",
     // Requests sent from the webview to the extension
-    RETRIEVE_ACHIEVEMENTS = "achievements-select",
+    RETRIEVE_ACHIEVEMENT_CHAINS = "achievement-chains-select",
+    RETRIEVE_ACHIEVEMENT_CHAIN_TIERS = "achievement-chain-tiers-select",
     RETRIEVE_ACHIEVEMENTS_FILTERS = "achievements-select-filters",
     RETRIEVE_PROGRESSIONS = "progressions-select",
     RETRIEVE_PROFILE = "profile-select",
@@ -272,6 +274,13 @@ export namespace queries {
     "achievedAt",
     "tier",
     "exp",
+  ];
+
+  // Status filter values of a tier chain, see AchievementChainStatus
+  export const VALID_CHAIN_STATUSES: readonly string[] = [
+    "unlocked",
+    "remaining",
+    "completed",
   ];
 
   export enum criteria {

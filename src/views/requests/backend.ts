@@ -4,7 +4,7 @@ import { AchievementController } from "../../database/controller/achievements";
 import { ProgressionController } from "../../database/controller/progressions";
 import { TimeSpentController } from "../../database/controller/timespent";
 import Achievement, {
-  AchievementSelectRequestFilters,
+  AchievementChainSelectRequestFilters,
 } from "../../database/model/tables/Achievement";
 import { PostMessage } from "../icons";
 import { webview } from "../viewconst";
@@ -17,9 +17,15 @@ export namespace backendRequests {
     panel: vscode.WebviewPanel,
   ): Promise<void> {
     switch (message.command) {
-      case webview.commands.RETRIEVE_ACHIEVEMENTS:
-        await handleAchievementsSelect(
-          (message.data ?? null) as AchievementSelectRequestFilters | null,
+      case webview.commands.RETRIEVE_ACHIEVEMENT_CHAINS:
+        await handleAchievementChainsSelect(
+          (message.data ?? null) as AchievementChainSelectRequestFilters | null,
+          panel,
+        );
+        break;
+      case webview.commands.RETRIEVE_ACHIEVEMENT_CHAIN_TIERS:
+        await handleAchievementChainTiersSelect(
+          (message.data ?? null) as { chain?: unknown; hidden?: unknown } | null,
           panel,
         );
         break;
@@ -37,19 +43,35 @@ export namespace backendRequests {
     }
   }
 
-  export async function handleAchievementsSelect(
-    filters: AchievementSelectRequestFilters | null,
+  export async function handleAchievementChainsSelect(
+    filters: AchievementChainSelectRequestFilters | null,
     panel: vscode.WebviewPanel,
   ): Promise<void> {
-    if (filters) {
-      const achievements = await AchievementController.getAchievements(filters);
-      panel.webview.postMessage({
-        command: webview.commands.DISPLAY_ACHIEVEMENTS,
-        data: { ...achievements, requestId: filters.requestId },
-      });
-    } else {
+    if (!filters) {
       return;
     }
+    const chains = await AchievementController.getJsonAchievementChains(filters);
+    panel.webview.postMessage({
+      command: webview.commands.DISPLAY_ACHIEVEMENT_CHAINS,
+      data: { ...chains, requestId: filters.requestId },
+    });
+  }
+
+  export async function handleAchievementChainTiersSelect(
+    data: { chain?: unknown; hidden?: unknown } | null,
+    panel: vscode.WebviewPanel,
+  ): Promise<void> {
+    if (typeof data?.chain !== "string" || data.chain === "") {
+      return;
+    }
+    const tiers = await AchievementController.getJsonChainTiers(
+      data.chain,
+      typeof data.hidden === "boolean" ? data.hidden : undefined,
+    );
+    panel.webview.postMessage({
+      command: webview.commands.DISPLAY_ACHIEVEMENT_CHAIN_TIERS,
+      data: { chain: data.chain, tiers },
+    });
   }
 
   export async function handleAchievementsSelectFilters(

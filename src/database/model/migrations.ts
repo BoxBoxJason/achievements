@@ -23,6 +23,28 @@ interface Migration {
 // ==================== MODULE FUNCTIONS ====================
 
 /**
+ * Checks whether a table has a given column
+ *
+ * @param {Database} db - The database to inspect
+ * @param {string} table - The table name (trusted, not user input)
+ * @param {string} column - The column name
+ *
+ * @returns {boolean} - True if the column exists
+ */
+export function hasColumn(
+  db: Database,
+  table: string,
+  column: string,
+): boolean {
+  const res = db.exec(`PRAGMA table_info(${table})`);
+  if (res.length === 0) {
+    return false;
+  }
+  const nameIndex = res[0].columns.indexOf("name");
+  return res[0].values.some((row) => row[nameIndex] === column);
+}
+
+/**
  * Applies the migration to the database
  *
  * @param {Database} db - The database to apply the migration to
@@ -187,6 +209,46 @@ export async function applyMigration(
           }
           for (const table of tables_to_drop) {
             db.run(`DROP TABLE IF EXISTS ${table}`);
+          }
+          db.run("COMMIT");
+        } catch (error) {
+          db.run("ROLLBACK");
+          throw error;
+        }
+      },
+    },
+    2: {
+      version: 2,
+      description: "Add the achievement tier chain key",
+      up: () => {
+        db.run("BEGIN TRANSACTION");
+        try {
+          // Idempotent: a database shared with an older version of the
+          // extension (devcontainers) can be "downgraded" to version 1 by
+          // it without the column being dropped, so it may already exist.
+          if (!hasColumn(db, "achievements", "chain")) {
+            // Key shared by every tier of a stacking template (its title
+            // template, e.g. "Committer %d"). NULL until the templates are
+            // re-inserted on startup, readers fall back to the title.
+            db.run("ALTER TABLE achievements ADD COLUMN chain TEXT");
+          }
+          // Readers group and look tiers up by COALESCE(chain, title): a
+          // plain index on chain could not serve them
+          db.run(
+            "CREATE INDEX IF NOT EXISTS idx_achievements_chain_key ON achievements(COALESCE(chain, title))"
+          );
+          db.run("COMMIT");
+        } catch (error) {
+          db.run("ROLLBACK");
+          throw error;
+        }
+      },
+      down: () => {
+        db.run("BEGIN TRANSACTION");
+        try {
+          db.run("DROP INDEX IF EXISTS idx_achievements_chain_key");
+          if (hasColumn(db, "achievements", "chain")) {
+            db.run("ALTER TABLE achievements DROP COLUMN chain");
           }
           db.run("COMMIT");
         } catch (error) {

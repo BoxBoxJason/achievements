@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { queries, webview } from '../viewconst';
+import { webview } from '../viewconst';
 import { PostMessage } from '../icons';
 
 interface SearchBarProps {
@@ -8,18 +8,52 @@ interface SearchBarProps {
   setLimit: React.Dispatch<React.SetStateAction<number>>;
 }
 
+// Status filter of a tier chain, see AchievementChainStatus
+const STATUS_OPTIONS: ReadonlyArray<{ value: string | undefined; label: string }> = [
+  { value: undefined, label: 'All' },
+  { value: 'unlocked', label: 'Unlocked' },
+  { value: 'remaining', label: 'Remaining' },
+  { value: 'completed', label: 'Completed' },
+];
+
+// Display names of queries.VALID_SORT_CRITERIA, sorting tier chains
+const SORT_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
+  { value: 'achieved', label: 'Progress' },
+  { value: 'achievedAt', label: 'Last unlocked' },
+  { value: 'tier', label: 'Tiers unlocked' },
+  { value: 'title', label: 'Title' },
+  { value: 'category', label: 'Category' },
+  { value: '"group"', label: 'Group' },
+  { value: 'exp', label: 'XP' },
+];
+
 const SearchBar: React.FC<SearchBarProps> = ({ setFilters, limit, setLimit }) => {
   const [partialTitle, setPartialTitle] = useState('');
   const [debouncedTitle, setDebouncedTitle] = useState('');
-  const [achievable, setAchievable] = useState<true | undefined>(true);
-  const [achieved, setAchieved] = useState<true | undefined>(undefined);
+  const [status, setStatus] = useState<string | undefined>(undefined);
+  const [category, setCategory] = useState<string | undefined>(undefined);
   const [label, setLabel] = useState<string | undefined>(undefined);
-  const [sortCriteria, setSortCriteria] = useState<string | undefined>('achieved');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | undefined>(undefined);
+  const [sortCriteria, setSortCriteria] = useState('achieved');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(true);
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [availableLabels, setAvailableLabels] = useState<string[]>([]);
 
   useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        const data: PostMessage = event.data;
+
+        if (data.command === webview.commands.DISPLAY_ACHIEVEMENTS_FILTERS) {
+          const payload = data.data as { categories: string[]; labels: string[] };
+          setAvailableCategories([...payload.categories].sort());
+          setAvailableLabels([...payload.labels].sort());
+        }
+      } catch (e) {
+        console.error('Invalid message data:', e);
+      }
+    };
+
     window.addEventListener('message', handleMessage);
 
     window.vscode.postMessage(
@@ -43,122 +77,108 @@ const SearchBar: React.FC<SearchBarProps> = ({ setFilters, limit, setLimit }) =>
   useEffect(() => {
     setFilters({
       title: debouncedTitle,
-      achievable,
-      achieved,
+      status,
+      category,
       labels: label ? [label] : undefined,
       limit,
       sortCriteria,
       sortDirection,
     });
-  }, [debouncedTitle, achievable, achieved, label, limit, sortCriteria, sortDirection, setFilters]);
-
-  const handleMessage = (event: MessageEvent) => {
-    try {
-      const data: PostMessage = event.data;
-
-      if (data.command === webview.commands.DISPLAY_ACHIEVEMENTS_FILTERS) {
-        const payload = data.data as { labels: string[] };
-        setAvailableLabels(payload.labels);
-      }
-    } catch (e) {
-      console.error('Invalid message data:', e);
-    }
-  };
+  }, [debouncedTitle, status, category, label, limit, sortCriteria, sortDirection, setFilters]);
 
   return (
     <div className="search-bar flex flex-col items-center justify-center max-w-full min-w-4/5 p-2.5">
 
       {showFilters && (
-        <div className="filters-container flex flex-col items-center gap-2.5 justify-center">
+        <div className="filters-container flex flex-col items-center gap-2.5 justify-center w-full">
           <input className="search-bar-input w-1/2 max-w-lg p-1.5 mb-1.5 min-w-38 rounded-xs border-none filter-input"
             type="text"
             value={partialTitle}
             onChange={(e) => setPartialTitle(e.target.value)}
             placeholder="Search"
+            aria-label="Search achievements by title"
           />
+
+          <div className="status-filter flex flex-row rounded-sm overflow-hidden" role="group" aria-label="Status">
+            {STATUS_OPTIONS.map((option) => (
+              <button
+                key={option.label}
+                type="button"
+                aria-pressed={status === option.value}
+                onClick={() => setStatus(option.value)}
+                className={`py-1 px-3 border-none cursor-pointer ${
+                  status === option.value
+                    ? 'bg-completion-blue text-white'
+                    : 'bg-filter-gray text-text-gray hover:text-white'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+
           <div className="filters-sub-container flex flex-row flex-wrap justify-between w-full">
-            <div className="filter-field">
-              <span className="mb-1.5">Achievable</span>
-              <input
-                className="filter-input"
-                type="checkbox"
-                checked={!!achievable}
-                onChange={(e) => setAchievable(e.target.checked ? true : undefined)}
-              />
-            </div>
+            <label className="filter-field">
+              <span className="mb-1.5">Category</span>
+              <select
+                className="filter-select"
+                value={category || ''}
+                onChange={(e) => setCategory(e.target.value || undefined)}
+              >
+                <option value="">All categories</option>
+                {availableCategories.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-            <div className="filter-field">
-              <span className="mb-1.5">Achieved</span>
-              <input
-                type="checkbox"
-                className="filter-input"
-                checked={!!achieved}
-                onChange={(e) => setAchieved(e.target.checked ? true : undefined)}
-              />
-            </div>
-
-            <div className="filter-field">
+            <label className="filter-field">
               <span className="mb-1.5">Label</span>
               <select
                 className="filter-select"
                 value={label || ''}
                 onChange={(e) => setLabel(e.target.value || undefined)}
               >
-                <option value="">Select Label</option>
-                {availableLabels.map((label) => (
-                  <option key={label} value={label}>
-                    {label}
+                <option value="">All labels</option>
+                {availableLabels.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
                   </option>
                 ))}
               </select>
-            </div>
+            </label>
 
             <div className="filter-field">
-              <span className="mb-1.5" >Sort Criteria</span>
-              <select
-                className="filter-select"
-                value={sortCriteria || ''}
-                onChange={(e) => setSortCriteria(e.target.value || undefined)}
-              >
-                <option value="">Select Criteria</option>
-                {queries.VALID_SORT_CRITERIA.map((criteria) => (
-                  <option key={criteria} value={criteria}>
-                    {criteria.replace(/"/g, '')}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="filter-field">
-              <span className="m-1.5">Sort Direction</span>
-              <div className="radio-container flex flex-col align-start">
-                <label>
-                  <input
-                    className="filter-input"
-                    type="radio"
-                    name="sortDirection"
-                    value="asc"
-                    checked={sortDirection === 'asc'}
-                    onChange={() => setSortDirection('asc')}
-                  />
-                  Ascending
-                </label>
-                <label>
-                  <input
-                    className="filter-input"
-                    type="radio"
-                    name="sortDirection"
-                    value="desc"
-                    checked={sortDirection === 'desc'}
-                    onChange={() => setSortDirection('desc')}
-                  />
-                  Descending
-                </label>
+              <label htmlFor="achievements-sort" className="mb-1.5">Sort by</label>
+              <div className="flex flex-row gap-1">
+                <select
+                  id="achievements-sort"
+                  className="filter-select"
+                  value={sortCriteria}
+                  onChange={(e) => setSortCriteria(e.target.value)}
+                >
+                  {SORT_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className="filter-select cursor-pointer hover:text-white"
+                  onClick={() => setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
+                  aria-label={sortDirection === 'asc' ? 'Ascending, switch to descending' : 'Descending, switch to ascending'}
+                  title={sortDirection === 'asc' ? 'Ascending' : 'Descending'}
+                >
+                  {sortDirection === 'asc' ? '↑' : '↓'}
+                </button>
               </div>
             </div>
 
-            <div className="filter-field">
-              <span className="mb-1.5">Achievement per Page</span>
+            <label className="filter-field">
+              <span className="mb-1.5">Per page</span>
               <input
                 type="number"
                 value={limit}
@@ -168,13 +188,13 @@ const SearchBar: React.FC<SearchBarProps> = ({ setFilters, limit, setLimit }) =>
                 }}
                 min={1}
                 max={2000}
-                className="p-1.5 border-none rounded-xs filter-input" />
-            </div>
+                className="w-20 p-1.5 border-none rounded-xs filter-input" />
+            </label>
           </div>
         </div>
       )}
 
-      <button onClick={() => setShowFilters((prev) => !prev)} className="w-fit py-1.5 px-5 border-none rounded-lg bg-white text-base text-black">
+      <button onClick={() => setShowFilters((prev) => !prev)} className="w-fit mt-2.5 py-1.5 px-5 border-none rounded-lg bg-white text-base text-black">
         {showFilters ? 'Hide Filters' : 'Show Filters'}
       </button>
     </div>

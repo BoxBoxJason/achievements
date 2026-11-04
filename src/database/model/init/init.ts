@@ -255,6 +255,7 @@ export namespace db_init {
     await removeObsoleteAchievements();
     await createIntegerProgressions();
     await createAchievementsFromStackingTemplates();
+    await Achievement.assignMissingChains();
     logger.info("Database populated successfully");
   }
 }
