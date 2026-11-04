@@ -16,8 +16,32 @@ const UserStats: React.FC = () => {
   });
 
   useEffect(() => {
+    const handleMessage = (message: MessageEvent) => {
+      try {
+        const data: PostMessage = message.data;
+        if (data.command === webview.commands.SET_PROFILE) {
+          const payload = data.data as {
+            username: string;
+            totalAchievements: number;
+            totalExp: number;
+            achievedCount: number;
+            timeSpent: Record<string, number>;
+          };
+          setUsername(payload.username);
+          setTotalAchievements(payload.totalAchievements);
+          setTotalExp(payload.totalExp);
+          setAchievedCount(payload.achievedCount);
+          setTimeSpent(payload.timeSpent);
+        }
+      } catch (error) {
+        console.error('Failed to parse message data: ' + error);
+      }
+    };
+
     window.addEventListener('message', handleMessage);
 
+    // Once per mount: without the empty dependency list, every reply
+    // re-rendered the component, which requested the profile again
     window.vscode.postMessage(
       JSON.stringify({
         command: webview.commands.RETRIEVE_PROFILE,
@@ -27,29 +51,7 @@ const UserStats: React.FC = () => {
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  });
-
-  const handleMessage = (message: MessageEvent) => {
-    try {
-      const data: PostMessage = message.data;
-      if (data.command === webview.commands.SET_PROFILE) {
-        const payload = data.data as {
-          username: string;
-          totalAchievements: number;
-          totalExp: number;
-          achievedCount: number;
-          timeSpent: Record<string, number>;
-        };
-        setUsername(payload.username);
-        setTotalAchievements(payload.totalAchievements);
-        setTotalExp(payload.totalExp);
-        setAchievedCount(payload.achievedCount);
-        setTimeSpent(payload.timeSpent);
-      }
-    } catch (error) {
-      console.error('Failed to parse message data: ' + error);
-    }
-  };
+  }, []);
 
   return (
     <div className="achievements-profile w-9/10 mx-auto flex flex-col gap-2.5">
